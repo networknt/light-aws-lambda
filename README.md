@@ -1,2 +1,2 @@
-# light-lambda-extension
-Aws lambda extensions for cross-cutting concerns
+# light-aws-lambda
+Aws lambda authorizer and extensions for cross-cutting concerns

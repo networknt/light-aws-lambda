@@ -70,7 +70,7 @@ public class AwsLambdaAppenderTest {
 
         // then
         assertThat(byteOut.toString())
-                .matches("\\[\\d{4}-\\d{2}-\\d{2} \\d{2}:\\d{2}:\\d{2}\\.\\d{3}\\] <request-id-not-set-by-lambda-runtime> INFO  c.n.a.l.AwsLambdaAppenderTest - 14m6d4 15 cöö1" + lineSeparator() + "$");    }
+                .matches("\\[\\d{4}-\\d{2}-\\d{2} \\d{2}:\\d{2}:\\d{2}\\.\\d{3}\\] <request-id-not-set-by-lambda-runtime>   INFO  c.n.a.l.AwsLambdaAppenderTest - 14m6d4 15 cöö1" + lineSeparator() + "$");    }
 
     @Test
     public void xmlConfigDebugShouldNotBeLogged() {
@@ -89,20 +89,26 @@ public class AwsLambdaAppenderTest {
     public void xmlConfigMdcRequestId() {
 
         String requestIdMdcKey = "AWSRequestId";
+        String traceabilityId = "tId";
+        String correlationId = "cId";
 
         // given
         // logback.xml present and
         MDC.put(requestIdMdcKey, "l099in95-3a5y-w1th-jlib-1t5c0015tuff");
+        MDC.put(traceabilityId, traceabilityId);
+        MDC.put(correlationId, correlationId);
 
         // when
         log.info("14m6d4 15 cöö1");
 
         // then
         assertThat(byteOut.toString())
-                .matches("\\[\\d{4}-\\d{2}-\\d{2} \\d{2}:\\d{2}:\\d{2}\\.\\d{3}\\] <l099in95-3a5y-w1th-jlib-1t5c0015tuff> INFO  c.n.a.l.AwsLambdaAppenderTest - 14m6d4 15 cöö1" + lineSeparator() + "$");
+                .matches("\\[\\d{4}-\\d{2}-\\d{2} \\d{2}:\\d{2}:\\d{2}\\.\\d{3}\\] <l099in95-3a5y-w1th-jlib-1t5c0015tuff> tId cId INFO  c.n.a.l.AwsLambdaAppenderTest - 14m6d4 15 cöö1" + lineSeparator() + "$");
 
         // cleanup
         MDC.remove(requestIdMdcKey);
+        MDC.remove(traceabilityId);
+        MDC.remove(correlationId);
     }
 
     @Test

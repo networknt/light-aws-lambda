@@ -1,0 +1,8 @@
+Dev:
+  jwkUrl: https://dev.example.com/oauth2/aus41bwp2BafABp7h1d6/v1/keys
+Sit:
+  jwkUrl: https://sit.example.com/oauth2/aus41bwp2BafABp7h1d6/v1/keys
+Stage:
+  jwkUrl: https://stage.example.com/oauth2/aus41bwp2BafABp7h1d6/v1/keys
+Prod:
+  jwkUrl: https://prod.example.com/oauth2/aus41bwp2BafABp7h1d6/v1/keys

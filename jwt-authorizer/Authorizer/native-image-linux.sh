@@ -9,6 +9,8 @@ mvn clean install;
 docker run --rm --name graal -v $(pwd):/${PROJECT_NAME} springci/graalvm-ce:master-java11 \
     /bin/bash -c "native-image \
                     -H:EnableURLProtocols=http \
+                    --no-fallback \
+                    --allow-incomplete-classpath \
 		                -H:ReflectionConfigurationFiles=/${PROJECT_NAME}/reflect.json \
                     -jar /${PROJECT_NAME}/target/${PROJECT_NAME}-${PROJECT_VERSION}.jar \
                     ; \
@@ -20,7 +22,7 @@ docker run --rm --name graal -v $(pwd):/${PROJECT_NAME} springci/graalvm-ce:mast
 sudo cp bootstrap target/custom-runtime/bootstrap;
 
 # Make bootstrap executable
-chmod +x target/custom-runtime/bootstrap;
+sudo chmod +x target/custom-runtime/bootstrap;
 
 # Zip
 rm $PROJECT_NAME-custom-runtime.zip

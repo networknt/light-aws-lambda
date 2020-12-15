@@ -2,17 +2,19 @@ package com.networknt.aws.lambda;
 
 import com.amazonaws.services.lambda.runtime.events.APIGatewayProxyRequestEvent;
 import com.fasterxml.jackson.databind.ObjectMapper;
-import org.junit.Ignore;
-import org.junit.Test;
 
 import java.util.HashMap;
 import java.util.Map;
+
+import org.junit.jupiter.api.Disabled;
+import org.junit.jupiter.api.Test;
+
 
 public class AuthorizerTest {
   ObjectMapper objectMapper = new ObjectMapper();
 
   @Test
-  @Ignore
+  @Disabled
   public void successfulResponse() {
     Authorizer authorizer = new Authorizer();
     APIGatewayProxyRequestEvent request = new APIGatewayProxyRequestEvent();

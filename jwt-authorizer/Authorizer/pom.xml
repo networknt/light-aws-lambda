@@ -44,16 +44,6 @@
             <version>${version.light-4j}</version>
         </dependency>
         <dependency>
-            <groupId>com.networknt</groupId>
-            <artifactId>status</artifactId>
-            <version>${version.light-4j}</version>
-        </dependency>
-        <dependency>
-            <groupId>com.networknt</groupId>
-            <artifactId>openapi-helper</artifactId>
-            <version>${version.light-4j}</version>
-        </dependency>
-        <dependency>
             <groupId>com.amazonaws</groupId>
             <artifactId>aws-lambda-java-core</artifactId>
             <version>${version.lambda-core}</version>

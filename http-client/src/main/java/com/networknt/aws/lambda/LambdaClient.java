@@ -1,9 +1,5 @@
 package com.networknt.aws.lambda;
 
-import com.networknt.config.Config;
-import com.networknt.exception.ClientException;
-import com.networknt.service.SingletonServiceFactory;
-import com.networknt.status.Status;
 import org.owasp.encoder.Encode;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -63,9 +59,12 @@ public class LambdaClient {
                 if(logger.isInfoEnabled()) logger.info("Loading trust store from system property at " + Encode.forJava(trustStoreName));
             } else {
                 trustStoreName = (String) configMap.get(TRUST_STORE_NAME);
+                if(trustStoreName == null) {
+                    logger.error("ERR10057 Config property truststoreName is missing in app.xml");
+                }
                 trustStorePass = (String) configMap.get(TRUST_STORE_PASS);
                 if(trustStorePass == null) {
-                    logger.error(new Status(CONFIG_PROPERTY_MISSING, TRUST_STORE_PASS, "app.yml").toString());
+                    logger.error("ERR10057 Config property truststorePass is missing in app.xml");
                 }
                 if(logger.isInfoEnabled()) logger.info("Loading trust store from config at " + Encode.forJava(trustStoreName));
             }
@@ -110,12 +109,11 @@ public class LambdaClient {
      * Get the certificate from key distribution service of OAuth 2.0 provider with the kid.
      *
      * @return String of the certificate
-     * @throws ClientException throw exception if communication with the service fails.
      */
-    public static String getKey() throws ClientException {
+    public static String getKey() {
         String jwkUrl = (String)configMap.get(JWK_URL);
         if(jwkUrl == null) {
-            throw new ClientException(new Status(OAUTH_SERVER_URL_ERROR, "key"));
+            logger.error("ERR10057 Config property jwkUrl is missing in app.xml");
         }
         try {
             // The key client is used only during the server startup or jwt key is rotated. Don't cache the keyClient.
@@ -135,7 +133,8 @@ public class LambdaClient {
                     keyClient.sendAsync(request, HttpResponse.BodyHandlers.ofString());
             return response.thenApply(HttpResponse::body).get(2000, TimeUnit.MILLISECONDS);
         } catch (Exception e) {
-            throw new ClientException(e);
+            logger.error("Exception:", e);
+            return null;
         }
     }
 

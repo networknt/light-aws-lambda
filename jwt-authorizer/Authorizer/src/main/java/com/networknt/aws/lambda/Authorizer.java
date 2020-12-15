@@ -5,8 +5,6 @@ import com.amazonaws.services.lambda.runtime.RequestHandler;
 import com.amazonaws.services.lambda.runtime.events.APIGatewayProxyRequestEvent;
 import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.databind.ObjectMapper;
-import com.networknt.exception.ExpiredTokenException;
-import com.networknt.status.Status;
 import com.networknt.utility.Constants;
 import org.jose4j.jwt.JwtClaims;
 import org.jose4j.jwt.MalformedClaimException;
@@ -21,8 +19,6 @@ import static com.networknt.aws.lambda.AuthPolicy.PolicyDocument.getDenyOnePolic
 
 public class Authorizer implements RequestHandler<APIGatewayProxyRequestEvent, AuthPolicy> {
     private static Logger logger = LoggerFactory.getLogger(Authorizer.class);
-    private static String STATUS_INVALID_AUTH_TOKEN = "ERR10000";
-    private static String STATUS_AUTH_TOKEN_EXPIRED = "ERR10001";
 
     public static JwtVerifier jwtVerifier;
     static {
@@ -86,16 +82,13 @@ public class Authorizer implements RequestHandler<APIGatewayProxyRequestEvent, A
             }
             ctx.put(Constants.PRIMARY_SCOPES, primaryScopes.toString());
         } catch (InvalidJwtException e) {
-            logger.error("InvalidJwtException:", e);
-            logger.error(new Status(STATUS_INVALID_AUTH_TOKEN).toString());
+            logger.error("ERR10000 InvalidJwtException:", e);
             return new AuthPolicy(principalId, getDenyOnePolicy(region, accountId, apiId, stage, AuthPolicy.HttpMethod.valueOf(httpMethod), "*"), ctx);
         } catch (ExpiredTokenException e) {
-            logger.error("ExpiredTokenException", e);
-            logger.error(new Status(STATUS_AUTH_TOKEN_EXPIRED).toString());
+            logger.error("ERR10001 ExpiredTokenException", e);
             return new AuthPolicy(principalId, getDenyOnePolicy(region, accountId, apiId, stage, AuthPolicy.HttpMethod.valueOf(httpMethod), "*"), ctx);
         } catch (MalformedClaimException e) {
-            logger.error("MalformedClaimException", e);
-            logger.error(new Status(STATUS_INVALID_AUTH_TOKEN).toString());
+            logger.error("ERR10000 MalformedClaimException", e);
             return new AuthPolicy(principalId, getDenyOnePolicy(region, accountId, apiId, stage, AuthPolicy.HttpMethod.valueOf(httpMethod), "*"), ctx);
         }
         logger.debug("Allow " + arn);

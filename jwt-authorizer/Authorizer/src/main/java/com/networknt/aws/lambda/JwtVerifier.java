@@ -2,7 +2,6 @@ package com.networknt.aws.lambda;
 
 import com.github.benmanes.caffeine.cache.Cache;
 import com.github.benmanes.caffeine.cache.Caffeine;
-import com.networknt.exception.ExpiredTokenException;
 import org.jose4j.jwk.JsonWebKey;
 import org.jose4j.jwk.JsonWebKeySet;
 import org.jose4j.keys.resolvers.JwksVerificationKeyResolver;
@@ -41,7 +40,6 @@ public class JwtVerifier {
      * @param ignoreExpiry indicate if the expiry will be ignored
      * @return JwtClaims
      * @throws InvalidJwtException throw when the token is invalid
-     * @throws ExpiredTokenException throw when the token is expired
      */
     public JwtClaims verifyJwt(String jwt, boolean ignoreExpiry) throws InvalidJwtException, ExpiredTokenException {
         return verifyJwt(jwt, ignoreExpiry, this::getKeyResolver);

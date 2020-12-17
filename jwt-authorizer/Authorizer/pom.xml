@@ -14,6 +14,7 @@
         <version.light-4j>2.0.22-SNAPSHOT</version.light-4j>
         <version.jackson>2.10.4</version.jackson>
         <version.slf4j>1.7.30</version.slf4j>
+        <version.encoder>1.2.3</version.encoder>
         <version.lambda-core>1.2.1</version.lambda-core>
         <version.lambda-events>3.6.0</version.lambda-events>
         <version.lambda-iam>1.11.918</version.lambda-iam>
@@ -41,6 +42,11 @@
         <dependency>
             <groupId>com.networknt</groupId>
             <artifactId>http-client</artifactId>
+            <version>${version.light-4j}</version>
+        </dependency>
+        <dependency>
+            <groupId>com.networknt</groupId>
+            <artifactId>utility</artifactId>
             <version>${version.light-4j}</version>
         </dependency>
         <dependency>
@@ -82,6 +88,11 @@
             <groupId>org.bitbucket.b_c</groupId>
             <artifactId>jose4j</artifactId>
             <version>${version.jose4j}</version>
+        </dependency>
+        <dependency>
+            <groupId>org.owasp.encoder</groupId>
+            <artifactId>encoder</artifactId>
+            <version>${version.encoder}</version>
         </dependency>
 
         <dependency>
@@ -129,6 +140,7 @@
                 <artifactId>maven-shade-plugin</artifactId>
                 <version>${version.maven-shade}</version>
                 <configuration>
+                    <createDependencyReducedPom>false</createDependencyReducedPom>
                 </configuration>
                 <executions>
                     <execution>

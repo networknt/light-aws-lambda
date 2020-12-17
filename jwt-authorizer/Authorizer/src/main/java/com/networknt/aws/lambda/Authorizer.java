@@ -6,6 +6,7 @@ import com.amazonaws.services.lambda.runtime.events.APIGatewayProxyRequestEvent;
 import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.networknt.utility.Constants;
+import com.networknt.utility.StringUtils;
 import org.jose4j.jwt.JwtClaims;
 import org.jose4j.jwt.MalformedClaimException;
 import org.jose4j.jwt.consumer.InvalidJwtException;
@@ -20,12 +21,8 @@ import static com.networknt.aws.lambda.AuthPolicy.PolicyDocument.getDenyOnePolic
 public class Authorizer implements RequestHandler<APIGatewayProxyRequestEvent, AuthPolicy> {
     private static Logger logger = LoggerFactory.getLogger(Authorizer.class);
 
-    public static JwtVerifier jwtVerifier;
-    static {
-        jwtVerifier = new JwtVerifier();
-    }
-
     ObjectMapper objectMapper = new ObjectMapper();
+    Map<String, Map<String, Object>> config = Configuration.getInstance().getConfig();
 
     public AuthPolicy handleRequest(APIGatewayProxyRequestEvent request, Context context) {
         try {
@@ -33,6 +30,7 @@ public class Authorizer implements RequestHandler<APIGatewayProxyRequestEvent, A
         } catch (JsonProcessingException e) {
             e.printStackTrace();
         }
+
         APIGatewayProxyRequestEvent.ProxyRequestContext proxyContext = request.getRequestContext();
         String region = System.getenv("AWS_REGION");  // use the env to get the region for REQUEST authorizer.
         String accountId = proxyContext.getAccountId();
@@ -48,7 +46,13 @@ public class Authorizer implements RequestHandler<APIGatewayProxyRequestEvent, A
         String secondaryToken = scopeToken == null ? null : scopeToken.substring(7);
         Map<String, String> ctx = new HashMap<>();
         try {
-            JwtClaims claims = jwtVerifier.verifyJwt(primaryToken, false);
+            Map<String, Object> stageConfig = config.get(stage);
+            Boolean ignoreExpiry = false;
+            if(stageConfig != null) {
+                ignoreExpiry = (Boolean)stageConfig.get("ignoreJwtExpiry");
+            }
+            JwtVerifier jwtVerifier = new JwtVerifier(stage);
+            JwtClaims claims = jwtVerifier.verifyJwt(primaryToken, ignoreExpiry == null ? false : ignoreExpiry);
             // handle the primary token.
             String clientId = claims.getStringClaimValue(Constants.CLIENT_ID_STRING);
             // try to get the cid as some OAuth tokens name it as cid like Okta.
@@ -80,7 +84,7 @@ public class Authorizer implements RequestHandler<APIGatewayProxyRequestEvent, A
                     primaryScopes = claims.getStringListClaimValue(Constants.SCP_STRING);
                 }
             }
-            ctx.put(Constants.PRIMARY_SCOPES, primaryScopes.toString());
+            ctx.put(Constants.PRIMARY_SCOPES, StringUtils.join(primaryScopes, ' '));
         } catch (InvalidJwtException e) {
             logger.error("ERR10000 InvalidJwtException:", e);
             return new AuthPolicy(principalId, getDenyOnePolicy(region, accountId, apiId, stage, AuthPolicy.HttpMethod.valueOf(httpMethod), "*"), ctx);

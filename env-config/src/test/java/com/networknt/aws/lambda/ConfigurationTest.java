@@ -17,8 +17,8 @@ public class ConfigurationTest {
         try {
             APIGatewayProxyRequestEvent request = objectMapper.readValue(json, APIGatewayProxyRequestEvent.class);
 
-            Configuration configuration = new Configuration();
-            Map<String, Object> envConfig  = configuration.getConfigMap(request.getRequestContext().getStage());
+            Configuration configuration = Configuration.getInstance();
+            Map<String, Object> envConfig  = configuration.getStageConfig(request.getRequestContext().getStage());
             Assertions.assertNotNull(envConfig);
         } catch (Exception e) {
             e.printStackTrace();

@@ -26,8 +26,10 @@ public class JwtVerifier {
     private static final int CACHE_EXPIRED_IN_MINUTES = 15;
     private static final int JWT_CLOCK_SKEW_IN_SECONDS = 60;
     private static Map<String, List<JsonWebKey>> jwksMap;
+    private String stage;
 
-    public JwtVerifier() {
+    public JwtVerifier(String stage) {
+        this.stage = stage;
         cache = Caffeine.newBuilder()
                 // assuming that the clock screw time is less than 5 minutes
                 .expireAfterWrite(CACHE_EXPIRED_IN_MINUTES, TimeUnit.MINUTES)
@@ -143,7 +145,7 @@ public class JwtVerifier {
      */
     private List<JsonWebKey> getJsonWebKeySetForToken() {
         try {
-            String key = LambdaClient.getKey();
+            String key = LambdaClient.getInstance(stage).getKey();
             logger.debug("Got Json Web Key {}", key);
             return new JsonWebKeySet(key).getJsonWebKeys();
         } catch (Exception e) {

@@ -24,8 +24,6 @@ public class LambdaClient {
     private static final String TRUST_STORE_PASS = "truststorePass";
     private static final String TRUST_STORE_NAME = "truststoreName";
     private static final String JWK_URL = "jwkUrl";
-    private static final String CONFIG_PROPERTY_MISSING = "ERR10057";
-    private static final String OAUTH_SERVER_URL_ERROR = "ERR10056";
 
     private static Map<String, Object> configMap = null;
     private static final LambdaClient INSTANCE = new LambdaClient();
@@ -33,8 +31,8 @@ public class LambdaClient {
     private LambdaClient() {
     }
     public static LambdaClient getInstance(String stage) {
-        Configuration configuration = new Configuration();
-        configMap  = configuration.getConfigMap(stage);
+        Configuration configuration = Configuration.getInstance();
+        configMap  = configuration.getStageConfig(stage);
         return INSTANCE;
     }
 
@@ -88,7 +86,7 @@ public class LambdaClient {
     }
 
     public static KeyStore loadTrustStore(final String name, final char[] password) {
-        try (InputStream stream = Configuration.class.getResourceAsStream(name)) {
+        try (InputStream stream = Configuration.class.getClassLoader().getResourceAsStream(name)) {
             if (stream == null) {
                 String message = "Unable to load truststore '" + name + "', please provide the truststore matching the configuration in app.yml to enable TLS connection.";
                 if (logger.isErrorEnabled()) {
@@ -119,7 +117,7 @@ public class LambdaClient {
             // The key client is used only during the server startup or jwt key is rotated. Don't cache the keyClient.
             HttpClient.Builder clientBuilder = HttpClient.newBuilder()
                     .followRedirects(HttpClient.Redirect.NORMAL)
-                    .connectTimeout(Duration.ofMillis(2000))
+                    .connectTimeout(Duration.ofMillis(3000))
                     .sslContext(createSSLContext());
             clientBuilder.version(HttpClient.Version.HTTP_2);
             HttpClient keyClient = clientBuilder.build();
@@ -131,7 +129,7 @@ public class LambdaClient {
 
             CompletableFuture<HttpResponse<String>> response =
                     keyClient.sendAsync(request, HttpResponse.BodyHandlers.ofString());
-            return response.thenApply(HttpResponse::body).get(2000, TimeUnit.MILLISECONDS);
+            return response.thenApply(HttpResponse::body).get(5000, TimeUnit.MILLISECONDS);
         } catch (Exception e) {
             logger.error("Exception:", e);
             return null;

@@ -85,6 +85,28 @@ public class Authorizer implements RequestHandler<APIGatewayProxyRequestEvent, A
                 }
             }
             ctx.put(Constants.PRIMARY_SCOPES, StringUtils.join(primaryScopes, ' '));
+            // secondary scopes
+            if(secondaryToken != null) {
+                claims = jwtVerifier.verifyJwt(secondaryToken, ignoreExpiry == null ? false : ignoreExpiry);
+                List<String> secondaryScopes = null;
+                scopeClaim = claims.getClaimValue(Constants.SCOPE_STRING);
+                if(scopeClaim instanceof String) {
+                    secondaryScopes = Arrays.asList(claims.getStringClaimValue(Constants.SCOPE_STRING).split(" "));
+                } else if(scopeClaim instanceof List) {
+                    secondaryScopes = claims.getStringListClaimValue(Constants.SCOPE_STRING);
+                }
+                if(secondaryScopes == null || secondaryScopes.isEmpty()) {
+                    // some IDPs like Okta and Microsoft call scope claim "scp" instead of "scope"
+                    Object scpClaim = claims.getClaimValue(Constants.SCP_STRING);
+                    if(scpClaim instanceof String) {
+                        secondaryScopes = Arrays.asList(claims.getStringClaimValue(Constants.SCP_STRING).split(" "));
+                    } else if(scpClaim instanceof List) {
+                        secondaryScopes = claims.getStringListClaimValue(Constants.SCP_STRING);
+                    }
+                }
+                ctx.put(Constants.SCOPE_CLIENT_ID_STRING, claims.getStringClaimValue(Constants.CLIENT_ID_STRING));
+                ctx.put(Constants.SECONDARY_SCOPES, StringUtils.join(secondaryScopes, ' '));
+            }
         } catch (InvalidJwtException e) {
             logger.error("ERR10000 InvalidJwtException:", e);
             return new AuthPolicy(principalId, getDenyOnePolicy(region, accountId, apiId, stage, AuthPolicy.HttpMethod.valueOf(httpMethod), "*"), ctx);

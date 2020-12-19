@@ -167,13 +167,13 @@
                 <artifactId>openapi-helper</artifactId>
                 <version>${version.light-4j}</version>
             </dependency>
-
-            <!-- External dependencies -->
             <dependency>
                 <groupId>com.networknt</groupId>
                 <artifactId>json-schema-validator</artifactId>
                 <version>${version.json-schema-validator}</version>
             </dependency>
+
+            <!-- External dependencies -->
             <dependency>
                 <groupId>org.yaml</groupId>
                 <artifactId>snakeyaml</artifactId>

@@ -37,6 +37,8 @@ public class ScopeVerifier {
     static final String STATUS_METHOD_NOT_ALLOWED = "ERR10008";
 
     /**
+     * verify the scopes from the primary and optional secondary tokens against the scopes in the
+     * openapi.yaml specification.
      *
      * @param requestEvent request event
      * @return responseEvent if error and null if pass.

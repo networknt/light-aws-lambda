@@ -39,6 +39,10 @@
             <artifactId>json-schema-validator</artifactId>
         </dependency>
         <dependency>
+            <groupId>com.mservicetech</groupId>
+            <artifactId>openapi-schema-validation</artifactId>
+        </dependency>
+        <dependency>
             <groupId>com.amazonaws</groupId>
             <artifactId>aws-lambda-java-core</artifactId>
         </dependency>

@@ -4,7 +4,8 @@ import com.amazonaws.services.lambda.runtime.events.APIGatewayProxyRequestEvent;
 import com.amazonaws.services.lambda.runtime.events.APIGatewayProxyResponseEvent;
 import com.mservicetech.openapi.common.RequestEntity;
 import com.mservicetech.openapi.common.Status;
-;
+
+import com.mservicetech.openapi.validation.OpenApiValidator;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -18,14 +19,15 @@ import java.util.*;
  *
  * The validateRequest is called by the request-handler that intercepts the request and response in the App.
  *
- * @author Steve Hu, Gavin Chen
+ * @author Steve Hu
+ * @author Gavin Chen
  */
-public class OpenApiValidator {
-    static final Logger logger = LoggerFactory.getLogger(OpenApiValidator.class);
+public class LambdaSchemaValidator {
+    static final Logger logger = LoggerFactory.getLogger(LambdaSchemaValidator.class);
     static final String CONTENT_TYPE = "application/json";
 
 
-    public OpenApiValidator() {
+    public LambdaSchemaValidator() {
     }
     /**
      * Validate the request based on the openapi.yaml specification
@@ -34,7 +36,7 @@ public class OpenApiValidator {
      * @return responseEvent if error and null if pass.
      */
     public APIGatewayProxyResponseEvent validateRequest(APIGatewayProxyRequestEvent requestEvent) {
-        com.mservicetech.openapi.validation.OpenApiValidator openApiValidator = new com.mservicetech.openapi.validation.OpenApiValidator("openapi.yaml");
+        OpenApiValidator openApiValidator = new OpenApiValidator("openapi.yaml");
         RequestEntity requestEntity = new RequestEntity();
         requestEntity.setQueryParameters(requestEvent.getQueryStringParameters());
         requestEntity.setPathParameters(requestEvent.getPathParameters());
@@ -54,6 +56,9 @@ public class OpenApiValidator {
         Map<String, String> headers = new HashMap<>();
         headers.put("Content-Type", "application/json");
         String body = "{\"statusCode\":" + statusCode + ",\"code\":\"" + errorCode + ",\"description\":\"" + errorMessage + "\"}";
+        if (logger.isDebugEnabled()) {
+            logger.debug("error info:" + body);
+        }
         return new APIGatewayProxyResponseEvent()
                 .withHeaders(headers)
                 .withStatusCode(statusCode)

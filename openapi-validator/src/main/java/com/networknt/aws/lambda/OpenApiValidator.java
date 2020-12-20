@@ -54,6 +54,9 @@ public class OpenApiValidator {
         Map<String, String> headers = new HashMap<>();
         headers.put("Content-Type", "application/json");
         String body = "{\"statusCode\":" + statusCode + ",\"code\":\"" + errorCode + ",\"description\":\"" + errorMessage + "\"}";
+        if (logger.isDebugEnabled()) {
+            logger.debug("error info:" + body);
+        }
         return new APIGatewayProxyResponseEvent()
                 .withHeaders(headers)
                 .withStatusCode(statusCode)

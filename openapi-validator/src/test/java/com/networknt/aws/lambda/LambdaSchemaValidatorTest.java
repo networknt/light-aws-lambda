@@ -3,8 +3,6 @@ package com.networknt.aws.lambda;
 import com.amazonaws.services.lambda.runtime.events.APIGatewayProxyRequestEvent;
 import com.amazonaws.services.lambda.runtime.events.APIGatewayProxyResponseEvent;
 import com.fasterxml.jackson.databind.ObjectMapper;
-import com.mservicetech.openapi.common.RequestEntity;
-import com.mservicetech.openapi.common.Status;
 import org.junit.jupiter.api.Assertions;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
@@ -12,9 +10,9 @@ import org.junit.jupiter.api.Test;
 import java.util.HashMap;
 import java.util.Map;
 
-public class OpenApiValidatorTest {
+public class LambdaSchemaValidatorTest {
     ObjectMapper objectMapper = new ObjectMapper();
-    private OpenApiValidator validator = new OpenApiValidator();
+    private LambdaSchemaValidator validator = new LambdaSchemaValidator();
     APIGatewayProxyRequestEvent requestEvent;
 
 

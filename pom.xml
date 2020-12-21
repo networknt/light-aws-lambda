@@ -145,11 +145,6 @@
             </dependency>
             <dependency>
                 <groupId>com.networknt</groupId>
-                <artifactId>request-handler</artifactId>
-                <version>${project.version}</version>
-            </dependency>
-            <dependency>
-                <groupId>com.networknt</groupId>
                 <artifactId>custom-runtime</artifactId>
                 <version>${project.version}</version>
             </dependency>
@@ -177,6 +172,16 @@
                 <groupId>com.mservicetech</groupId>
                 <artifactId>openapi-schema-validation</artifactId>
                 <version>${version.openapi-schema-validation}</version>
+            </dependency>
+            <dependency>
+                <groupId>com.networknt</groupId>
+                <artifactId>openapi-validator</artifactId>
+                <version>${project.version}</version>
+            </dependency>
+            <dependency>
+                <groupId>com.networknt</groupId>
+                <artifactId>request-handler</artifactId>
+                <version>${project.version}</version>
             </dependency>
 
             <!-- External dependencies -->

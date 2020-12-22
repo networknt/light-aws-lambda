@@ -35,6 +35,8 @@ public class ScopeVerifier {
     static final String STATUS_SCOPE_TOKEN_SCOPE_MISMATCH = "ERR10006";
     static final String STATUS_INVALID_REQUEST_PATH = "ERR10007";
     static final String STATUS_METHOD_NOT_ALLOWED = "ERR10008";
+    static final String STATUS_MISSING_GATEWAY_AUTHORIZER = "ERR10061";
+    static final String STATUS_MISSING_PRIMARY_SCOPES = "ERR10062";
 
     /**
      * verify the scopes from the primary and optional secondary tokens against the scopes in the
@@ -47,7 +49,12 @@ public class ScopeVerifier {
         APIGatewayProxyRequestEvent.ProxyRequestContext context = requestEvent.getRequestContext();
         if(context != null) {
             // get the enriched primaryScopes and convert it into a list of string again.
-            String primaryScopesString = (String) context.getAuthorizer().get(Constants.PRIMARY_SCOPES);
+            Map<String, Object> authorizerMap = context.getAuthorizer();
+            if(authorizerMap == null) {
+                logger.error("Authorizer enriched context is missing");
+                return createErrorResponse(401, STATUS_MISSING_GATEWAY_AUTHORIZER);
+            }
+            String primaryScopesString = (String) authorizerMap.get(Constants.PRIMARY_SCOPES);
             if (primaryScopesString != null) {
                 String[] primaryScopes = StringUtils.split(primaryScopesString, ' ');
                 // get the openapi.yaml from the resources folder.
@@ -108,6 +115,10 @@ public class ScopeVerifier {
                         }
                     }
                 }
+            } else {
+                // not primary scopes available.
+                logger.error("Scopes from the JWT token in Authorization header are missing");
+                return createErrorResponse(401, STATUS_MISSING_PRIMARY_SCOPES);
             }
         }
         return null;

@@ -25,9 +25,9 @@
         <relativePath>..</relativePath>
     </parent>
 
-    <artifactId>openapi-validator</artifactId>
+    <artifactId>lambda-validator</artifactId>
     <packaging>jar</packaging>
-    <description>Validate the request against the OpenAPI specification</description>
+    <description>Validate the lambda funcation request against the OpenAPI specification</description>
 
     <dependencies>
         <dependency>

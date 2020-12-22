@@ -122,7 +122,7 @@
         <module>request-handler</module>
         <module>custom-runtime</module>
         <module>scope-verifier</module>
-        <module>openapi-validator</module>
+        <module>lambda-validator</module>
     </modules>
 
     <dependencyManagement>
@@ -175,7 +175,7 @@
             </dependency>
             <dependency>
                 <groupId>com.networknt</groupId>
-                <artifactId>openapi-validator</artifactId>
+                <artifactId>lambda-validator</artifactId>
                 <version>${project.version}</version>
             </dependency>
             <dependency>

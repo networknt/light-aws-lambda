@@ -99,6 +99,7 @@
         <version.slf4j>1.7.30</version.slf4j>
         <version.lambda-core>1.2.1</version.lambda-core>
         <version.lambda-events>3.6.0</version.lambda-events>
+        <version.lambda-awssdk>2.15.53</version.lambda-awssdk>
         <version.lambda-iam>1.11.918</version.lambda-iam>
         <version.jose4j>0.6.3</version.jose4j>
         <version.snakeyaml>1.26</version.snakeyaml>
@@ -123,6 +124,7 @@
         <module>custom-runtime</module>
         <module>scope-verifier</module>
         <module>lambda-validator</module>
+        <module>lambda-invoker</module>
     </modules>
 
     <dependencyManagement>
@@ -155,6 +157,11 @@
             </dependency>
             <dependency>
                 <groupId>com.networknt</groupId>
+                <artifactId>lambda-invoker</artifactId>
+                <version>${project.version}</version>
+            </dependency>
+            <dependency>
+                <groupId>com.networknt</groupId>
                 <artifactId>json-overlay</artifactId>
                 <version>${version.light-4j}</version>
             </dependency>
@@ -181,6 +188,21 @@
             <dependency>
                 <groupId>com.networknt</groupId>
                 <artifactId>request-handler</artifactId>
+                <version>${project.version}</version>
+            </dependency>
+            <dependency>
+                <groupId>com.networknt</groupId>
+                <artifactId>handler</artifactId>
+                <version>${project.version}</version>
+            </dependency>
+            <dependency>
+                <groupId>com.networknt</groupId>
+                <artifactId>config</artifactId>
+                <version>${project.version}</version>
+            </dependency>
+            <dependency>
+                <groupId>com.networknt</groupId>
+                <artifactId>body</artifactId>
                 <version>${project.version}</version>
             </dependency>
 
@@ -241,6 +263,11 @@
                 <groupId>com.amazonaws</groupId>
                 <artifactId>aws-java-sdk-iam</artifactId>
                 <version>${version.lambda-iam}</version>
+            </dependency>
+            <dependency>
+                <groupId>software.amazon.awssdk</groupId>
+                <artifactId>lambda</artifactId>
+                <version>${version.lambda-awssdk}</version>
             </dependency>
             <dependency>
                 <groupId>ch.qos.logback</groupId>

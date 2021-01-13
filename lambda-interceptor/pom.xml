@@ -25,22 +25,14 @@
         <relativePath>..</relativePath>
     </parent>
 
-    <artifactId>request-handler</artifactId>
+    <artifactId>lambda-interceptor</artifactId>
     <packaging>jar</packaging>
-    <description>The interceptor to pre-process request and post-process response when AWS API Gateway is used</description>
+    <description>The interceptor to pre-process request and post-process response when light-proxy is used</description>
 
     <dependencies>
         <dependency>
             <groupId>com.networknt</groupId>
-            <artifactId>openapi-helper</artifactId>
-        </dependency>
-        <dependency>
-            <groupId>com.networknt</groupId>
-            <artifactId>scope-verifier</artifactId>
-        </dependency>
-        <dependency>
-            <groupId>com.networknt</groupId>
-            <artifactId>lambda-validator</artifactId>
+            <artifactId>slf4j-logback</artifactId>
         </dependency>
         <dependency>
             <groupId>com.amazonaws</groupId>

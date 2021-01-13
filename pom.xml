@@ -125,6 +125,7 @@
         <module>scope-verifier</module>
         <module>lambda-validator</module>
         <module>lambda-invoker</module>
+        <module>lambda-interceptor</module>
     </modules>
 
     <dependencyManagement>
@@ -188,6 +189,11 @@
             <dependency>
                 <groupId>com.networknt</groupId>
                 <artifactId>request-handler</artifactId>
+                <version>${project.version}</version>
+            </dependency>
+            <dependency>
+                <groupId>com.networknt</groupId>
+                <artifactId>lambda-interceptor</artifactId>
                 <version>${project.version}</version>
             </dependency>
             <dependency>

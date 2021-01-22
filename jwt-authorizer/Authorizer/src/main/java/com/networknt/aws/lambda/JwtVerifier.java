@@ -2,10 +2,13 @@ package com.networknt.aws.lambda;
 
 import com.github.benmanes.caffeine.cache.Cache;
 import com.github.benmanes.caffeine.cache.Caffeine;
+import com.networknt.utility.FingerPrintUtil;
 import org.jose4j.jwk.JsonWebKey;
 import org.jose4j.jwk.JsonWebKeySet;
 import org.jose4j.keys.resolvers.JwksVerificationKeyResolver;
 import org.jose4j.keys.resolvers.VerificationKeyResolver;
+import org.jose4j.keys.resolvers.X509VerificationKeyResolver;
+import org.owasp.encoder.Encode;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.jose4j.jwt.JwtClaims;
@@ -14,26 +17,102 @@ import org.jose4j.jwt.NumericDate;
 import org.jose4j.jwt.consumer.*;
 import org.jose4j.jwx.JsonWebStructure;
 
-import java.util.HashMap;
-import java.util.List;
-import java.util.Map;
+import java.io.ByteArrayInputStream;
+import java.io.IOException;
+import java.io.InputStream;
+import java.nio.charset.StandardCharsets;
+import java.security.cert.CertificateFactory;
+import java.security.cert.X509Certificate;
+import java.util.*;
 import java.util.concurrent.TimeUnit;
 import java.util.function.BiFunction;
 
 public class JwtVerifier {
     private static final Logger logger = LoggerFactory.getLogger(JwtVerifier.class);
     private static Cache<String, JwtClaims> cache;
+    private static Map<String, X509Certificate> certMap;
+    private static List<JsonWebKey> jwkList;
+    private static List<String> fingerPrints;
+
+    public static final String JWT_CONFIG = "jwt";
+    public static final String JWT_CERTIFICATE = "certificate";
+    public static final String JWT_JWK = "jwk";
+    public static final String JWT_CLOCK_SKEW_IN_SECONDS = "clockSkewInSeconds";
+    public static final String ENABLE_VERIFY_JWT = "enableVerifyJwt";
+    private static final String ENABLE_JWT_CACHE = "enableJwtCache";
     private static final int CACHE_EXPIRED_IN_MINUTES = 15;
-    private static final int JWT_CLOCK_SKEW_IN_SECONDS = 60;
-    private static Map<String, List<JsonWebKey>> jwksMap;
+
+    public static final String JWT_KEY_RESOLVER = "keyResolver";
+    public static final String JWT_KEY_RESOLVER_X509CERT = "X509Certificate";
+    public static final String JWT_KEY_RESOLVER_JWKS = "JsonWebKeySet";
+
     private String stage;
+    Map<String, Map<String, Object>> config = Configuration.getInstance().getConfig();
+    Map<String, Object> stageConfig;
+    Map<String, Object> jwtConfig;
+    int secondsOfAllowedClockSkew;
+    Boolean enableJwtCache;
 
     public JwtVerifier(String stage) {
         this.stage = stage;
-        cache = Caffeine.newBuilder()
-                // assuming that the clock screw time is less than 5 minutes
-                .expireAfterWrite(CACHE_EXPIRED_IN_MINUTES, TimeUnit.MINUTES)
-                .build();
+        stageConfig = config.get(stage);
+        jwtConfig = (Map<String, Object>)stageConfig.get(JWT_CONFIG);
+        this.secondsOfAllowedClockSkew = (Integer)jwtConfig.get(JWT_CLOCK_SKEW_IN_SECONDS);
+        this.enableJwtCache = (Boolean)stageConfig.get(ENABLE_JWT_CACHE);
+        if(Boolean.TRUE.equals(enableJwtCache)) {
+            cache = Caffeine.newBuilder()
+                    // assuming that the clock screw time is less than 5 minutes
+                    .expireAfterWrite(CACHE_EXPIRED_IN_MINUTES, TimeUnit.MINUTES)
+                    .build();
+        }
+        switch ((String) jwtConfig.getOrDefault(JWT_KEY_RESOLVER, JWT_KEY_RESOLVER_X509CERT)) {
+            case JWT_KEY_RESOLVER_JWKS:
+                break;
+            case JWT_KEY_RESOLVER_X509CERT:
+                // load local public key certificates only if bootstrapFromKeyService is false
+                certMap = new HashMap<>();
+                fingerPrints = new ArrayList<>();
+                if (jwtConfig.get(JWT_CERTIFICATE)!=null) {
+                    Map<String, Object> keyMap = (Map<String, Object>) jwtConfig.get(JWT_CERTIFICATE);
+                    for(String kid: keyMap.keySet()) {
+                        X509Certificate cert = null;
+                        try {
+                            cert = readCertificate((String)keyMap.get(kid));
+                        } catch (Exception e) {
+                            logger.error("Exception:", e);
+                        }
+                        certMap.put(kid, cert);
+                        fingerPrints.add(FingerPrintUtil.getCertFingerPrint(cert));
+                    }
+                }
+                break;
+            default:
+                logger.info("{} not found or not recognized in jwt config. Use {} as default {}",
+                        JWT_KEY_RESOLVER, JWT_KEY_RESOLVER_X509CERT, JWT_KEY_RESOLVER);
+        }
+
+    }
+
+    /**
+     * Read certificate from a file and convert it into X509Certificate object
+     *
+     * @param filename certificate file name
+     * @return X509Certificate object
+     * @throws Exception Exception while reading certificate
+     */
+    public X509Certificate readCertificate(String filename) {
+        X509Certificate cert = null;
+        try (InputStream inStream = JwtVerifier.class.getClassLoader().getResourceAsStream(filename)){
+            if (inStream != null) {
+                CertificateFactory cf = CertificateFactory.getInstance("X.509");
+                cert = (X509Certificate) cf.generateCertificate(inStream);
+            } else {
+                logger.info("Certificate " + Encode.forJava(filename) + " not found.");
+            }
+        } catch (Exception e) {
+            logger.error("Exception: ", e);
+        }
+        return cert;
     }
 
     /**
@@ -62,7 +141,7 @@ public class JwtVerifier {
                 try {
                     // if using our own client module, the jwt token should be renewed automatically
                     // and it will never expired here. However, we need to handle other clients.
-                    if ((NumericDate.now().getValue() - JWT_CLOCK_SKEW_IN_SECONDS) >= claims.getExpirationTime().getValue())
+                    if ((NumericDate.now().getValue() - secondsOfAllowedClockSkew) >= claims.getExpirationTime().getValue())
                     {
                         logger.info("Cached jwt token is expired!");
                         throw new ExpiredTokenException("Token is expired");
@@ -91,7 +170,7 @@ public class JwtVerifier {
         // if ignoreExpiry is false, verify expiration of the token
         if(!ignoreExpiry) {
             try {
-                if ((NumericDate.now().getValue() - JWT_CLOCK_SKEW_IN_SECONDS) >= claims.getExpirationTime().getValue())
+                if ((NumericDate.now().getValue() - secondsOfAllowedClockSkew) >= claims.getExpirationTime().getValue())
                 {
                     logger.info("jwt token is expired!");
                     throw new ExpiredTokenException("Token is expired");
@@ -121,36 +200,46 @@ public class JwtVerifier {
      * @return VerificationKeyResolver
      */
     private VerificationKeyResolver getKeyResolver(String kid, boolean isToken) {
-
         VerificationKeyResolver verificationKeyResolver = null;
-        List<JsonWebKey> jwkList = jwksMap == null ? null : jwksMap.get(kid);
-        if (jwkList == null) {
-            jwkList = getJsonWebKeySetForToken();
-            if (jwkList != null) {
-                if (jwksMap == null) jwksMap = new HashMap<>();  // null if bootstrapFromKeyService is true
-                jwksMap.put(kid, jwkList);
-            }
-        } else {
-            logger.debug("Got Json web key set for kid: {} from local cache", kid);
-        }
-        if (jwkList != null) {
-            verificationKeyResolver = new JwksVerificationKeyResolver(jwkList);
+        String keyResolver = (String)jwtConfig.get(JWT_KEY_RESOLVER);
+        switch (keyResolver) {
+            default:
+            case JWT_KEY_RESOLVER_X509CERT:
+                // get the public key certificate from the cache that is loaded from security.yml if it is not there,
+                // go to OAuth2 server /oauth2/key endpoint to get the public key certificate with kid as parameter.
+                X509Certificate certificate = certMap == null ? null : certMap.get(kid);
+                X509VerificationKeyResolver x509VerificationKeyResolver = new X509VerificationKeyResolver(certificate);
+                x509VerificationKeyResolver.setTryAllOnNoThumbHeader(true);
+                verificationKeyResolver = x509VerificationKeyResolver;
+                break;
+
+            case JWT_KEY_RESOLVER_JWKS:
+                if(jwkList == null) {
+                    String jwkName = (String)jwtConfig.get(JWT_JWK);
+                    jwkList = getJsonWebKeySetForToken(jwkName);
+                }
+                verificationKeyResolver = new JwksVerificationKeyResolver(jwkList);
+                break;
         }
         return verificationKeyResolver;
     }
 
     /**
-     * Retrieve JWK set from oauth server with the given kid
+     * Retrieve JWK set from the config file
      * @return List
      */
-    private List<JsonWebKey> getJsonWebKeySetForToken() {
-        try {
-            String key = LambdaClient.getInstance(stage).getKey();
-            logger.debug("Got Json Web Key {}", key);
-            return new JsonWebKeySet(key).getJsonWebKeys();
+    private List<JsonWebKey> getJsonWebKeySetForToken(String filename) {
+        try (InputStream inputStream = JwtVerifier.class.getClassLoader().getResourceAsStream(filename)) {
+            if(inputStream != null) {
+                String s = new Scanner(inputStream, "UTF-8").useDelimiter("\\A").next();
+                if(logger.isTraceEnabled()) logger.trace("Got Json Web Key {}", s);
+                return new JsonWebKeySet(s).getJsonWebKeys();
+            } else {
+                return null;
+            }
         } catch (Exception e) {
             logger.error("Exception: ", e);
-            throw new RuntimeException(e);
+            return null;
         }
     }
 

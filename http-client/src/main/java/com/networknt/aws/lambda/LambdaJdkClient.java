@@ -17,8 +17,8 @@ import java.util.Map;
 import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.TimeUnit;
 
-public class LambdaClient {
-    private static final Logger logger = LoggerFactory.getLogger(LambdaClient.class);
+public class LambdaJdkClient {
+    private static final Logger logger = LoggerFactory.getLogger(LambdaJdkClient.class);
     private static final String TRUST_STORE_PROPERTY = "javax.net.ssl.trustStore";
     private static final String TRUST_STORE_PASSWORD_PROPERTY = "javax.net.ssl.trustStorePassword";
     private static final String TRUST_STORE_PASS = "truststorePass";
@@ -26,11 +26,11 @@ public class LambdaClient {
     private static final String JWK_URL = "jwkUrl";
 
     private static Map<String, Object> configMap = null;
-    private static final LambdaClient INSTANCE = new LambdaClient();
+    private static final LambdaJdkClient INSTANCE = new LambdaJdkClient();
 
-    private LambdaClient() {
+    private LambdaJdkClient() {
     }
-    public static LambdaClient getInstance(String stage) {
+    public static LambdaJdkClient getInstance(String stage) {
         Configuration configuration = Configuration.getInstance();
         configMap  = configuration.getStageConfig(stage);
         return INSTANCE;

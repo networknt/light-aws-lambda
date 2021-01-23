@@ -1,8 +1,9 @@
 PROJECT_NAME=Authorizer
 PROJECT_VERSION=1.0.0
 
-# Generate Jar file
+# mvn clean might fail due to permission issue on Linux, so remove target with root.
 sudo rm -rf target;
+# Generate Jar file
 mvn clean install;
 
 # Generate Native Image
@@ -11,7 +12,10 @@ docker run --rm --name graal -v $(pwd):/${PROJECT_NAME} springci/graalvm-ce:mast
                     -H:EnableURLProtocols=http \
                     --no-fallback \
                     --allow-incomplete-classpath \
+                    --enable-all-security-services \
 		                -H:ReflectionConfigurationFiles=/${PROJECT_NAME}/reflect.json \
+                    -H:ResourceConfigurationFiles=/${PROJECT_NAME}/resource-config.json \
+                    -H:+ReportExceptionStackTraces \
                     -jar /${PROJECT_NAME}/target/${PROJECT_NAME}-${PROJECT_VERSION}.jar \
                     ; \
                     mkdir /${PROJECT_NAME}/target/custom-runtime \

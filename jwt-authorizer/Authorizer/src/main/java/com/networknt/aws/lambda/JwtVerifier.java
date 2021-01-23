@@ -1,7 +1,5 @@
 package com.networknt.aws.lambda;
 
-import com.github.benmanes.caffeine.cache.Cache;
-import com.github.benmanes.caffeine.cache.Caffeine;
 import com.networknt.utility.FingerPrintUtil;
 import org.jose4j.jwk.JsonWebKey;
 import org.jose4j.jwk.JsonWebKeySet;
@@ -17,19 +15,15 @@ import org.jose4j.jwt.NumericDate;
 import org.jose4j.jwt.consumer.*;
 import org.jose4j.jwx.JsonWebStructure;
 
-import java.io.ByteArrayInputStream;
-import java.io.IOException;
 import java.io.InputStream;
-import java.nio.charset.StandardCharsets;
 import java.security.cert.CertificateFactory;
 import java.security.cert.X509Certificate;
 import java.util.*;
-import java.util.concurrent.TimeUnit;
 import java.util.function.BiFunction;
 
 public class JwtVerifier {
     private static final Logger logger = LoggerFactory.getLogger(JwtVerifier.class);
-    private static Cache<String, JwtClaims> cache;
+    private static Map<String, JwtClaims> cache;
     private static Map<String, X509Certificate> certMap;
     private static List<JsonWebKey> jwkList;
     private static List<String> fingerPrints;
@@ -60,10 +54,12 @@ public class JwtVerifier {
         this.secondsOfAllowedClockSkew = (Integer)jwtConfig.get(JWT_CLOCK_SKEW_IN_SECONDS);
         this.enableJwtCache = (Boolean)stageConfig.get(ENABLE_JWT_CACHE);
         if(Boolean.TRUE.equals(enableJwtCache)) {
-            cache = Caffeine.newBuilder()
-                    // assuming that the clock screw time is less than 5 minutes
-                    .expireAfterWrite(CACHE_EXPIRED_IN_MINUTES, TimeUnit.MINUTES)
-                    .build();
+            cache = new LinkedHashMap<>() {
+                @Override
+                protected boolean removeEldestEntry(final Map.Entry eldest) {
+                    return size() > 1000;
+                }
+            };
         }
         switch ((String) jwtConfig.getOrDefault(JWT_KEY_RESOLVER, JWT_KEY_RESOLVER_X509CERT)) {
             case JWT_KEY_RESOLVER_JWKS:
@@ -135,7 +131,7 @@ public class JwtVerifier {
      * @throws InvalidJwtException throw when the token is invalid
      */
     public JwtClaims verifyJwt(String jwt, boolean ignoreExpiry, BiFunction<String, Boolean, VerificationKeyResolver> getKeyResolver) throws InvalidJwtException, ExpiredTokenException {
-        JwtClaims claims = cache.getIfPresent(jwt);
+        JwtClaims claims = cache.get(jwt);
         if(claims != null) {
             if(!ignoreExpiry) {
                 try {

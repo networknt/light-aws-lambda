@@ -3,11 +3,10 @@ package com.networknt.aws.lambda;
 import com.amazonaws.services.lambda.runtime.events.APIGatewayProxyRequestEvent;
 import com.fasterxml.jackson.databind.DeserializationFeature;
 import com.fasterxml.jackson.databind.ObjectMapper;
-import org.apache.commons.io.IOUtils;
 
 import java.io.IOException;
 import java.net.HttpURLConnection;
-import java.nio.charset.Charset;
+import com.networknt.utility.NioUtils;
 
 public class Main {
 
@@ -56,7 +55,7 @@ public class Main {
                 String.format("http://%s/2018-06-01/runtime/invocation/next", endpoint)
         );
 
-        String response = IOUtils.toString(connection.getInputStream(), Charset.defaultCharset());
+        String response = NioUtils.toString(connection.getInputStream());
 
         String requestId = connection.getHeaderField(REQUEST_ID_HEADER);
 

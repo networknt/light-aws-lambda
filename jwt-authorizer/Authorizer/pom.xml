@@ -19,7 +19,6 @@
         <version.lambda-events>3.6.0</version.lambda-events>
         <version.lambda-iam>1.11.918</version.lambda-iam>
         <version.jose4j>0.7.2</version.jose4j>
-        <version.commons-io>2.8.0</version.commons-io>
         <version.logback>1.2.3</version.logback>
         <version.junit>5.7.0</version.junit>
         <version.maven-shade>3.2.4</version.maven-shade>
@@ -62,11 +61,6 @@
             <groupId>com.amazonaws</groupId>
             <artifactId>aws-java-sdk-iam</artifactId>
             <version>${version.lambda-iam}</version>
-        </dependency>
-        <dependency>
-            <groupId>commons-io</groupId>
-            <artifactId>commons-io</artifactId>
-            <version>${version.commons-io}</version>
         </dependency>
         <dependency>
             <groupId>com.fasterxml.jackson.core</groupId>

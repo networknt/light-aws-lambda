@@ -3,8 +3,6 @@ package com.networknt.aws.lambda;
 import com.amazonaws.services.lambda.runtime.RequestHandler;
 import com.amazonaws.services.lambda.runtime.events.APIGatewayProxyRequestEvent;
 import com.amazonaws.services.lambda.runtime.events.APIGatewayProxyResponseEvent;
-import com.fasterxml.jackson.annotation.JsonAutoDetect;
-import com.fasterxml.jackson.annotation.PropertyAccessor;
 import com.fasterxml.jackson.databind.DeserializationFeature;
 import com.fasterxml.jackson.databind.ObjectMapper;
 
@@ -26,15 +24,12 @@ public class Runtime {
     public static void main(String[] args) throws IOException {
         while(true) {
             String endpoint = System.getenv("AWS_LAMBDA_RUNTIME_API");
-            System.out.println("endpoint = " + endpoint);
             InvocationResponse invocation = getInvocation(endpoint);
             String handlerName = System.getenv("_HANDLER");
-            System.out.println("handlerName = " + handlerName);
             int pos = handlerName.indexOf("::");
             if (pos > 0) {
                 handlerName = handlerName.substring(0, pos);
             }
-            System.out.println("handlerName = " + handlerName);
             Class<?> clazz = null;
             try {
                 clazz = Class.forName(handlerName);
@@ -44,7 +39,6 @@ public class Runtime {
                     response = (APIGatewayProxyResponseEvent)((RequestHandler)handler).handleRequest(invocation.getEvent(), new LambdaContext(invocation.getRequestId()));
                 }
                 String result = response.toString();
-                System.out.println("result = " + result);
                 // Post to Lambda success endpoint
                 HttpUtils.post(String.format("http://%s/2018-06-01/runtime/invocation/%s/response", endpoint, invocation.getRequestId()), result);
             } catch (Exception t) {

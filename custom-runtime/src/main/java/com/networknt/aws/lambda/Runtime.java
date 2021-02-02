@@ -13,7 +13,6 @@ import java.lang.reflect.ParameterizedType;
 import java.lang.reflect.Type;
 import java.net.HttpURLConnection;
 
-import com.networknt.config.JsonMapper;
 import com.networknt.utility.NioUtils;
 
 public class Runtime {
@@ -39,7 +38,7 @@ public class Runtime {
                 if(handler instanceof RequestHandler) {
                     response = (APIGatewayProxyResponseEvent)((RequestHandler)handler).handleRequest(invocation.getEvent(), new LambdaContext(invocation.getRequestId()));
                 }
-                String result = JsonMapper.toJson(response);
+                String result = OBJECT_MAPPER.writeValueAsString(response);
                 // Post to Lambda success endpoint
                 HttpUtils.post(String.format("http://%s/2018-06-01/runtime/invocation/%s/response", endpoint, invocation.getRequestId()), result);
             } catch (Exception t) {

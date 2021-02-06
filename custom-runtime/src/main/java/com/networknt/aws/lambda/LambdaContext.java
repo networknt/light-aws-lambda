@@ -17,47 +17,47 @@ public class LambdaContext implements Context {
 
     @Override
     public String getLogGroupName() {
-        return null;
+        return System.getenv("AWS_LAMBDA_LOG_GROUP_NAME");
     }
 
     @Override
     public String getLogStreamName() {
-        return null;
+        return System.getenv("AWS_LAMBDA_LOG_STREAM_NAME");
     }
 
     @Override
     public String getFunctionName() {
-        return null;
+        return System.getenv("AWS_LAMBDA_FUNCTION_NAME");
     }
 
     @Override
     public String getFunctionVersion() {
-        return null;
+        return System.getenv("AWS_LAMBDA_FUNCTION_VERSION");
     }
 
     @Override
     public String getInvokedFunctionArn() {
-        return null;
+        throw new UnsupportedOperationException();
     }
 
     @Override
     public CognitoIdentity getIdentity() {
-        return null;
+        throw new UnsupportedOperationException();
     }
 
     @Override
     public ClientContext getClientContext() {
-        return null;
+        throw new UnsupportedOperationException();
     }
 
     @Override
     public int getRemainingTimeInMillis() {
-        return 0;
+        throw new UnsupportedOperationException();
     }
 
     @Override
     public int getMemoryLimitInMB() {
-        return 0;
+        return Integer.parseInt(System.getenv("AWS_LAMBDA_FUNCTION_MEMORY_SIZE"));
     }
 
     @Override

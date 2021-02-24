@@ -1,5 +1,13 @@
 # Change Log
 
+## [2.0.24](https://github.com/networknt/light-aws-lambda/tree/2.0.24) (2021-02-24)
+
+
+**Merged pull requests:**
+
+
+- fixes \#41 update the LambdaContent implementation with some env vars [\#42](https://github.com/networknt/light-aws-lambda/pull/42) ([stevehu](https://github.com/stevehu))
+- issue \#39 [\#40](https://github.com/networknt/light-aws-lambda/pull/40) ([BalloonWen](https://github.com/BalloonWen))
 ## [2.0.23](https://github.com/networknt/light-aws-lambda/tree/2.0.23) (2021-01-29)
 
 

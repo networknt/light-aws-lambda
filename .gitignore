@@ -28,4 +28,5 @@
 hs_err_pid*
 
 .idea/
+.aws-sam/
 target/

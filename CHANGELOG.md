@@ -1,5 +1,12 @@
 # Change Log
 
+## [2.0.30](https://github.com/networknt/light-aws-lambda/tree/2.0.30) (2021-08-23)
+
+
+**Merged pull requests:**
+
+
+- fixes \#43 Upgrade to latest version of snapshot for the jwt-authorize… [\#44](https://github.com/networknt/light-aws-lambda/pull/44) ([stevehu](https://github.com/stevehu))
 ## [2.0.29](https://github.com/networknt/light-aws-lambda/tree/2.0.29) (2021-07-25)
 
 

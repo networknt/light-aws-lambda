@@ -41,8 +41,10 @@ public class Authorizer implements RequestHandler<APIGatewayProxyRequestEvent, A
         String principalId = null;
         Map<String, String> headers = request.getHeaders();
         String authorization = headers.get("Authorization");
+        logger.debug("authorization = " + authorization);
         String scopeToken = headers.get("X-Scope-Token");
         String primaryToken = authorization.substring(7);
+        logger.debug("primaryToken = " + primaryToken);
         String secondaryToken = scopeToken == null ? null : scopeToken.substring(7);
         Map<String, String> ctx = new HashMap<>();
         try {
@@ -51,6 +53,7 @@ public class Authorizer implements RequestHandler<APIGatewayProxyRequestEvent, A
             if(stageConfig != null) {
                 ignoreExpiry = (Boolean)stageConfig.get("ignoreJwtExpiry");
             }
+            logger.debug("ignoreExpiry = " + ignoreExpiry);
             JwtVerifier jwtVerifier = new JwtVerifier(stage);
             JwtClaims claims = jwtVerifier.verifyJwt(primaryToken, ignoreExpiry == null ? false : ignoreExpiry);
             // handle the primary token.

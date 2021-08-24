@@ -50,7 +50,9 @@ public class JwtVerifier {
     public JwtVerifier(String stage) {
         this.stage = stage;
         stageConfig = config.get(stage);
+        logger.debug("stage = " + stage + " stageConfig = " + stageConfig);
         jwtConfig = (Map<String, Object>)stageConfig.get(JWT_CONFIG);
+        logger.debug("jwtConfig = " + jwtConfig);
         this.secondsOfAllowedClockSkew = (Integer)jwtConfig.get(JWT_CLOCK_SKEW_IN_SECONDS);
         this.enableJwtCache = (Boolean)stageConfig.get(ENABLE_JWT_CACHE);
         if(Boolean.TRUE.equals(enableJwtCache)) {
@@ -60,20 +62,25 @@ public class JwtVerifier {
                     return size() > 1000;
                 }
             };
+            logger.debug("jwt cache is enabled.");
         }
         switch ((String) jwtConfig.getOrDefault(JWT_KEY_RESOLVER, JWT_KEY_RESOLVER_X509CERT)) {
             case JWT_KEY_RESOLVER_JWKS:
+                logger.debug("JWK resolver is enabled");
                 break;
             case JWT_KEY_RESOLVER_X509CERT:
+                logger.debug("X509 resolver is enabled");
                 // load local public key certificates only if bootstrapFromKeyService is false
                 certMap = new HashMap<>();
                 fingerPrints = new ArrayList<>();
                 if (jwtConfig.get(JWT_CERTIFICATE)!=null) {
                     Map<String, Object> keyMap = (Map<String, Object>) jwtConfig.get(JWT_CERTIFICATE);
+                    logger.debug("keyMap = " + keyMap);
                     for(String kid: keyMap.keySet()) {
                         X509Certificate cert = null;
                         try {
                             cert = readCertificate((String)keyMap.get(kid));
+                            logger.debug("cert = " + cert);
                         } catch (Exception e) {
                             logger.error("Exception:", e);
                         }
@@ -102,6 +109,7 @@ public class JwtVerifier {
             if (inStream != null) {
                 CertificateFactory cf = CertificateFactory.getInstance("X.509");
                 cert = (X509Certificate) cf.generateCertificate(inStream);
+                logger.debug("certificate is loaded " + cert);
             } else {
                 logger.info("Certificate " + Encode.forJava(filename) + " not found.");
             }
@@ -133,6 +141,7 @@ public class JwtVerifier {
     public JwtClaims verifyJwt(String jwt, boolean ignoreExpiry, BiFunction<String, Boolean, VerificationKeyResolver> getKeyResolver) throws InvalidJwtException, ExpiredTokenException {
         JwtClaims claims = cache.get(jwt);
         if(claims != null) {
+            logger.debug("There is a cache claims for the JWT");
             if(!ignoreExpiry) {
                 try {
                     // if using our own client module, the jwt token should be renewed automatically
@@ -161,7 +170,7 @@ public class JwtVerifier {
         JsonWebStructure structure = jwtContext.getJoseObjects().get(0);
         // need this kid to load public key certificate for signature verification
         String kid = structure.getKeyIdHeaderValue();
-
+        logger.debug("get the kid = " + kid);
         // so we do expiration check here manually as we have the claim already for kid
         // if ignoreExpiry is false, verify expiration of the token
         if(!ignoreExpiry) {
@@ -187,6 +196,7 @@ public class JwtVerifier {
         // Validate the JWT and process it to the Claims
         jwtContext = consumer.process(jwt);
         claims = jwtContext.getJwtClaims();
+        logger.debug("processed jwt with the claims " + claims);
         cache.put(jwt, claims);
         return claims;
     }
@@ -198,6 +208,7 @@ public class JwtVerifier {
     private VerificationKeyResolver getKeyResolver(String kid, boolean isToken) {
         VerificationKeyResolver verificationKeyResolver = null;
         String keyResolver = (String)jwtConfig.get(JWT_KEY_RESOLVER);
+        logger.debug("keyResolver = " + keyResolver);
         switch (keyResolver) {
             default:
             case JWT_KEY_RESOLVER_X509CERT:

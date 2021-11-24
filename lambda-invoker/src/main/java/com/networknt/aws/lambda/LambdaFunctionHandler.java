@@ -68,6 +68,7 @@ public class LambdaFunctionHandler implements LightHttpHandler {
         String requestBody = JsonMapper.objectMapper.writeValueAsString(requestEvent);
         if(logger.isTraceEnabled()) logger.trace("requestBody = " + requestBody);
         String res = invokeFunction(client, functionName, requestBody);
+        if(logger.isDebugEnabled()) logger.debug("response = " + res);
         if(res == null) {
             setExchangeStatus(exchange, EMPTY_LAMBDA_RESPONSE, functionName);
             return;
@@ -93,6 +94,12 @@ public class LambdaFunctionHandler implements LightHttpHandler {
 
             //Invoke the Lambda function
             InvokeResponse res = awsLambda.invoke(request);
+            if(logger.isDebugEnabled()) {
+                logger.debug("lambda call function error:" + res.functionError());
+                logger.debug("lambda logger result:" + res.logResult());
+                logger.debug("lambda call status:" + res.statusCode());
+            }
+
             response = res.payload().asUtf8String() ;
         } catch(LambdaException e) {
             logger.error("LambdaException", e);

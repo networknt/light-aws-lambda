@@ -1,8 +1,0 @@
-Dev:
-Sit:
-Stage:
-Prod:
-  truststoreName: prod.stuststore
-  truststorePass: password
-  jwkUrl: https://prod.example.com/oauth2/aus41bwp2BafABp7h1d6/v1/keys
-

@@ -95,6 +95,7 @@
         <maven.compiler.target>${java.version}</maven.compiler.target>
         <project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
         <version.light-4j>2.1.0</version.light-4j>
+        <version.http-client>1.0.0</version.http-client>
         <version.jackson>2.12.1</version.jackson>
         <version.slf4j>1.7.30</version.slf4j>
         <version.lambda-core>1.2.1</version.lambda-core>
@@ -119,7 +120,6 @@
     <modules>
         <module>slf4j-logback</module>
         <module>env-config</module>
-        <module>http-client</module>
         <module>request-handler</module>
         <module>custom-runtime</module>
         <module>scope-verifier</module>
@@ -144,7 +144,7 @@
             <dependency>
                 <groupId>com.networknt</groupId>
                 <artifactId>http-client</artifactId>
-                <version>${project.version}</version>
+                <version>${version.http-client}</version>
             </dependency>
             <dependency>
                 <groupId>com.networknt</groupId>

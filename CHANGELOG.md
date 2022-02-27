@@ -1,5 +1,14 @@
 # Change Log
 
+## [2.1.0](https://github.com/networknt/light-aws-lambda/tree/2.1.0) (2022-02-27)
+
+
+**Merged pull requests:**
+
+
+- add debug log for lambda call result [\#48](https://github.com/networknt/light-aws-lambda/pull/48) ([GavinChenYan](https://github.com/GavinChenYan))
+
+
 ## [2.0.32](https://github.com/networknt/light-aws-lambda/tree/2.0.32) (2021-10-19)
 
 

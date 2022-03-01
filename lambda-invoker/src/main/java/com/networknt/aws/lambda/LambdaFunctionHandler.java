@@ -8,6 +8,7 @@ import com.networknt.config.JsonMapper;
 import com.networknt.handler.LightHttpHandler;
 import com.networknt.httpstring.AttachmentConstants;
 import com.networknt.utility.Constants;
+import com.networknt.utility.StringUtils;
 import io.undertow.server.HttpServerExchange;
 import io.undertow.util.HeaderMap;
 import io.undertow.util.HttpString;
@@ -16,6 +17,7 @@ import org.slf4j.LoggerFactory;
 import software.amazon.awssdk.core.SdkBytes;
 import software.amazon.awssdk.regions.Region;
 import software.amazon.awssdk.services.lambda.LambdaClient;
+import software.amazon.awssdk.services.lambda.LambdaClientBuilder;
 import software.amazon.awssdk.services.lambda.model.InvokeRequest;
 import software.amazon.awssdk.services.lambda.model.InvokeResponse;
 import software.amazon.awssdk.services.lambda.model.LambdaException;
@@ -34,10 +36,11 @@ public class LambdaFunctionHandler implements LightHttpHandler {
     private final LambdaClient client;
 
     public LambdaFunctionHandler() {
-        client = LambdaClient.builder()
-                .region(Region.of(config.getRegion()))
-                .endpointOverride(URI.create(config.getEndpointOverride()))
-                .build();
+        LambdaClientBuilder builder = LambdaClient.builder().region(Region.of(config.getRegion()));
+        if(!StringUtils.isEmpty(config.getEndpointOverride())) {
+            builder.endpointOverride(URI.create(config.getEndpointOverride()));
+        }
+        client = builder.build();        
     }
 
     @Override

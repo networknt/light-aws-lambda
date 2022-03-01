@@ -1,0 +1,5 @@
+lambda-invoker.functions:
+  /pets@get: PetsGetFunction
+  /pets@post: PetsPostFunction
+  /pets/{petId}@get: PetsPetIdGetFunction
+  /pets/{petId}@delete: PetsPetIdDeleteFunction

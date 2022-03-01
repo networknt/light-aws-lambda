@@ -1,10 +1,8 @@
 # The aws region that is used to create the LambdaClient.
-region: us-east-1
+region: ${lambda-invoker.region:us-east-1}
+# endpoint override if for lambda function deployed in virtual private cloud
+endpointOverride: ${lambda-invoker.endpointOverride:vpce-0012C939329d982-tk8ps.lambda.ca-central-1.vpce.amazonaws.com}
 # The LogType of the execution log of Lambda. Set Tail to include and None to not include.
-logType: Tail
-# mapping of the endpoints to Lambda functions
-functions:
-  /pets@get: PetsGetFunction
-  /pets@post: PetsPostFunction
-  /pets/{petId}@get: PetsPetIdGetFunction
-  /pets/{petId}@delete: PetsPetIdDeleteFunction
+logType: ${lambda-invoker.logType:Tail}
+# mapping of the endpoints to Lambda functions. Define a list of functions in values.yml file.
+functions: ${lambda-invoker.functions:}

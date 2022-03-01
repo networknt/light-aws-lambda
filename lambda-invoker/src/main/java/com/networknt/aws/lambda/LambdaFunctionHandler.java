@@ -20,6 +20,7 @@ import software.amazon.awssdk.services.lambda.model.InvokeRequest;
 import software.amazon.awssdk.services.lambda.model.InvokeResponse;
 import software.amazon.awssdk.services.lambda.model.LambdaException;
 
+import java.net.URI;
 import java.util.Deque;
 import java.util.HashMap;
 import java.util.Map;
@@ -35,6 +36,7 @@ public class LambdaFunctionHandler implements LightHttpHandler {
     public LambdaFunctionHandler() {
         client = LambdaClient.builder()
                 .region(Region.of(config.getRegion()))
+                .endpointOverride(URI.create(config.getEndpointOverride()))
                 .build();
     }
 

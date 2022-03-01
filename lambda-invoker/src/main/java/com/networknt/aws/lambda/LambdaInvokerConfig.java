@@ -6,6 +6,7 @@ public class LambdaInvokerConfig {
     public static final String CONFIG_NAME = "lambda-invoker";
 
     private String region;
+    private String endpointOverride;
     private String logType;
     private Map<String, String> functions;
 
@@ -15,6 +16,14 @@ public class LambdaInvokerConfig {
 
     public void setRegion(String region) {
         this.region = region;
+    }
+
+    public String getEndpointOverride() {
+        return endpointOverride;
+    }
+
+    public void setEndpointOverride(String endpointOverride) {
+        this.endpointOverride = endpointOverride;
     }
 
     public String getLogType() {

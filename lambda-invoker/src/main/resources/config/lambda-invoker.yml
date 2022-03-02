@@ -1,6 +1,7 @@
 # The aws region that is used to create the LambdaClient.
 region: ${lambda-invoker.region:us-east-1}
-# endpoint override if for lambda function deployed in virtual private cloud
+# endpoint override if for lambda function deployed in virtual private cloud. Here is an example.
+# https://vpce-0012C939329d982-tk8ps.lambda.ca-central-1.vpce.amazonaws.com
 endpointOverride: ${lambda-invoker.endpointOverride:}
 # The LogType of the execution log of Lambda. Set Tail to include and None to not include.
 logType: ${lambda-invoker.logType:Tail}

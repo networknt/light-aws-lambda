@@ -1,3 +1,4 @@
+# lambda-invoker.endpointOverride: https://vpce-0012C939329d982-tk8ps.lambda.ca-central-1.vpce.amazonaws.com
 lambda-invoker.functions:
   /pets@get: PetsGetFunction
   /pets@post: PetsPostFunction

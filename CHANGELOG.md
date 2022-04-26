@@ -1,5 +1,15 @@
 # Change Log
 
+## [2.1.1](https://github.com/networknt/light-aws-lambda/tree/2.1.1) (2022-04-26)
+
+
+**Merged pull requests:**
+
+
+- fixes \#56 update Authorizer pom.xml to add dependency of env-config [\#57](https://github.com/networknt/light-aws-lambda/pull/57) ([stevehu](https://github.com/stevehu))
+- fixes \#54 update authorizer pom.xml to use http-client 1.0.0 [\#55](https://github.com/networknt/light-aws-lambda/pull/55) ([stevehu](https://github.com/stevehu))
+- fixes \#52 update the comment and add an example in values.yml for the… [\#53](https://github.com/networknt/light-aws-lambda/pull/53) ([stevehu](https://github.com/stevehu))
+- fixes \#50 update the lambda-invoker to add endpointOverride to the co… [\#51](https://github.com/networknt/light-aws-lambda/pull/51) ([stevehu](https://github.com/stevehu))
 ## [2.1.0](https://github.com/networknt/light-aws-lambda/tree/2.1.0) (2022-02-27)
 
 

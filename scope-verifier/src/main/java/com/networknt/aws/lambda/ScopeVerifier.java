@@ -27,6 +27,9 @@ import java.util.*;
  *
  * The verifyScope is called by the request-handler that intercepts the request and response in the App.
  *
+ * The light-rest-4j now supports multiple OpenApi specifications, however, the Lambda should only use
+ * one specification. The default config should do that job as it is configured as single spec.
+ *
  * @author Steve Hu
  */
 public class ScopeVerifier {
@@ -61,11 +64,11 @@ public class ScopeVerifier {
                 String spec = new Scanner(ScopeVerifier.class.getClassLoader().getResourceAsStream("openapi.yaml"), StandardCharsets.UTF_8).useDelimiter("\\A").next();
                 OpenApiHelper openApiHelper = null;
                 if (spec != null) {
-                    openApiHelper = OpenApiHelper.init(spec);
+                    openApiHelper = new OpenApiHelper(spec);
                 }
-                if (OpenApiHelper.openApi3 != null) {
+                if (openApiHelper.openApi3 != null) {
                     String path = requestEvent.getPath();
-                    final NormalisedPath requestPath = new ApiNormalisedPath(path);
+                    final NormalisedPath requestPath = new ApiNormalisedPath(path, openApiHelper.basePath);
                     final Optional<NormalisedPath> maybeApiPath = openApiHelper.findMatchingApiPath(requestPath);
                     if (!maybeApiPath.isPresent()) {
                         logger.error("Invalid request path " + path);
@@ -73,7 +76,7 @@ public class ScopeVerifier {
                     }
 
                     final NormalisedPath swaggerPathString = maybeApiPath.get();
-                    final Path swaggerPath = OpenApiHelper.openApi3.getPath(swaggerPathString.original());
+                    final Path swaggerPath = openApiHelper.openApi3.getPath(swaggerPathString.original());
 
                     final String httpMethod = requestEvent.getHttpMethod().toLowerCase();
                     Operation operation = swaggerPath.getOperation(httpMethod);
@@ -90,7 +93,7 @@ public class ScopeVerifier {
                     if (securityRequirements != null) {
                         for (SecurityRequirement requirement : securityRequirements) {
                             SecurityParameter securityParameter = null;
-                            for (String oauth2Name : OpenApiHelper.oauth2Names) {
+                            for (String oauth2Name : openApiHelper.oauth2Names) {
                                 securityParameter = requirement.getRequirement(oauth2Name);
                                 if (securityParameter != null) break;
                             }

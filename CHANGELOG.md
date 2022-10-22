@@ -1,5 +1,12 @@
 # Change Log
 
+## [2.1.2](https://github.com/networknt/light-aws-lambda/tree/2.1.2) (2022-10-22)
+
+
+**Merged pull requests:**
+
+
+- fixes \#58 update the security and validator to support the multiple s… [\#59](https://github.com/networknt/light-aws-lambda/pull/59) ([stevehu](https://github.com/stevehu))
 ## [2.1.1](https://github.com/networknt/light-aws-lambda/tree/2.1.1) (2022-04-26)
 
 

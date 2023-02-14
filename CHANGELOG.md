@@ -1,5 +1,12 @@
 # Change Log
 
+## [2.1.7](https://github.com/networknt/light-aws-lambda/tree/2.1.7) (2023-02-14)
+
+
+**Merged pull requests:**
+
+
+- fixes \#60 upgrade aws lambda dependencies [\#61](https://github.com/networknt/light-aws-lambda/pull/61) ([stevehu](https://github.com/stevehu))
 ## [2.1.6](https://github.com/networknt/light-aws-lambda/tree/2.1.6) (2023-02-06)
 
 

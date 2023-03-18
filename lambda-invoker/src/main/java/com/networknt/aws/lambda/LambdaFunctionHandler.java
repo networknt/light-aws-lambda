@@ -5,10 +5,15 @@ import com.amazonaws.services.lambda.runtime.events.APIGatewayProxyResponseEvent
 import com.networknt.body.BodyHandler;
 import com.networknt.config.Config;
 import com.networknt.config.JsonMapper;
+import com.networknt.handler.Handler;
 import com.networknt.handler.LightHttpHandler;
 import com.networknt.httpstring.AttachmentConstants;
+import com.networknt.metrics.AbstractMetricsHandler;
+import com.networknt.metrics.MetricsConfig;
 import com.networknt.utility.Constants;
+import com.networknt.utility.ModuleRegistry;
 import com.networknt.utility.StringUtils;
+import io.undertow.server.HttpHandler;
 import io.undertow.server.HttpServerExchange;
 import io.undertow.util.HeaderMap;
 import io.undertow.util.HttpString;
@@ -29,22 +34,36 @@ import java.util.Map;
 
 public class LambdaFunctionHandler implements LightHttpHandler {
     private static final Logger logger = LoggerFactory.getLogger(LambdaFunctionHandler.class);
-    private static final LambdaInvokerConfig config = (LambdaInvokerConfig) Config.getInstance().getJsonObjectConfig(LambdaInvokerConfig.CONFIG_NAME, LambdaInvokerConfig.class);
+    private static LambdaInvokerConfig config;
     private static final String MISSING_ENDPOINT_FUNCTION = "ERR10063";
     private static final String EMPTY_LAMBDA_RESPONSE = "ERR10064";
+    private static AbstractMetricsHandler metricsHandler;
 
-    private final LambdaClient client;
+    private static LambdaClient client;
 
     public LambdaFunctionHandler() {
+        config = LambdaInvokerConfig.load();
         LambdaClientBuilder builder = LambdaClient.builder().region(Region.of(config.getRegion()));
         if(!StringUtils.isEmpty(config.getEndpointOverride())) {
             builder.endpointOverride(URI.create(config.getEndpointOverride()));
         }
-        client = builder.build();        
+        client = builder.build();
+        if(config.isMetricsInjection()) {
+            // get the metrics handler from the handler chain for metrics registration. If we cannot get the
+            // metrics handler, then an error message will be logged.
+            Map<String, HttpHandler> handlers = Handler.getHandlers();
+            metricsHandler = (AbstractMetricsHandler) handlers.get(MetricsConfig.CONFIG_NAME);
+            if(metricsHandler == null) {
+                logger.error("An instance of MetricsHandler is not configured in the handler.yml.");
+            }
+        }
+        ModuleRegistry.registerModule(LambdaFunctionHandler.class.getName(), config.getMappedConfig(), null);
+        if(logger.isInfoEnabled()) logger.info("LambdaFunctionHandler is loaded.");
     }
 
     @Override
     public void handleRequest(HttpServerExchange exchange) throws Exception {
+        long startTime = System.nanoTime();
         String httpMethod = exchange.getRequestMethod().toString();
         String requestPath = exchange.getRequestPath();
         Map<String, String> headers = convertHeaders(exchange.getRequestHeaders());
@@ -61,6 +80,7 @@ public class LambdaFunctionHandler implements LightHttpHandler {
         String functionName = config.getFunctions().get(endpoint);
         if(functionName == null) {
             setExchangeStatus(exchange, MISSING_ENDPOINT_FUNCTION, endpoint);
+            if(config.isMetricsInjection() && metricsHandler != null) metricsHandler.injectMetrics(exchange, startTime, config.getMetricsName());
             return;
         }
         APIGatewayProxyRequestEvent requestEvent = new APIGatewayProxyRequestEvent();
@@ -76,12 +96,14 @@ public class LambdaFunctionHandler implements LightHttpHandler {
         if(logger.isDebugEnabled()) logger.debug("response = " + res);
         if(res == null) {
             setExchangeStatus(exchange, EMPTY_LAMBDA_RESPONSE, functionName);
+            if(config.isMetricsInjection() && metricsHandler != null) metricsHandler.injectMetrics(exchange, startTime, config.getMetricsName());
             return;
         }
         APIGatewayProxyResponseEvent responseEvent = JsonMapper.fromJson(res, APIGatewayProxyResponseEvent.class);
         setResponseHeaders(exchange, responseEvent.getHeaders());
         exchange.setStatusCode(responseEvent.getStatusCode());
         exchange.getResponseSender().send(responseEvent.getBody());
+        if(config.isMetricsInjection() && metricsHandler != null) metricsHandler.injectMetrics(exchange, startTime, config.getMetricsName());
     }
 
     private String invokeFunction(LambdaClient awsLambda, String functionName, String requestBody)  {
@@ -150,5 +172,25 @@ public class LambdaFunctionHandler implements LightHttpHandler {
                 exchange.getResponseHeaders().put(new HttpString(key), headers.get(key));
             }
         }
+    }
+
+    public static void reload() {
+        config.reload();
+        LambdaClientBuilder builder = LambdaClient.builder().region(Region.of(config.getRegion()));
+        if(!StringUtils.isEmpty(config.getEndpointOverride())) {
+            builder.endpointOverride(URI.create(config.getEndpointOverride()));
+        }
+        client = builder.build();
+        if(config.isMetricsInjection()) {
+            // get the metrics handler from the handler chain for metrics registration. If we cannot get the
+            // metrics handler, then an error message will be logged.
+            Map<String, HttpHandler> handlers = Handler.getHandlers();
+            metricsHandler = (AbstractMetricsHandler) handlers.get(MetricsConfig.CONFIG_NAME);
+            if(metricsHandler == null) {
+                logger.error("An instance of MetricsHandler is not configured in the handler.yml.");
+            }
+        }
+        ModuleRegistry.registerModule(LambdaFunctionHandler.class.getName(), config.getMappedConfig(), null);
+        if(logger.isInfoEnabled()) logger.info("LambdaFunctionHandler is loaded.");
     }
 }

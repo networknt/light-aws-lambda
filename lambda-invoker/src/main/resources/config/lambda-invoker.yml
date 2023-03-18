@@ -7,3 +7,13 @@ endpointOverride: ${lambda-invoker.endpointOverride:}
 logType: ${lambda-invoker.logType:Tail}
 # mapping of the endpoints to Lambda functions. Define a list of functions in values.yml file.
 functions: ${lambda-invoker.functions:}
+# When LambdaFunctionHandler is used in the light-gateway, it can collect the metrics info for the total
+# response time of the downstream Lambda functions. With this value injected, users can quickly determine
+# how much time the light-gateway handlers spend and how much time the downstream Lambda function spends,
+# including the network latency. By default, it is false, and metrics will not be collected and injected
+# into the metrics handler configured in the request/response chain.
+metricsInjection: ${lambda-invoker.metricsInjection:false}
+# When the metrics info is injected into the metrics handler, we need to pass a metric name to it so that
+# the metrics info can be categorized in a tree structure under the name. By default, it is lambda-response,
+# and users can change it.
+metricsName: ${lambda-invoker.metricsName:lambda-response}

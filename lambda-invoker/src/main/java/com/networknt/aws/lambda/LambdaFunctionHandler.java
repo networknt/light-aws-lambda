@@ -80,7 +80,7 @@ public class LambdaFunctionHandler implements LightHttpHandler {
         String functionName = config.getFunctions().get(endpoint);
         if(functionName == null) {
             setExchangeStatus(exchange, MISSING_ENDPOINT_FUNCTION, endpoint);
-            if(config.isMetricsInjection() && metricsHandler != null) metricsHandler.injectMetrics(exchange, startTime, config.getMetricsName());
+            if(config.isMetricsInjection() && metricsHandler != null) metricsHandler.injectMetrics(exchange, startTime, config.getMetricsName(), endpoint);
             return;
         }
         APIGatewayProxyRequestEvent requestEvent = new APIGatewayProxyRequestEvent();
@@ -96,14 +96,14 @@ public class LambdaFunctionHandler implements LightHttpHandler {
         if(logger.isDebugEnabled()) logger.debug("response = " + res);
         if(res == null) {
             setExchangeStatus(exchange, EMPTY_LAMBDA_RESPONSE, functionName);
-            if(config.isMetricsInjection() && metricsHandler != null) metricsHandler.injectMetrics(exchange, startTime, config.getMetricsName());
+            if(config.isMetricsInjection() && metricsHandler != null) metricsHandler.injectMetrics(exchange, startTime, config.getMetricsName(), endpoint);
             return;
         }
         APIGatewayProxyResponseEvent responseEvent = JsonMapper.fromJson(res, APIGatewayProxyResponseEvent.class);
         setResponseHeaders(exchange, responseEvent.getHeaders());
         exchange.setStatusCode(responseEvent.getStatusCode());
         exchange.getResponseSender().send(responseEvent.getBody());
-        if(config.isMetricsInjection() && metricsHandler != null) metricsHandler.injectMetrics(exchange, startTime, config.getMetricsName());
+        if(config.isMetricsInjection() && metricsHandler != null) metricsHandler.injectMetrics(exchange, startTime, config.getMetricsName(), endpoint);
     }
 
     private String invokeFunction(LambdaClient awsLambda, String functionName, String requestBody)  {

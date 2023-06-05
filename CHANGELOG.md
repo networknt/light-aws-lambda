@@ -1,5 +1,12 @@
 # Change Log
 
+## [2.1.19](https://github.com/networknt/light-aws-lambda/tree/2.1.19) (2023-06-05)
+
+
+**Merged pull requests:**
+
+
+- fixes \#64 Update LambdaFunctionHandler to add endpoint for metrics in… [\#65](https://github.com/networknt/light-aws-lambda/pull/65) ([stevehu](https://github.com/stevehu))
 ## [2.1.18](https://github.com/networknt/light-aws-lambda/tree/2.1.18) (2023-05-06)
 
 

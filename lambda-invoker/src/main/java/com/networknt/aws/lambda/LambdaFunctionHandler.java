@@ -69,7 +69,7 @@ public class LambdaFunctionHandler implements LightHttpHandler {
         Map<String, String> headers = convertHeaders(exchange.getRequestHeaders());
         Map<String, String> queryStringParameters = convertQueryParameters(exchange.getQueryParameters());
         Map<String, String> pathParameters = convertPathParameters(exchange.getPathParameters());
-        String body = exchange.getAttachment(BodyHandler.REQUEST_BODY_STRING);
+        String body = exchange.getAttachment(AttachmentConstants.REQUEST_BODY_STRING);
         if(logger.isTraceEnabled()) {
             logger.trace("requestPath = " + requestPath + " httpMethod = " + httpMethod + " body = " + body);
             logger.trace("headers = " + JsonMapper.toJson(headers));

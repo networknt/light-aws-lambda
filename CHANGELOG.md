@@ -7,6 +7,8 @@
 
 
 - fixes \#66 change the body attachment key from AttachmentConstants [\#67](https://github.com/networknt/light-aws-lambda/pull/67) ([stevehu](https://github.com/stevehu))
+
+
 ## [2.1.21](https://github.com/networknt/light-aws-lambda/tree/2.1.21) (2023-06-22)
 
 

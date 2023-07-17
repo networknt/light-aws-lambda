@@ -20,34 +20,41 @@ import software.amazon.awssdk.services.lambda.model.InvokeResponse;
  * @author Steve Hu
  */
 public class App extends LightRequestHandler implements RequestHandler<APIGatewayProxyRequestEvent, APIGatewayProxyResponseEvent> {
-    private static final Logger logger = LoggerFactory.getLogger(App.class);
+    private static final Logger LOG = LoggerFactory.getLogger(App.class);
     private static final ObjectMapper objectMapper = new ObjectMapper();
 
     public APIGatewayProxyResponseEvent handleRequest(final APIGatewayProxyRequestEvent input, final Context context) {
+
         try {
-            if(logger.isDebugEnabled()) logger.debug(objectMapper.writeValueAsString(input));
+
+            if (LOG.isDebugEnabled())
+                LOG.debug(objectMapper.writeValueAsString(input));
+
         } catch (Exception e) {
             e.printStackTrace();
         }
+
         // intercept the request and apply request cross-cutting concerns
         APIGatewayProxyResponseEvent response = interceptRequest(input, context);
-        if(response != null) {
+
+        if (response != null) {
             // the response is from the interceptors and return it directly.
             return interceptResponse(response);
         }
+
         // call the target business Lambda function with SDK. Apply the response cross-cutting concerns before returning
         // to the AWS API Gateway.
         LambdaClient lambdaClient = LambdaClient.builder()
                 .region(Region.US_EAST_1) // Replace with your desired region
                 .build();
-        InvokeRequest invokeRequest = InvokeRequest.builder()
-                .functionName("your-function-name") // Replace with the name of the target Lambda function
-                .build();
+
+        InvokeRequest invokeRequest = InvokeRequest.builder().functionName("your-function-name").build();
         InvokeResponse invokeResponse = lambdaClient.invoke(invokeRequest);
-        APIGatewayProxyResponseEvent payload = invokeResponse.payload().asUtf8String();
+
+        String payload = invokeResponse.payload().asUtf8String();
 
         // Handle the response payload as needed
         System.out.println("Response payload: " + payload);
-        return interceptResponse((input, context));
+        return interceptResponse(interceptRequest(input, context));
     }
 }

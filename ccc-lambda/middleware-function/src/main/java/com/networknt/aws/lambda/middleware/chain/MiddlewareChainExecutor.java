@@ -120,27 +120,20 @@ public class MiddlewareChainExecutor {
     }
 
     private final MiddlewareCallback middlewareCallback = (proxyRequestEvent, context, middlewareReturn) -> {
-
-
         this.middlewareReturns.add(middlewareReturn);
 
-        if (middlewareReturn.getStatus() == MiddlewareReturn.Status.EXECUTION_FAILED) {
+        if (middlewareReturn.getStatus() == MiddlewareReturn.Status.EXECUTION_FAILED)
             this.abortExecution();
 
-        } else {
-            this.decrementCounter.decrementAndGet();
-
-        }
+        else this.decrementCounter.decrementAndGet();
     };
 
-    private void abortExecution() {
+    synchronized private void abortExecution() {
 
         synchronized (lock) {
             continueExecuting = false;
-        }
-
-        for (var executor : this.chainGroupExecutor) {
-            executor.interrupt();
+            for (var executor : this.chainGroupExecutor)
+                executor.interrupt();
         }
 
     }

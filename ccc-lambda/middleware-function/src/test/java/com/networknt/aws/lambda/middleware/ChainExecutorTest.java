@@ -305,4 +305,25 @@ public class ChainExecutorTest {
 
     }
 
+    @Test
+    void middlewareAsynchronousFailureTest2() {
+        final MiddlewareChainExecutor asyncFail = new MiddlewareChainExecutor(requestEvent, lambdaContext)
+                .addChainLink(TestAsynchronousMiddleware.class)
+                .addChainLink(TestAsynchronousMiddleware.class)
+                .addChainLink(TestAsynchronousMiddleware.class)
+                .addChainLink(TestAsynchronousFailedResponseMiddleware.class) // fail should happen here.
+                .addChainLink(TestAsynchronousFailedResponseMiddleware.class) // fail should also happen here.
+                .addChainLink(TestAsynchronousMiddleware.class)
+                .addChainLink(TestSynchronousMiddleware.class)
+                .addChainLink(TestSynchronousMiddleware.class)
+                .addChainLink(TestSynchronousMiddleware.class)
+                .addChainLink(TestSynchronousMiddleware.class);
+
+        asyncFail.finalizeChain();
+        asyncFail.executeChain();
+
+        Assertions.assertEquals(asyncFail.getMiddlewareReturns().size(), 6);
+
+    }
+
 }

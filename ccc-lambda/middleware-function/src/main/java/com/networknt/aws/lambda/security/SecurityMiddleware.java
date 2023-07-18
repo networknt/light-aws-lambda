@@ -1,10 +1,11 @@
-package com.networknt.aws.lambda.middleware;
+package com.networknt.aws.lambda.security;
 
-import com.amazonaws.services.lambda.runtime.Context;
 import com.amazonaws.services.lambda.runtime.events.APIGatewayProxyRequestEvent;
 import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.networknt.aws.lambda.*;
+import com.networknt.aws.lambda.middleware.LambdaMiddleware;
+import com.networknt.aws.lambda.middleware.MiddlewareCallback;
 import com.networknt.aws.lambda.middleware.response.MiddlewareReturn;
 import com.networknt.utility.Constants;
 import com.networknt.utility.StringUtils;
@@ -22,12 +23,13 @@ import java.util.Map;
 import static com.networknt.aws.lambda.AuthPolicy.PolicyDocument.getAllowOnePolicy;
 import static com.networknt.aws.lambda.AuthPolicy.PolicyDocument.getDenyOnePolicy;
 
-public class SecurityMiddleware extends LambdaMiddleware {
+public class SecurityMiddleware extends LambdaMiddleware<AuthPolicy> {
 
     private static final Logger LOG = LoggerFactory.getLogger(SecurityMiddleware.class);
     ObjectMapper objectMapper = new ObjectMapper();
-    Map<String, Map<String, Object>> config = Configuration.getInstance().getConfig();
 
+    /* We still need to figure out how we are going to load configs */
+    Map<String, Map<String, Object>> config = new HashMap<>();
     public SecurityMiddleware(MiddlewareCallback middlewareCallback, APIGatewayProxyRequestEvent input, LambdaContext context) {
         super(middlewareCallback, input, context, false, SecurityMiddleware.class);
     }
@@ -73,7 +75,7 @@ public class SecurityMiddleware extends LambdaMiddleware {
             LOG.debug("ignoreExpiry = " + ignoreExpiry);
 
             JwtVerifier jwtVerifier = new JwtVerifier(stage);
-            JwtClaims claims = jwtVerifier.verifyJwt(primaryToken, ignoreExpiry == null ? false : ignoreExpiry);
+            JwtClaims claims = jwtVerifier.verifyJwt(primaryToken, ignoreExpiry != null && ignoreExpiry);
 
             // handle the primary token.
             String clientId = claims.getStringClaimValue(Constants.CLIENT_ID_STRING);

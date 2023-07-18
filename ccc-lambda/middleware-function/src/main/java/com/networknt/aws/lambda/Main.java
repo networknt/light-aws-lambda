@@ -8,7 +8,7 @@ import java.io.IOException;
 import java.net.HttpURLConnection;
 
 import com.networknt.aws.lambda.middleware.chain.MiddlewareChainExecutor;
-import com.networknt.aws.lambda.middleware.SecurityMiddleware;
+import com.networknt.aws.lambda.security.SecurityMiddleware;
 import com.networknt.utility.NioUtils;
 
 public class Main {
@@ -158,12 +158,9 @@ public class Main {
         // middleware is executed in the order they are added.
         final var chainExecutor = new MiddlewareChainExecutor(requestEvent, lambdaContext)
                 .addChainLink(SecurityMiddleware.class);
+
         chainExecutor.finalizeChain();
         chainExecutor.executeChain();
-
-
-
-
 
 //        String endpoint = System.getenv("AWS_LAMBDA_RUNTIME_API");
 //

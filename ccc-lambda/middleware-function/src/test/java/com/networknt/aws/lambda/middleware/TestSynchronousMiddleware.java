@@ -33,4 +33,5 @@ public class TestSynchronousMiddleware extends LambdaMiddleware {
         LOG.info("I am done executing Synchronously, doing callback");
         return new MiddlewareReturn<>("Success Synchronous Response", MiddlewareReturn.Status.EXECUTION_SUCCESS);
     }
+
 }

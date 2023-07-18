@@ -34,5 +34,6 @@ public class TestAsynchronousMiddleware extends LambdaMiddleware {
         LOG.info("I am done executing asynchronously, doing callback");
         return new MiddlewareReturn<>("Success Asynchronous Response", MiddlewareReturn.Status.EXECUTION_SUCCESS);
     }
+
 }
 

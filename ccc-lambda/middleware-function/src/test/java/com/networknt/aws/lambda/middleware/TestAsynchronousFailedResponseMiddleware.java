@@ -18,4 +18,5 @@ public class TestAsynchronousFailedResponseMiddleware extends LambdaMiddleware {
         LOG.info("I am failing Asynchronously");
         return new MiddlewareReturn<>("Failed response", MiddlewareReturn.Status.EXECUTION_FAILED);
     }
+
 }

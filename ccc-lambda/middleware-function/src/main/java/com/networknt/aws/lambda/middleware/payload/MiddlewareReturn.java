@@ -1,4 +1,4 @@
-package com.networknt.aws.lambda.middleware.response;
+package com.networknt.aws.lambda.middleware.payload;
 
 public class MiddlewareReturn<T> extends GenericResponse<T> {
 
@@ -29,6 +29,6 @@ public class MiddlewareReturn<T> extends GenericResponse<T> {
         if (response != null)
             return this.reflectClassType();
 
-        else return Status.class;
+        else return Object.class;
     }
 }

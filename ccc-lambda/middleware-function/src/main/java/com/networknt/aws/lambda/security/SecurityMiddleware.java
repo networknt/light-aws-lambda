@@ -6,7 +6,8 @@ import com.fasterxml.jackson.databind.ObjectMapper;
 import com.networknt.aws.lambda.*;
 import com.networknt.aws.lambda.middleware.LambdaMiddleware;
 import com.networknt.aws.lambda.middleware.MiddlewareCallback;
-import com.networknt.aws.lambda.middleware.response.MiddlewareReturn;
+import com.networknt.aws.lambda.middleware.payload.LambdaEventWrapper;
+import com.networknt.aws.lambda.middleware.payload.MiddlewareReturn;
 import com.networknt.utility.Constants;
 import com.networknt.utility.StringUtils;
 import org.jose4j.jwt.JwtClaims;
@@ -20,8 +21,8 @@ import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 
-import static com.networknt.aws.lambda.AuthPolicy.PolicyDocument.getAllowOnePolicy;
-import static com.networknt.aws.lambda.AuthPolicy.PolicyDocument.getDenyOnePolicy;
+import static com.networknt.aws.lambda.security.AuthPolicy.PolicyDocument.getAllowOnePolicy;
+import static com.networknt.aws.lambda.security.AuthPolicy.PolicyDocument.getDenyOnePolicy;
 
 public class SecurityMiddleware extends LambdaMiddleware<AuthPolicy> {
 
@@ -30,19 +31,19 @@ public class SecurityMiddleware extends LambdaMiddleware<AuthPolicy> {
 
     /* We still need to figure out how we are going to load configs */
     Map<String, Map<String, Object>> config = new HashMap<>();
-    public SecurityMiddleware(MiddlewareCallback middlewareCallback, APIGatewayProxyRequestEvent input, LambdaContext context) {
-        super(middlewareCallback, input, context, false, SecurityMiddleware.class);
+    public SecurityMiddleware(MiddlewareCallback middlewareCallback, final LambdaEventWrapper eventWrapper) {
+        super(middlewareCallback, eventWrapper, false, SecurityMiddleware.class);
     }
 
     @Override
     protected MiddlewareReturn<AuthPolicy> executeMiddleware() {
         try {
-            LOG.debug(objectMapper.writerWithDefaultPrettyPrinter().writeValueAsString(this.proxyRequestEvent));
+            LOG.debug(objectMapper.writerWithDefaultPrettyPrinter().writeValueAsString(this.eventWrapper));
         } catch (JsonProcessingException e) {
             e.printStackTrace();
         }
 
-        APIGatewayProxyRequestEvent.ProxyRequestContext proxyContext = this.proxyRequestEvent.getRequestContext();
+        APIGatewayProxyRequestEvent.ProxyRequestContext proxyContext = this.eventWrapper.getRequest().getRequestContext();
 
         String region = System.getenv("AWS_REGION");  // use the env to get the region for REQUEST authorizer.
         String accountId = proxyContext.getAccountId();
@@ -51,7 +52,7 @@ public class SecurityMiddleware extends LambdaMiddleware<AuthPolicy> {
         String httpMethod = proxyContext.getHttpMethod();
         String arn = String.format("arn:aws:execute-api:%s:%s:%s/%s/%s/%s", region, accountId, apiId, stage, httpMethod, "*");
         String principalId = null;
-        Map<String, String> headers = this.proxyRequestEvent.getHeaders();
+        Map<String, String> headers = this.eventWrapper.getRequest().getHeaders();
         String authorization = headers.get("Authorization");
 
         LOG.debug("authorization = " + authorization);

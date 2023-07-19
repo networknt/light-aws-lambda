@@ -4,7 +4,8 @@ import com.amazonaws.services.lambda.runtime.events.APIGatewayProxyRequestEvent;
 import com.networknt.aws.lambda.LambdaContext;
 import com.networknt.aws.lambda.middleware.LambdaMiddleware;
 import com.networknt.aws.lambda.middleware.MiddlewareCallback;
-import com.networknt.aws.lambda.middleware.response.MiddlewareReturn;
+import com.networknt.aws.lambda.middleware.payload.LambdaEventWrapper;
+import com.networknt.aws.lambda.middleware.payload.MiddlewareReturn;
 import com.networknt.aws.lambda.utility.HeaderKey;
 import com.networknt.aws.lambda.utility.LoggerKey;
 import org.apache.commons.codec.binary.Base64;
@@ -19,8 +20,8 @@ public class CorrelationMiddleware extends LambdaMiddleware<String> {
 
     private static final Logger LOG = LoggerFactory.getLogger(CorrelationMiddleware.class);
 
-    public CorrelationMiddleware(MiddlewareCallback middlewareCallback, APIGatewayProxyRequestEvent input, LambdaContext context) {
-        super(middlewareCallback, input, context, true, CorrelationMiddleware.class);
+    public CorrelationMiddleware(MiddlewareCallback middlewareCallback, final LambdaEventWrapper eventWrapper) {
+        super(middlewareCallback, eventWrapper, true, CorrelationMiddleware.class);
     }
 
     @Override
@@ -30,14 +31,14 @@ public class CorrelationMiddleware extends LambdaMiddleware<String> {
             LOG.debug("CorrelationHandler.handleRequest starts.");
 
         // check if the cid is in the request header
-        var cid = this.proxyRequestEvent.getHeaders().get(HeaderKey.TRACEABILITY);
+        var cid = this.eventWrapper.getRequest().getHeaders().get(HeaderKey.TRACEABILITY);
 
         if (cid == null) {
 
             cid = this.getUUID();
-            this.proxyRequestEvent.getHeaders().put(HeaderKey.CORRELATION, cid);
+            this.eventWrapper.getRequest().getHeaders().put(HeaderKey.CORRELATION, cid);
 
-            var tid = this.proxyRequestEvent.getHeaders().get(HeaderKey.TRACEABILITY);
+            var tid = this.eventWrapper.getRequest().getHeaders().get(HeaderKey.TRACEABILITY);
 
             if (tid != null && LOG.isInfoEnabled()) {
                 LOG.info("Associate traceability Id " + tid + " with correlation Id " + cid);

@@ -1,4 +1,4 @@
-package com.networknt.aws.lambda.middleware.thread;
+package com.networknt.aws.lambda.middleware.chain;
 
 import com.networknt.aws.lambda.middleware.LambdaMiddleware;
 import org.slf4j.MDC;

@@ -172,158 +172,177 @@ public class ChainExecutorTest {
     @Test
     void groupingAllSynchronousTest() {
         final MiddlewareChainExecutor allSynchronousExample = new MiddlewareChainExecutor(requestEvent, lambdaContext)
-                .addChainLink(TestSynchronousMiddleware.class)
-                .addChainLink(TestSynchronousMiddleware.class)
-                .addChainLink(TestSynchronousMiddleware.class)
-                .addChainLink(TestSynchronousMiddleware.class)
-                .addChainLink(TestSynchronousMiddleware.class)
-                .addChainLink(TestSynchronousMiddleware.class)
-                .addChainLink(TestSynchronousMiddleware.class)
-                .addChainLink(TestSynchronousMiddleware.class);
+                .add(TestSynchronousMiddleware.class)
+                .add(TestSynchronousMiddleware.class)
+                .add(TestSynchronousMiddleware.class)
+                .add(TestSynchronousMiddleware.class)
+                .add(TestSynchronousMiddleware.class)
+                .add(TestSynchronousMiddleware.class)
+                .add(TestSynchronousMiddleware.class)
+                .add(TestSynchronousMiddleware.class);
 
         allSynchronousExample.finalizeChain();
 
-        Assertions.assertEquals(allSynchronousExample.getChain().getGroupedChain().size(), 8);
+        Assertions.assertEquals(8, allSynchronousExample.getChain().getGroupedChain().size());
     }
 
     @Test
     void groupingAllAsynchronousTest() {
         final MiddlewareChainExecutor allAsynchronousExample = new MiddlewareChainExecutor(requestEvent, lambdaContext)
-                .addChainLink(TestAsynchronousMiddleware.class)
-                .addChainLink(TestAsynchronousMiddleware.class)
-                .addChainLink(TestAsynchronousMiddleware.class)
-                .addChainLink(TestAsynchronousMiddleware.class)
-                .addChainLink(TestAsynchronousMiddleware.class)
-                .addChainLink(TestAsynchronousMiddleware.class)
-                .addChainLink(TestAsynchronousMiddleware.class)
-                .addChainLink(TestAsynchronousMiddleware.class)
-                .addChainLink(TestAsynchronousMiddleware.class);
+                .add(TestAsynchronousMiddleware.class)
+                .add(TestAsynchronousMiddleware.class)
+                .add(TestAsynchronousMiddleware.class)
+                .add(TestAsynchronousMiddleware.class)
+                .add(TestAsynchronousMiddleware.class)
+                .add(TestAsynchronousMiddleware.class)
+                .add(TestAsynchronousMiddleware.class)
+                .add(TestAsynchronousMiddleware.class)
+                .add(TestAsynchronousMiddleware.class);
 
         allAsynchronousExample.finalizeChain();
 
-        Assertions.assertEquals(allAsynchronousExample.getChain().getGroupedChain().size(), 1);
+        Assertions.assertEquals(1, allAsynchronousExample.getChain().getGroupedChain().size());
     }
 
     @Test
     void groupingMixedTest1() {
         final MiddlewareChainExecutor mixed = new MiddlewareChainExecutor(requestEvent, lambdaContext)
-                .addChainLink(TestAsynchronousMiddleware.class)     //
-                .addChainLink(TestAsynchronousMiddleware.class)     // -- group 1
+                .add(TestAsynchronousMiddleware.class)     //
+                .add(TestAsynchronousMiddleware.class)     // -- group 1
 
-                .addChainLink(TestSynchronousMiddleware.class)      // -- group 2
+                .add(TestSynchronousMiddleware.class)      // -- group 2
 
-                .addChainLink(TestAsynchronousMiddleware.class)     //
-                .addChainLink(TestAsynchronousMiddleware.class)     //
-                .addChainLink(TestAsynchronousMiddleware.class)     // -- group 3
+                .add(TestAsynchronousMiddleware.class)     //
+                .add(TestAsynchronousMiddleware.class)     //
+                .add(TestAsynchronousMiddleware.class)     // -- group 3
 
-                .addChainLink(TestSynchronousMiddleware.class)      // -- group 4
+                .add(TestSynchronousMiddleware.class)      // -- group 4
 
-                .addChainLink(TestAsynchronousMiddleware.class)     //
-                .addChainLink(TestAsynchronousMiddleware.class);    // -- group 5
+                .add(TestAsynchronousMiddleware.class)     //
+                .add(TestAsynchronousMiddleware.class);    // -- group 5
                 ////////////////////////////////////////////////////// -- total: 5
 
         mixed.finalizeChain();
 
-        Assertions.assertEquals(mixed.getChain().getGroupedChain().size(), 5);
+        Assertions.assertEquals(5, mixed.getChain().getGroupedChain().size());
     }
 
     @Test
     void groupingMixedTest2() {
         final MiddlewareChainExecutor mixed = new MiddlewareChainExecutor(requestEvent, lambdaContext)
-                .addChainLink(TestAsynchronousMiddleware.class) //
-                .addChainLink(TestAsynchronousMiddleware.class) //
-                .addChainLink(TestAsynchronousMiddleware.class) //
-                .addChainLink(TestAsynchronousMiddleware.class) //
-                .addChainLink(TestAsynchronousMiddleware.class) //
-                .addChainLink(TestAsynchronousMiddleware.class) //
-                .addChainLink(TestAsynchronousMiddleware.class) //  -- group 1
+                .add(TestAsynchronousMiddleware.class) //
+                .add(TestAsynchronousMiddleware.class) //
+                .add(TestAsynchronousMiddleware.class) //
+                .add(TestAsynchronousMiddleware.class) //
+                .add(TestAsynchronousMiddleware.class) //
+                .add(TestAsynchronousMiddleware.class) //
+                .add(TestAsynchronousMiddleware.class) //  -- group 1
 
-                .addChainLink(TestSynchronousMiddleware.class) //   -- group 2
+                .add(TestSynchronousMiddleware.class) //   -- group 2
 
-                .addChainLink(TestSynchronousMiddleware.class); //  -- group 3
+                .add(TestSynchronousMiddleware.class); //  -- group 3
 
         mixed.finalizeChain();
 
-        Assertions.assertEquals(mixed.getChain().getGroupedChain().size(), 3);
+        Assertions.assertEquals(3, mixed.getChain().getGroupedChain().size());
     }
 
     @Test
     void middlewareResponseTest() {
         final MiddlewareChainExecutor allSynchronousExample = new MiddlewareChainExecutor(requestEvent, lambdaContext)
-                .addChainLink(TestAsynchronousMiddleware.class) //
-                .addChainLink(TestAsynchronousMiddleware.class) //
-                .addChainLink(TestAsynchronousMiddleware.class) //
-                .addChainLink(TestAsynchronousMiddleware.class) //
-                .addChainLink(TestAsynchronousMiddleware.class) //
-                .addChainLink(TestAsynchronousMiddleware.class) //
-                .addChainLink(TestAsynchronousMiddleware.class) //  -- group 1
+                .add(TestAsynchronousMiddleware.class) //
+                .add(TestAsynchronousMiddleware.class) //
+                .add(TestAsynchronousMiddleware.class) //
+                .add(TestAsynchronousMiddleware.class) //
+                .add(TestAsynchronousMiddleware.class) //
+                .add(TestAsynchronousMiddleware.class) //
+                .add(TestAsynchronousMiddleware.class) //  -- group 1
 
-                .addChainLink(TestSynchronousMiddleware.class) //   -- group 2
+                .add(TestSynchronousMiddleware.class) //   -- group 2
 
-                .addChainLink(TestSynchronousMiddleware.class); //  -- group 3
+                .add(TestSynchronousMiddleware.class); //  -- group 3
 
         allSynchronousExample.finalizeChain();
         allSynchronousExample.executeChain();
 
         /* 3 groups, but all 9 return a response */
-        Assertions.assertEquals(allSynchronousExample.getMiddlewareReturns().size(), 9);
+        Assertions.assertEquals(9, allSynchronousExample.getMiddlewareReturns().size());
     }
 
     @Test
     void middlewareSynchronousFailureTest() {
         final MiddlewareChainExecutor syncFail = new MiddlewareChainExecutor(requestEvent, lambdaContext)
-                .addChainLink(TestSynchronousMiddleware.class)
-                .addChainLink(TestSynchronousFailedResponseMiddleware.class) // fail should happen here
-                .addChainLink(TestAsynchronousMiddleware.class)
-                .addChainLink(TestAsynchronousMiddleware.class)
-                .addChainLink(TestAsynchronousMiddleware.class);
+                .add(TestSynchronousMiddleware.class)
+                .add(TestSynchronousFailedResponseMiddleware.class) // fail should happen here
+                .add(TestAsynchronousMiddleware.class)
+                .add(TestAsynchronousMiddleware.class)
+                .add(TestAsynchronousMiddleware.class);
 
         syncFail.finalizeChain();
         syncFail.executeChain();
 
         /* 5 middleware responses, but we failed on the second one. so expect only 2 responses total */
-        Assertions.assertEquals(syncFail.getMiddlewareReturns().size(), 2);
+        Assertions.assertEquals(2, syncFail.getMiddlewareReturns().size());
     }
 
     @Test
     void middlewareAsynchronousFailureTest() {
         final MiddlewareChainExecutor asyncFail = new MiddlewareChainExecutor(requestEvent, lambdaContext)
-                .addChainLink(TestAsynchronousMiddleware.class)
-                .addChainLink(TestAsynchronousMiddleware.class)
-                .addChainLink(TestAsynchronousMiddleware.class)
-                .addChainLink(TestAsynchronousFailedResponseMiddleware.class) // fail should happen here.
-                .addChainLink(TestAsynchronousMiddleware.class)
-                .addChainLink(TestSynchronousMiddleware.class)
-                .addChainLink(TestSynchronousMiddleware.class)
-                .addChainLink(TestSynchronousMiddleware.class)
-                .addChainLink(TestSynchronousMiddleware.class);
+                .add(TestAsynchronousMiddleware.class)
+                .add(TestAsynchronousMiddleware.class)
+                .add(TestAsynchronousMiddleware.class)
+                .add(TestAsynchronousFailedResponseMiddleware.class) // fail should happen here.
+                .add(TestAsynchronousMiddleware.class)
+                .add(TestSynchronousMiddleware.class)
+                .add(TestSynchronousMiddleware.class)
+                .add(TestSynchronousMiddleware.class)
+                .add(TestSynchronousMiddleware.class);
 
         asyncFail.finalizeChain();
         asyncFail.executeChain();
 
-        Assertions.assertEquals(asyncFail.getMiddlewareReturns().size(), 5);
+        Assertions.assertEquals(5, asyncFail.getMiddlewareReturns().size());
 
     }
 
     @Test
     void middlewareAsynchronousFailureTest2() {
         final MiddlewareChainExecutor asyncFail = new MiddlewareChainExecutor(requestEvent, lambdaContext)
-                .addChainLink(TestAsynchronousMiddleware.class)
-                .addChainLink(TestAsynchronousMiddleware.class)
-                .addChainLink(TestAsynchronousMiddleware.class)
-                .addChainLink(TestAsynchronousFailedResponseMiddleware.class) // fail should happen here.
-                .addChainLink(TestAsynchronousFailedResponseMiddleware.class) // fail should also happen here.
-                .addChainLink(TestAsynchronousMiddleware.class)
-                .addChainLink(TestSynchronousMiddleware.class)
-                .addChainLink(TestSynchronousMiddleware.class)
-                .addChainLink(TestSynchronousMiddleware.class)
-                .addChainLink(TestSynchronousMiddleware.class);
+                .add(TestAsynchronousMiddleware.class)
+                .add(TestAsynchronousMiddleware.class)
+                .add(TestAsynchronousMiddleware.class)
+                .add(TestAsynchronousFailedResponseMiddleware.class) // fail should happen here.
+                .add(TestAsynchronousFailedResponseMiddleware.class) // fail should also happen here.
+                .add(TestAsynchronousMiddleware.class)
+                .add(TestSynchronousMiddleware.class)
+                .add(TestSynchronousMiddleware.class)
+                .add(TestSynchronousMiddleware.class)
+                .add(TestSynchronousMiddleware.class);
 
         asyncFail.finalizeChain();
         asyncFail.executeChain();
 
-        Assertions.assertEquals(asyncFail.getMiddlewareReturns().size(), 6);
+        Assertions.assertEquals(6, asyncFail.getMiddlewareReturns().size());
 
+    }
+
+    @Test
+    void middlewareAsynchronousExceptionTest() {
+        final MiddlewareChainExecutor asyncException = new MiddlewareChainExecutor(requestEvent, lambdaContext)
+                .add(TestAsynchronousMiddleware.class) // 1 - success
+                .add(TestAsynchronousMiddleware.class) // 2 - success
+                .add(TestAsynchronousMiddleware.class) // 3 - success
+                .add(TestAsynchronousExceptionThrowingMiddleware.class) // 4 - exception should happen here.
+                .add(TestAsynchronousMiddleware.class) // 5 - success
+                .add(TestSynchronousMiddleware.class)
+                .add(TestSynchronousMiddleware.class)
+                .add(TestSynchronousMiddleware.class)
+                .add(TestSynchronousMiddleware.class);
+
+        asyncException.finalizeChain();
+        asyncException.executeChain();
+
+        Assertions.assertEquals(5, asyncException.getMiddlewareReturns().size());
     }
 
 }

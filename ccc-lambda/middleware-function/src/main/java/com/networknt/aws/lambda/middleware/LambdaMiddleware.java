@@ -1,34 +1,37 @@
 package com.networknt.aws.lambda.middleware;
 
-import com.amazonaws.services.lambda.runtime.events.APIGatewayProxyRequestEvent;
-import com.networknt.aws.lambda.LambdaContext;
 import com.networknt.aws.lambda.middleware.chain.Chainable;
-import com.networknt.aws.lambda.middleware.response.MiddlewareReturn;
+import com.networknt.aws.lambda.middleware.payload.LambdaEventWrapper;
+import com.networknt.aws.lambda.middleware.payload.MiddlewareReturn;
 
 public abstract class LambdaMiddleware<T> extends Chainable implements Runnable {
     final MiddlewareCallback middlewareCallback;
-    protected final APIGatewayProxyRequestEvent proxyRequestEvent;
-    protected final LambdaContext context;
+    protected final LambdaEventWrapper eventWrapper;
 
-    public LambdaMiddleware(MiddlewareCallback middlewareCallback, final APIGatewayProxyRequestEvent input, final LambdaContext context, final boolean isSynchronous, Class<? extends LambdaMiddleware> chainableId) {
+    public LambdaMiddleware(MiddlewareCallback middlewareCallback, final LambdaEventWrapper eventWrapper, final boolean isSynchronous, Class<? extends LambdaMiddleware<?>> chainableId) {
         super(chainableId.getName(), isSynchronous);
         this.middlewareCallback = middlewareCallback;
-        this.proxyRequestEvent = input;
-        this.context = context;
+        this.eventWrapper = eventWrapper;
     }
 
-    public LambdaMiddleware(MiddlewareCallback middlewareCallback, final APIGatewayProxyRequestEvent input, final LambdaContext context, Class<? extends LambdaMiddleware> chainableId) {
+    public LambdaMiddleware(MiddlewareCallback middlewareCallback, final LambdaEventWrapper eventWrapper, Class<? extends LambdaMiddleware<?>> chainableId) {
         super(chainableId.getName(), false);
         this.middlewareCallback = middlewareCallback;
-        this.proxyRequestEvent = input;
-        this.context = context;
+        this.eventWrapper = eventWrapper;
     }
 
     protected abstract MiddlewareReturn<T> executeMiddleware();
 
     @Override
     public void run() {
-        var status = this.executeMiddleware();
-        this.middlewareCallback.callback(this.proxyRequestEvent, this.context, status);
+
+        try {
+            var status = this.executeMiddleware();
+            this.middlewareCallback.callback(this.eventWrapper, status);
+
+        } catch (Throwable e) {
+            this.middlewareCallback.exceptionCallback(this.eventWrapper, e);
+        }
+
     }
 }

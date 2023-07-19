@@ -7,11 +7,11 @@ import java.util.LinkedList;
 
 public class Chain {
 
-    protected final LinkedList<LambdaMiddleware> chain = new LinkedList<>();
-    protected final LinkedList<ArrayList<LambdaMiddleware>> groupedChain = new LinkedList<>();
+    protected final LinkedList<LambdaMiddleware<?>> chain = new LinkedList<>();
+    protected final LinkedList<ArrayList<LambdaMiddleware<?>>> groupedChain = new LinkedList<>();
     private boolean isFinalized;
 
-    public void addChainable(LambdaMiddleware chainable) {
+    public void addChainable(LambdaMiddleware<?> chainable) {
         if (!this.isFinalized) {
             this.chain.add(chainable);
         }
@@ -21,7 +21,7 @@ public class Chain {
         return isFinalized;
     }
 
-    public LinkedList<ArrayList<LambdaMiddleware>> getGroupedChain() {
+    public LinkedList<ArrayList<LambdaMiddleware<?>>> getGroupedChain() {
         return groupedChain;
     }
 
@@ -34,7 +34,7 @@ public class Chain {
         if (this.isFinalized)
             return;
 
-        ArrayList<LambdaMiddleware> group = new ArrayList<>();
+        ArrayList<LambdaMiddleware<?>> group = new ArrayList<>();
         for (var chainable : this.chain) {
 
             if (!chainable.isSynchronous()) {
@@ -61,7 +61,7 @@ public class Chain {
         this.isFinalized = true;
     }
 
-    public LinkedList<LambdaMiddleware> getChain() {
+    public LinkedList<LambdaMiddleware<?>> getChain() {
         return chain;
     }
 

@@ -1,4 +1,4 @@
-package com.networknt.aws.lambda.middleware.response;
+package com.networknt.aws.lambda.middleware.payload;
 
 import java.lang.reflect.ParameterizedType;
 

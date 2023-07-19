@@ -2,7 +2,7 @@ package com.networknt.aws.lambda.middleware;
 
 import com.amazonaws.services.lambda.runtime.events.APIGatewayProxyRequestEvent;
 import com.networknt.aws.lambda.LambdaContext;
-import com.networknt.aws.lambda.middleware.response.MiddlewareReturn;
+import com.networknt.aws.lambda.middleware.payload.MiddlewareReturn;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 

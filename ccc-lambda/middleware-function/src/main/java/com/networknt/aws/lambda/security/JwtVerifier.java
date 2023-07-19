@@ -1,5 +1,6 @@
-package com.networknt.aws.lambda;
+package com.networknt.aws.lambda.security;
 
+import com.networknt.aws.lambda.Configuration;
 import com.networknt.utility.FingerPrintUtil;
 import org.jose4j.jwk.JsonWebKey;
 import org.jose4j.jwk.JsonWebKeySet;

@@ -5,7 +5,7 @@
     <artifactId>middleware-function</artifactId>
     <version>1.0.0</version>
     <packaging>jar</packaging>
-    <name></name>
+    <name>middleware-function</name>
     <description>A middleware Lambda function that handles all the cross-cutting concerns for the downstream Lambda function.</description>
     <properties>
         <java.version>11</java.version>
@@ -33,6 +33,11 @@
         <dependency>
             <groupId>com.networknt</groupId>
             <artifactId>custom-runtime</artifactId>
+            <version>${version.light-4j}</version>
+        </dependency>
+        <dependency>
+            <groupId>com.networknt</groupId>
+            <artifactId>status</artifactId>
             <version>${version.light-4j}</version>
         </dependency>
         <dependency>

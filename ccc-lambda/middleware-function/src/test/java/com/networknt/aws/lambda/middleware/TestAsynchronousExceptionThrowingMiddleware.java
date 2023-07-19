@@ -8,17 +8,16 @@ import org.slf4j.LoggerFactory;
 
 import java.util.concurrent.ThreadLocalRandom;
 
-public class TestAsynchronousMiddleware extends LambdaMiddleware<String> {
+public class TestAsynchronousExceptionThrowingMiddleware extends LambdaMiddleware<String> {
+    private static final Logger LOG = LoggerFactory.getLogger(TestSynchronousMiddleware.class);
 
-    private static final Logger LOG = LoggerFactory.getLogger(TestAsynchronousMiddleware.class);
-
-    public TestAsynchronousMiddleware(MiddlewareCallback callback, APIGatewayProxyRequestEvent input, LambdaContext context) {
-        super(callback, input, context, TestAsynchronousMiddleware.class);
+    public TestAsynchronousExceptionThrowingMiddleware(MiddlewareCallback callback, APIGatewayProxyRequestEvent input, LambdaContext context) {
+        super(callback, input, context, false, TestAsynchronousMiddleware.class);
     }
 
     @Override
     protected MiddlewareReturn<String> executeMiddleware() {
-        LOG.info("I am executing asynchronously");
+        LOG.info("I am failing Asynchronously");
 
         int randomSlept = ThreadLocalRandom.current().nextInt(5, 15);
         LOG.info("I will sleep a total of {} times", randomSlept);
@@ -31,15 +30,12 @@ public class TestAsynchronousMiddleware extends LambdaMiddleware<String> {
                 Thread.sleep(randomSleep);
                 slept++;
             } catch (InterruptedException e) {
-                LOG.error("Middleware exited on failure status!");
-                LOG.error(e.getMessage(), e);
-                return new MiddlewareReturn<>("Failed Asynchronous Response", MiddlewareReturn.Status.EXECUTION_FAILED);
+                // does not matter
             }
         }
 
-        LOG.info("I am done executing asynchronously, doing callback");
-        return new MiddlewareReturn<>("Success Asynchronous Response", MiddlewareReturn.Status.EXECUTION_SUCCESS);
+        /* force throw an exception after some time. */
+        throw new RuntimeException("I am throwing an exception asynchronously");
     }
 
 }
-

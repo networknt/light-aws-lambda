@@ -1,4 +1,4 @@
-package com.networknt.aws.lambda;
+package com.networknt.aws.lambda.security;
 
 public class ExpiredTokenException extends Exception {
     private static final long serialVersionUID = 1L;

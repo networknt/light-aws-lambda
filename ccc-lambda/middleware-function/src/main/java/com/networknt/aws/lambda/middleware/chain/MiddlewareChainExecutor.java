@@ -1,49 +1,55 @@
 package com.networknt.aws.lambda.middleware.chain;
 
+import com.amazonaws.services.lambda.runtime.Context;
 import com.amazonaws.services.lambda.runtime.events.APIGatewayProxyRequestEvent;
 import com.networknt.aws.lambda.LambdaContext;
 import com.networknt.aws.lambda.middleware.LambdaMiddleware;
 import com.networknt.aws.lambda.middleware.MiddlewareCallback;
-import com.networknt.aws.lambda.middleware.response.MiddlewareReturn;
-import com.networknt.aws.lambda.middleware.thread.MiddlewareThreadWorker;
+import com.networknt.aws.lambda.middleware.payload.LambdaEventWrapper;
+import com.networknt.aws.lambda.middleware.payload.MiddlewareReturn;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.slf4j.MDC;
 
 import java.lang.reflect.InvocationTargetException;
 import java.util.ArrayList;
+import java.util.Collection;
 import java.util.LinkedList;
+import java.util.concurrent.ThreadPoolExecutor;
+import java.util.concurrent.LinkedBlockingQueue;
+import java.util.concurrent.TimeUnit;
+import java.util.concurrent.ExecutionException;
+import java.util.concurrent.Future;
 import java.util.concurrent.atomic.AtomicInteger;
 
-public class MiddlewareChainExecutor {
-    Logger LOG = LoggerFactory.getLogger(MiddlewareChainExecutor.class);
-    final APIGatewayProxyRequestEvent apiGatewayProxyRequestEvent;
-    protected final LambdaContext lambdaContext;
-    protected final Chain chain = new Chain();
-    final LinkedList<MiddlewareReturn<?>> middlewareReturns = new LinkedList<>();
-    private ArrayList<MiddlewareThreadWorker> chainGroupExecutor;
-    private final Object lock = new Object();
-    volatile boolean continueExecuting = true;
+public class MiddlewareChainExecutor extends ThreadPoolExecutor {
+    private final Logger LOG = LoggerFactory.getLogger(MiddlewareChainExecutor.class);
+    private final static int MAX_POOL_SIZE = 10;
+    private final static long KEEP_ALIVE_TIME = 0L;
+    private final LambdaEventWrapper lambdaEventWrapper;
+    private final Chain chain = new Chain();
+    private final LinkedList<MiddlewareReturn<?>> middlewareReturns = new LinkedList<>();
     private final AtomicInteger decrementCounter = new AtomicInteger(0);
+    final Object lock = new Object();
 
-    public MiddlewareChainExecutor(final APIGatewayProxyRequestEvent apiGatewayProxyRequestEvent, final LambdaContext lambdaContext) {
-        this.lambdaContext = lambdaContext;
-        this.apiGatewayProxyRequestEvent = apiGatewayProxyRequestEvent;
+    public MiddlewareChainExecutor(final LambdaEventWrapper lambdaEventWrapper) {
+        super(MAX_POOL_SIZE, MAX_POOL_SIZE, KEEP_ALIVE_TIME, TimeUnit.MILLISECONDS, new LinkedBlockingQueue<>());
+        this.lambdaEventWrapper = lambdaEventWrapper;
     }
 
-    public MiddlewareChainExecutor addChainLink(Class<? extends LambdaMiddleware> middleware) {
+    @SuppressWarnings("rawtypes")
+    public MiddlewareChainExecutor add(Class<? extends LambdaMiddleware> middleware) {
 
         try {
-
             var newClazz = middleware
-                    .getConstructor(MiddlewareCallback.class, APIGatewayProxyRequestEvent.class, LambdaContext.class)
-                    .newInstance(this.middlewareCallback, this.apiGatewayProxyRequestEvent, this.lambdaContext);
-
+                    .getConstructor(MiddlewareCallback.class, LambdaEventWrapper.class)
+                    .newInstance(this.chainMiddlewareCallback, this.lambdaEventWrapper);
 
             this.chain.addChainable(newClazz);
             int linkNumber = this.chain.getChainSize();
+
             if (LOG.isInfoEnabled())
-                LOG.info("-- Created new class instance: {}[{}]", newClazz.chainableId, linkNumber);
+                LOG.info("Created new middleware instance: {}[{}]", newClazz.chainableId, linkNumber);
 
         } catch (InstantiationException | IllegalAccessException | InvocationTargetException | NoSuchMethodException e) {
             LOG.error("failed to create class: {}", e.getMessage());
@@ -58,84 +64,85 @@ public class MiddlewareChainExecutor {
 
     public void executeChain() {
 
-        if (!this.chain.isFinalized())
+        if (!this.chain.isFinalized()) {
+            LOG.error("Execution attempt on a chain that is not finalized! Call 'finalizeChain' before 'executeChain'");
             return;
+        }
 
         int groupNumber = 1;
-        for (var linkGroup : this.chain.getGroupedChain()) {
-            this.resetChainGroupExecutorAndDecrementCounter(linkGroup.size());
+        int linkNumber;
 
-            int linkNumber = 1;
+        for (var linkGroup : this.chain.getGroupedChain()) {
+
+            final ArrayList<MiddlewareThreadWorker> middlewareGroup = new ArrayList<>();
+            final Collection<Future<?>> middlewareGroupFutures = new LinkedList<>();
+            linkNumber = 1;
+
             for (var link : linkGroup) {
 
                 if (LOG.isTraceEnabled())
                     LOG.trace("Creating thread for link '{}' in group '{}'.", linkNumber, groupNumber);
 
-                this.chainGroupExecutor.add(new MiddlewareThreadWorker(link, new MiddlewareThreadWorker.AuditThreadContext(MDC.getCopyOfContextMap())));
+                middlewareGroup.add(new MiddlewareThreadWorker(link, new MiddlewareThreadWorker.AuditThreadContext(MDC.getCopyOfContextMap())));
                 linkNumber++;
             }
 
+            this.decrementCounter.getAndSet(middlewareGroup.size());
             linkNumber = 1;
-            for (var executor : this.chainGroupExecutor) {
+
+            for (var executor : middlewareGroup) {
 
                 if (LOG.isTraceEnabled())
                     LOG.trace("Starting thread for link '{}' in group '{}'.", linkNumber, groupNumber);
 
-                executor.start();
-                linkNumber++;
-            }
+                synchronized (lock) {
 
+                    if (!this.isShutdown() && !this.isTerminating())
+                        middlewareGroupFutures.add(this.submit(executor));
 
-            linkNumber = 1;
-            for (var executor : this.chainGroupExecutor) {
-
-                if (LOG.isTraceEnabled())
-                    LOG.trace("Joining thread for link '{}' in group '{}'.", linkNumber, groupNumber);
-
-                try {
-                    executor.join();
-                } catch (InterruptedException e) {
-                    LOG.error(e.getMessage());
                 }
 
+                this.decrementCounter.decrementAndGet();
                 linkNumber++;
             }
 
-            if (this.decrementCounter.get() > 0)
-                LOG.error("not all executors were able to finish the call back, or returned FAILED_STATUS.");
+            if (this.isShutdown() || this.isTerminated() || this.decrementCounter.get() != 0)
+                return;
 
-            if (!this.continueExecuting) {
-                break;
+            for (var future : middlewareGroupFutures) {
+
+                try {
+                    future.get();
+                } catch (InterruptedException | ExecutionException e) {
+                    throw new RuntimeException(e);
+                }
             }
 
-            groupNumber++;
+            middlewareGroup.clear();
+            middlewareGroupFutures.clear();
+        }
+    }
+
+    private final MiddlewareCallback chainMiddlewareCallback = new MiddlewareCallback() {
+        @Override
+        public void callback(final LambdaEventWrapper eventWrapper, MiddlewareReturn<?> middlewareReturn) {
+            middlewareReturns.add(middlewareReturn);
+
+            if (middlewareReturn.getStatus() == MiddlewareReturn.Status.EXECUTION_FAILED)
+                abortExecution();
         }
 
-        this.chainGroupExecutor.clear();
-    }
-
-    private void resetChainGroupExecutorAndDecrementCounter(int decrementSize) {
-        this.decrementCounter.getAndSet(decrementSize);
-        this.chainGroupExecutor = new ArrayList<>();
-    }
-
-    private final MiddlewareCallback middlewareCallback = (proxyRequestEvent, context, middlewareReturn) -> {
-        this.middlewareReturns.add(middlewareReturn);
-
-        if (middlewareReturn.getStatus() == MiddlewareReturn.Status.EXECUTION_FAILED)
-            this.abortExecution();
-
-        else this.decrementCounter.decrementAndGet();
+        @Override
+        public void exceptionCallback(final LambdaEventWrapper eventWrapper, Throwable throwable) {
+            middlewareReturns.add(new MiddlewareReturn<>(throwable, MiddlewareReturn.Status.EXECUTION_FAILED));
+            abortExecution();
+        }
     };
 
-    synchronized private void abortExecution() {
-
+    private void abortExecution() {
         synchronized (lock) {
-            continueExecuting = false;
-            for (var executor : this.chainGroupExecutor)
-                executor.interrupt();
+            this.shutdown();
         }
-
     }
 
     public Chain getChain() {

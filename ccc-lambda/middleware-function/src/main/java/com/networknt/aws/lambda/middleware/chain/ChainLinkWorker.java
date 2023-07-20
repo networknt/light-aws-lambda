@@ -5,9 +5,9 @@ import org.slf4j.MDC;
 
 import java.util.Map;
 
-public class MiddlewareThreadWorker extends Thread {
+public class ChainLinkWorker extends Thread {
 
-    public MiddlewareThreadWorker(LambdaMiddleware runnable, AuditThreadContext context) {
+    public ChainLinkWorker(LambdaMiddleware runnable, AuditThreadContext context) {
         super(runnable);
         MDC.setContextMap(context.MDCContext);
     }

@@ -1,11 +1,9 @@
 package com.networknt.aws.lambda.correlation;
 
-import com.amazonaws.services.lambda.runtime.events.APIGatewayProxyRequestEvent;
-import com.networknt.aws.lambda.LambdaContext;
 import com.networknt.aws.lambda.middleware.LambdaMiddleware;
-import com.networknt.aws.lambda.middleware.MiddlewareCallback;
+import com.networknt.aws.lambda.middleware.ChainLinkCallback;
 import com.networknt.aws.lambda.middleware.payload.LambdaEventWrapper;
-import com.networknt.aws.lambda.middleware.payload.MiddlewareReturn;
+import com.networknt.aws.lambda.middleware.payload.ChainLinkReturn;
 import com.networknt.aws.lambda.utility.HeaderKey;
 import com.networknt.aws.lambda.utility.LoggerKey;
 import org.apache.commons.codec.binary.Base64;
@@ -20,12 +18,12 @@ public class CorrelationMiddleware extends LambdaMiddleware<String> {
 
     private static final Logger LOG = LoggerFactory.getLogger(CorrelationMiddleware.class);
 
-    public CorrelationMiddleware(MiddlewareCallback middlewareCallback, final LambdaEventWrapper eventWrapper) {
+    public CorrelationMiddleware(ChainLinkCallback middlewareCallback, final LambdaEventWrapper eventWrapper) {
         super(middlewareCallback, eventWrapper, true, CorrelationMiddleware.class);
     }
 
     @Override
-    protected MiddlewareReturn<String> executeMiddleware() {
+    protected ChainLinkReturn<String> executeMiddleware() {
 
         if (LOG.isDebugEnabled())
             LOG.debug("CorrelationHandler.handleRequest starts.");
@@ -50,7 +48,7 @@ public class CorrelationMiddleware extends LambdaMiddleware<String> {
         if (LOG.isDebugEnabled())
             LOG.debug("CorrelationHandler.handleRequest ends.");
 
-        return new MiddlewareReturn<>(cid, MiddlewareReturn.Status.EXECUTION_SUCCESS);
+        return new ChainLinkReturn<>(cid, ChainLinkReturn.Status.EXECUTION_SUCCESS);
     }
 
     private String getUUID() {

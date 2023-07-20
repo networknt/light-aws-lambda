@@ -1,6 +1,8 @@
 package com.networknt.aws.lambda.middleware.payload;
 
-public class MiddlewareReturn<T> extends GenericResponse<T> {
+import java.util.Map;
+
+public class ChainLinkReturn<T> extends GenericResponse<T> {
 
     public enum Status
     {
@@ -11,7 +13,7 @@ public class MiddlewareReturn<T> extends GenericResponse<T> {
     protected final Status status;
     protected final T response;
 
-    public MiddlewareReturn(T response, Status status) {
+    public ChainLinkReturn(T response, Status status) {
         this.response = response;
         this.status = status;
     }

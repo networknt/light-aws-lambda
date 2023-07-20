@@ -1,22 +1,12 @@
 package com.networknt.aws.lambda;
 
 import com.amazonaws.services.lambda.runtime.events.APIGatewayProxyRequestEvent;
-import com.amazonaws.services.lambda.runtime.events.APIGatewayProxyResponseEvent;
 import com.fasterxml.jackson.databind.DeserializationFeature;
 import com.fasterxml.jackson.databind.ObjectMapper;
 
 import java.io.IOException;
 import java.net.HttpURLConnection;
 
-import com.networknt.aws.lambda.body.RequestBodyTransformerMiddleware;
-import com.networknt.aws.lambda.body.ResponseBodyTransformerMiddleware;
-import com.networknt.aws.lambda.correlation.CorrelationMiddleware;
-import com.networknt.aws.lambda.header.HeaderMiddleware;
-import com.networknt.aws.lambda.limit.LimitMiddleware;
-import com.networknt.aws.lambda.middleware.chain.MiddlewareChainExecutor;
-import com.networknt.aws.lambda.middleware.payload.LambdaEventWrapper;
-import com.networknt.aws.lambda.security.SecurityMiddleware;
-import com.networknt.aws.lambda.traceability.TraceabilityMiddleware;
 import com.networknt.utility.NioUtils;
 
 public class Main {
@@ -160,42 +150,7 @@ public class Main {
 
         final APIGatewayProxyRequestEvent requestEvent = invocation.getEvent();
         final LambdaContext lambdaContext = new LambdaContext(invocation.getRequestId());
-        final LambdaEventWrapper eventWrapper = new LambdaEventWrapper();
-        eventWrapper.setRequest(requestEvent);
-        eventWrapper.updateContext(lambdaContext);
 
-        // middleware is executed in the order they are added.
-        final var requestChain = new MiddlewareChainExecutor(eventWrapper)
-                .add(SecurityMiddleware.class)
-                .add(LimitMiddleware.class)
-                .add(CorrelationMiddleware.class)
-                .add(TraceabilityMiddleware.class)
-                .add(HeaderMiddleware.class)
-                .add(RequestBodyTransformerMiddleware.class);
-
-        requestChain.finalizeChain();
-        requestChain.executeChain();
-
-        // TODO
-        /* Send request to lambda function */
-
-        // TODO
-        /* Get response */
-
-        // TODO get response id?
-        final APIGatewayProxyResponseEvent responseEvent = new APIGatewayProxyResponseEvent();
-        final LambdaContext responseContext = new LambdaContext("" /* id here*/);
-        eventWrapper.setResponse(responseEvent);
-        eventWrapper.updateContext(responseContext);
-
-        final var responseChain = new MiddlewareChainExecutor(eventWrapper)
-                .add(ResponseBodyTransformerMiddleware.class);
-
-        responseChain.finalizeChain();
-        responseChain.executeChain();
-
-        // TODO
-        /* Send response back */
 
         /* ---------------------------------------------< END >--------------------------------------------- */
 

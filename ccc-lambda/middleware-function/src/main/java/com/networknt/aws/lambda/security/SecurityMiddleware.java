@@ -3,11 +3,10 @@ package com.networknt.aws.lambda.security;
 import com.amazonaws.services.lambda.runtime.events.APIGatewayProxyRequestEvent;
 import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.databind.ObjectMapper;
-import com.networknt.aws.lambda.*;
 import com.networknt.aws.lambda.middleware.LambdaMiddleware;
-import com.networknt.aws.lambda.middleware.MiddlewareCallback;
+import com.networknt.aws.lambda.middleware.ChainLinkCallback;
 import com.networknt.aws.lambda.middleware.payload.LambdaEventWrapper;
-import com.networknt.aws.lambda.middleware.payload.MiddlewareReturn;
+import com.networknt.aws.lambda.middleware.payload.ChainLinkReturn;
 import com.networknt.utility.Constants;
 import com.networknt.utility.StringUtils;
 import org.jose4j.jwt.JwtClaims;
@@ -31,12 +30,12 @@ public class SecurityMiddleware extends LambdaMiddleware<AuthPolicy> {
 
     /* We still need to figure out how we are going to load configs */
     Map<String, Map<String, Object>> config = new HashMap<>();
-    public SecurityMiddleware(MiddlewareCallback middlewareCallback, final LambdaEventWrapper eventWrapper) {
+    public SecurityMiddleware(ChainLinkCallback middlewareCallback, final LambdaEventWrapper eventWrapper) {
         super(middlewareCallback, eventWrapper, false, SecurityMiddleware.class);
     }
 
     @Override
-    protected MiddlewareReturn<AuthPolicy> executeMiddleware() {
+    protected ChainLinkReturn<AuthPolicy> executeMiddleware() {
         try {
             LOG.debug(objectMapper.writerWithDefaultPrettyPrinter().writeValueAsString(this.eventWrapper));
         } catch (JsonProcessingException e) {
@@ -150,19 +149,19 @@ public class SecurityMiddleware extends LambdaMiddleware<AuthPolicy> {
 
         } catch (InvalidJwtException e) {
             LOG.error("ERR10000 InvalidJwtException:", e);
-            return new MiddlewareReturn<>(new AuthPolicy(principalId, getDenyOnePolicy(region, accountId, apiId, stage, AuthPolicy.HttpMethod.valueOf(httpMethod), "*"), ctx), MiddlewareReturn.Status.EXECUTION_FAILED);
+            return new ChainLinkReturn<>(new AuthPolicy(principalId, getDenyOnePolicy(region, accountId, apiId, stage, AuthPolicy.HttpMethod.valueOf(httpMethod), "*"), ctx), ChainLinkReturn.Status.EXECUTION_FAILED);
 
         } catch (ExpiredTokenException e) {
             LOG.error("ERR10001 ExpiredTokenException", e);
-            return new MiddlewareReturn<>(new AuthPolicy(principalId, getDenyOnePolicy(region, accountId, apiId, stage, AuthPolicy.HttpMethod.valueOf(httpMethod), "*"), ctx), MiddlewareReturn.Status.EXECUTION_FAILED);
+            return new ChainLinkReturn<>(new AuthPolicy(principalId, getDenyOnePolicy(region, accountId, apiId, stage, AuthPolicy.HttpMethod.valueOf(httpMethod), "*"), ctx), ChainLinkReturn.Status.EXECUTION_FAILED);
 
         } catch (MalformedClaimException e) {
             LOG.error("ERR10000 MalformedClaimException", e);
-            return new MiddlewareReturn<>(new AuthPolicy(principalId, getDenyOnePolicy(region, accountId, apiId, stage, AuthPolicy.HttpMethod.valueOf(httpMethod), "*"), ctx), MiddlewareReturn.Status.EXECUTION_FAILED);
+            return new ChainLinkReturn<>(new AuthPolicy(principalId, getDenyOnePolicy(region, accountId, apiId, stage, AuthPolicy.HttpMethod.valueOf(httpMethod), "*"), ctx), ChainLinkReturn.Status.EXECUTION_FAILED);
         }
 
         LOG.debug("Allow " + arn);
 
-        return new MiddlewareReturn<>(new AuthPolicy(principalId, getAllowOnePolicy(region, accountId, apiId, stage, AuthPolicy.HttpMethod.valueOf(httpMethod), "*"), ctx), MiddlewareReturn.Status.EXECUTION_SUCCESS);
+        return new ChainLinkReturn<>(new AuthPolicy(principalId, getAllowOnePolicy(region, accountId, apiId, stage, AuthPolicy.HttpMethod.valueOf(httpMethod), "*"), ctx), ChainLinkReturn.Status.EXECUTION_SUCCESS);
     }
 }

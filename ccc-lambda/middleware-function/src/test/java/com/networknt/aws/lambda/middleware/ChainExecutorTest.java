@@ -1,12 +1,14 @@
 package com.networknt.aws.lambda.middleware;
 
+import com.amazonaws.services.lambda.runtime.Context;
 import com.amazonaws.services.lambda.runtime.events.APIGatewayProxyRequestEvent;
 import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.databind.DeserializationFeature;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.networknt.aws.lambda.InvocationResponse;
 import com.networknt.aws.lambda.LambdaContext;
-import com.networknt.aws.lambda.middleware.chain.MiddlewareChainExecutor;
+import com.networknt.aws.lambda.middleware.chain.PooledChainLinkExecutor;
+import com.networknt.aws.lambda.middleware.payload.LambdaEventWrapper;
 import org.junit.jupiter.api.Assertions;
 import org.junit.jupiter.api.BeforeAll;
 import org.junit.jupiter.api.Test;
@@ -23,8 +25,8 @@ public class ChainExecutorTest {
     private static final ObjectMapper OBJECT_MAPPER = new ObjectMapper()
             .disable(DeserializationFeature.FAIL_ON_UNKNOWN_PROPERTIES);
 
-    APIGatewayProxyRequestEvent requestEvent;
-    LambdaContext lambdaContext;
+
+    LambdaEventWrapper eventWrapper;
 
     @BeforeAll
     void setup() {
@@ -164,14 +166,16 @@ public class ChainExecutorTest {
                 .requestId("12345")
                 .event(apiGatewayProxyRequestEvent)
                 .build();
-
-        this.requestEvent = invocation.getEvent();
-        this.lambdaContext = new LambdaContext(invocation.getRequestId());
+        APIGatewayProxyRequestEvent requestEvent = invocation.getEvent();
+        Context lambdaContext = new LambdaContext(invocation.getRequestId());
+        this.eventWrapper = new LambdaEventWrapper();
+        this.eventWrapper.setRequest(requestEvent);
+        this.eventWrapper.updateContext(lambdaContext);
     }
 
     @Test
     void groupingAllSynchronousTest() {
-        final MiddlewareChainExecutor allSynchronousExample = new MiddlewareChainExecutor(requestEvent, lambdaContext)
+        final PooledChainLinkExecutor allSynchronousExample = new PooledChainLinkExecutor(this.eventWrapper)
                 .add(TestSynchronousMiddleware.class)
                 .add(TestSynchronousMiddleware.class)
                 .add(TestSynchronousMiddleware.class)
@@ -188,7 +192,7 @@ public class ChainExecutorTest {
 
     @Test
     void groupingAllAsynchronousTest() {
-        final MiddlewareChainExecutor allAsynchronousExample = new MiddlewareChainExecutor(requestEvent, lambdaContext)
+        final PooledChainLinkExecutor allAsynchronousExample = new PooledChainLinkExecutor(this.eventWrapper)
                 .add(TestAsynchronousMiddleware.class)
                 .add(TestAsynchronousMiddleware.class)
                 .add(TestAsynchronousMiddleware.class)
@@ -206,7 +210,7 @@ public class ChainExecutorTest {
 
     @Test
     void groupingMixedTest1() {
-        final MiddlewareChainExecutor mixed = new MiddlewareChainExecutor(requestEvent, lambdaContext)
+        final PooledChainLinkExecutor mixed = new PooledChainLinkExecutor(this.eventWrapper)
                 .add(TestAsynchronousMiddleware.class)     //
                 .add(TestAsynchronousMiddleware.class)     // -- group 1
 
@@ -229,7 +233,7 @@ public class ChainExecutorTest {
 
     @Test
     void groupingMixedTest2() {
-        final MiddlewareChainExecutor mixed = new MiddlewareChainExecutor(requestEvent, lambdaContext)
+        final PooledChainLinkExecutor mixed = new PooledChainLinkExecutor(this.eventWrapper)
                 .add(TestAsynchronousMiddleware.class) //
                 .add(TestAsynchronousMiddleware.class) //
                 .add(TestAsynchronousMiddleware.class) //
@@ -249,7 +253,7 @@ public class ChainExecutorTest {
 
     @Test
     void middlewareResponseTest() {
-        final MiddlewareChainExecutor allSynchronousExample = new MiddlewareChainExecutor(requestEvent, lambdaContext)
+        final PooledChainLinkExecutor allSynchronousExample = new PooledChainLinkExecutor(this.eventWrapper)
                 .add(TestAsynchronousMiddleware.class) //
                 .add(TestAsynchronousMiddleware.class) //
                 .add(TestAsynchronousMiddleware.class) //
@@ -266,12 +270,12 @@ public class ChainExecutorTest {
         allSynchronousExample.executeChain();
 
         /* 3 groups, but all 9 return a response */
-        Assertions.assertEquals(9, allSynchronousExample.getMiddlewareReturns().size());
+        Assertions.assertEquals(9, allSynchronousExample.getChainLinkReturns().size());
     }
 
     @Test
     void middlewareSynchronousFailureTest() {
-        final MiddlewareChainExecutor syncFail = new MiddlewareChainExecutor(requestEvent, lambdaContext)
+        final PooledChainLinkExecutor syncFail = new PooledChainLinkExecutor(this.eventWrapper)
                 .add(TestSynchronousMiddleware.class)
                 .add(TestSynchronousFailedResponseMiddleware.class) // fail should happen here
                 .add(TestAsynchronousMiddleware.class)
@@ -282,12 +286,12 @@ public class ChainExecutorTest {
         syncFail.executeChain();
 
         /* 5 middleware responses, but we failed on the second one. so expect only 2 responses total */
-        Assertions.assertEquals(2, syncFail.getMiddlewareReturns().size());
+        Assertions.assertEquals(2, syncFail.getChainLinkReturns().size());
     }
 
     @Test
     void middlewareAsynchronousFailureTest() {
-        final MiddlewareChainExecutor asyncFail = new MiddlewareChainExecutor(requestEvent, lambdaContext)
+        final PooledChainLinkExecutor asyncFail = new PooledChainLinkExecutor(this.eventWrapper)
                 .add(TestAsynchronousMiddleware.class)
                 .add(TestAsynchronousMiddleware.class)
                 .add(TestAsynchronousMiddleware.class)
@@ -301,13 +305,13 @@ public class ChainExecutorTest {
         asyncFail.finalizeChain();
         asyncFail.executeChain();
 
-        Assertions.assertEquals(5, asyncFail.getMiddlewareReturns().size());
+        Assertions.assertEquals(5, asyncFail.getChainLinkReturns().size());
 
     }
 
     @Test
     void middlewareAsynchronousFailureTest2() {
-        final MiddlewareChainExecutor asyncFail = new MiddlewareChainExecutor(requestEvent, lambdaContext)
+        final PooledChainLinkExecutor asyncFail = new PooledChainLinkExecutor(this.eventWrapper)
                 .add(TestAsynchronousMiddleware.class)
                 .add(TestAsynchronousMiddleware.class)
                 .add(TestAsynchronousMiddleware.class)
@@ -322,13 +326,13 @@ public class ChainExecutorTest {
         asyncFail.finalizeChain();
         asyncFail.executeChain();
 
-        Assertions.assertEquals(6, asyncFail.getMiddlewareReturns().size());
+        Assertions.assertEquals(6, asyncFail.getChainLinkReturns().size());
 
     }
 
     @Test
     void middlewareAsynchronousExceptionTest() {
-        final MiddlewareChainExecutor asyncException = new MiddlewareChainExecutor(requestEvent, lambdaContext)
+        final PooledChainLinkExecutor asyncException = new PooledChainLinkExecutor(this.eventWrapper)
                 .add(TestAsynchronousMiddleware.class) // 1 - success
                 .add(TestAsynchronousMiddleware.class) // 2 - success
                 .add(TestAsynchronousMiddleware.class) // 3 - success
@@ -342,7 +346,7 @@ public class ChainExecutorTest {
         asyncException.finalizeChain();
         asyncException.executeChain();
 
-        Assertions.assertEquals(5, asyncException.getMiddlewareReturns().size());
+        Assertions.assertEquals(5, asyncException.getChainLinkReturns().size());
     }
 
 }

@@ -1,8 +1,8 @@
 package com.networknt.aws.lambda.middleware.payload;
 
+import com.amazonaws.services.lambda.runtime.Context;
 import com.amazonaws.services.lambda.runtime.events.APIGatewayProxyRequestEvent;
 import com.amazonaws.services.lambda.runtime.events.APIGatewayProxyResponseEvent;
-import com.networknt.aws.lambda.LambdaContext;
 import com.networknt.aws.lambda.middleware.LambdaMiddleware;
 
 import java.util.HashMap;
@@ -11,7 +11,7 @@ import java.util.Map;
 public class LambdaEventWrapper {
     private APIGatewayProxyRequestEvent request;
     private APIGatewayProxyResponseEvent response;
-    private LambdaContext context;
+    private Context context;
 
     private final Map<Class<? extends LambdaMiddleware<?>>, Object> requestAttachments = new HashMap<>();
     private final Map<Class<? extends LambdaMiddleware<?>>, Object> responseAttachments = new HashMap<>();
@@ -24,7 +24,7 @@ public class LambdaEventWrapper {
         responseSet = false;
     }
 
-    public void updateContext(LambdaContext context) {
+    public void updateContext(Context context) {
         this.context = context;
     }
 
@@ -54,7 +54,7 @@ public class LambdaEventWrapper {
         return response;
     }
 
-    public LambdaContext getContext() {
+    public Context getContext() {
         return context;
     }
 

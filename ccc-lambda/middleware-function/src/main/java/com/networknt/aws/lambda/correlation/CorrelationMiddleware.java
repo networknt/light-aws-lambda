@@ -14,16 +14,17 @@ import org.slf4j.MDC;
 import java.nio.ByteBuffer;
 import java.util.UUID;
 
-public class CorrelationMiddleware extends LambdaMiddleware<String> {
+public class CorrelationMiddleware extends LambdaMiddleware {
 
     private static final Logger LOG = LoggerFactory.getLogger(CorrelationMiddleware.class);
+    private static final LambdaEventWrapper.Attachable CORRELATION_ATTACHMENT_KEY = LambdaEventWrapper.Attachable.createMiddlewareAttachable(CorrelationMiddleware.class);
 
     public CorrelationMiddleware(ChainLinkCallback middlewareCallback, final LambdaEventWrapper eventWrapper) {
-        super(middlewareCallback, eventWrapper, true, CorrelationMiddleware.class);
+        super(middlewareCallback, eventWrapper, true, true, CorrelationMiddleware.class);
     }
 
     @Override
-    protected ChainLinkReturn<String> executeMiddleware() {
+    protected ChainLinkReturn executeMiddleware() {
 
         if (LOG.isDebugEnabled())
             LOG.debug("CorrelationHandler.handleRequest starts.");
@@ -35,7 +36,7 @@ public class CorrelationMiddleware extends LambdaMiddleware<String> {
 
             cid = this.getUUID();
             this.eventWrapper.getRequest().getHeaders().put(HeaderKey.CORRELATION, cid);
-
+            this.eventWrapper.addRequestAttachment(CORRELATION_ATTACHMENT_KEY, cid);
             var tid = this.eventWrapper.getRequest().getHeaders().get(HeaderKey.TRACEABILITY);
 
             if (tid != null && LOG.isInfoEnabled()) {
@@ -48,7 +49,7 @@ public class CorrelationMiddleware extends LambdaMiddleware<String> {
         if (LOG.isDebugEnabled())
             LOG.debug("CorrelationHandler.handleRequest ends.");
 
-        return new ChainLinkReturn<>(cid, ChainLinkReturn.Status.EXECUTION_SUCCESS);
+        return new ChainLinkReturn(ChainLinkReturn.Status.EXECUTION_SUCCESS);
     }
 
     private String getUUID() {

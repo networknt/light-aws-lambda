@@ -7,16 +7,16 @@ import com.networknt.aws.lambda.middleware.payload.ChainLinkReturn;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-public class LimitMiddleware extends LambdaMiddleware<Long> {
+public class LimitMiddleware extends LambdaMiddleware {
 
     private static final Logger LOG = LoggerFactory.getLogger(LambdaMiddleware.class);
 
     public LimitMiddleware(ChainLinkCallback middlewareCallback, final LambdaEventWrapper eventWrapper) {
-        super(middlewareCallback, eventWrapper, false, LimitMiddleware.class);
+        super(middlewareCallback, eventWrapper, false, true, LimitMiddleware.class);
     }
 
     @Override
-    protected ChainLinkReturn<Long> executeMiddleware() {
+    protected ChainLinkReturn executeMiddleware() {
         return null;
     }
 }

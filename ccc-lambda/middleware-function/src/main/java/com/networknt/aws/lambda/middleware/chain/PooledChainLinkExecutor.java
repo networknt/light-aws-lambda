@@ -25,7 +25,6 @@ public class PooledChainLinkExecutor extends ThreadPoolExecutor {
     private final static long KEEP_ALIVE_TIME = 0L;
     private final LambdaEventWrapper lambdaEventWrapper;
     private final Chain chain = new Chain();
-    private final LinkedList<ChainLinkReturn<?>> chainLinkReturns = new LinkedList<>();
     private final AtomicInteger decrementCounter = new AtomicInteger(0);
     final Object lock = new Object();
 
@@ -69,25 +68,27 @@ public class PooledChainLinkExecutor extends ThreadPoolExecutor {
         int groupNumber = 1;
         int linkNumber;
 
-        for (var linkGroup : this.chain.getGroupedChain()) {
+        for (var chainLinkGroup : this.chain.getGroupedChain()) {
 
             final ArrayList<ChainLinkWorker> chainLinkWorkerGroup = new ArrayList<>();
             final Collection<Future<?>> chainLinkWorkerFutures = new LinkedList<>();
             linkNumber = 1;
 
-            for (var link : linkGroup) {
+            /* create a worker for each link in a group */
+            for (var chainLink : chainLinkGroup) {
 
                 if (LOG.isDebugEnabled())
-                    LOG.debug("Creating thread for link '{}' in group '{}'.", linkNumber, groupNumber);
+                    LOG.debug("Creating thread for link '{}[{}]' in group '{}'.", chainLink.getChainableId(), linkNumber, groupNumber);
 
-                chainLinkWorkerGroup.add(new ChainLinkWorker(link, new ChainLinkWorker.AuditThreadContext(MDC.getCopyOfContextMap())));
+                chainLinkWorkerGroup.add(new ChainLinkWorker(chainLink, new ChainLinkWorker.AuditThreadContext(MDC.getCopyOfContextMap())));
                 linkNumber++;
             }
 
             this.decrementCounter.getAndSet(chainLinkWorkerGroup.size());
             linkNumber = 1;
 
-            for (var executor : chainLinkWorkerGroup) {
+            /* submit each link in the group into a queue */
+            for (var chainLinkWorker : chainLinkWorkerGroup) {
 
                 if (LOG.isDebugEnabled())
                     LOG.debug("Submitting link '{}' in group '{}' for execution.", linkNumber, groupNumber);
@@ -95,7 +96,7 @@ public class PooledChainLinkExecutor extends ThreadPoolExecutor {
                 synchronized (lock) {
 
                     if (!this.isShutdown() && !this.isTerminating())
-                        chainLinkWorkerFutures.add(this.submit(executor));
+                        chainLinkWorkerFutures.add(this.submit(chainLinkWorker));
 
                 }
 
@@ -104,10 +105,11 @@ public class PooledChainLinkExecutor extends ThreadPoolExecutor {
             }
 
 
-            for (var future : chainLinkWorkerFutures) {
+            /* wait out the future results of the submitted tasks. */
+            for (var chainLinkWorkerFuture : chainLinkWorkerFutures) {
 
                 try {
-                    future.get();
+                    chainLinkWorkerFuture.get();
                 } catch (InterruptedException | ExecutionException e) {
                     throw new RuntimeException(e);
                 }
@@ -118,13 +120,20 @@ public class PooledChainLinkExecutor extends ThreadPoolExecutor {
 
             chainLinkWorkerGroup.clear();
             chainLinkWorkerFutures.clear();
+
+            LOG.trace("Decrement counter = {}", this.decrementCounter.get());
         }
+    }
+
+    public LambdaEventWrapper GetResolvedChainResult() {
+
+        return this.lambdaEventWrapper;
     }
 
     private final ChainLinkCallback chainLinkCallback = new ChainLinkCallback() {
         @Override
-        public void callback(final LambdaEventWrapper eventWrapper, ChainLinkReturn<?> middlewareReturn) {
-            chainLinkReturns.add(middlewareReturn);
+        public void callback(final LambdaEventWrapper eventWrapper, ChainLinkReturn middlewareReturn) {
+            chain.addChainableResult(middlewareReturn);
 
             if (middlewareReturn.getStatus() == ChainLinkReturn.Status.EXECUTION_FAILED)
                 abortExecution();
@@ -132,7 +141,12 @@ public class PooledChainLinkExecutor extends ThreadPoolExecutor {
 
         @Override
         public void exceptionCallback(final LambdaEventWrapper eventWrapper, Throwable throwable) {
-            chainLinkReturns.add(new ChainLinkReturn<>(throwable, ChainLinkReturn.Status.EXECUTION_FAILED));
+
+            if (throwable instanceof InterruptedException)
+                chain.addChainableResult(new ChainLinkReturn(ChainLinkReturn.Status.EXECUTION_INTERRUPTED));
+
+            else chain.addChainableResult(new ChainLinkReturn(ChainLinkReturn.Status.EXECUTION_FAILED));
+
             abortExecution();
         }
     };
@@ -147,7 +161,7 @@ public class PooledChainLinkExecutor extends ThreadPoolExecutor {
         return chain;
     }
 
-    public LinkedList<ChainLinkReturn<?>> getChainLinkReturns() {
-        return chainLinkReturns;
+    public LinkedList<ChainLinkReturn> getChainLinkReturns() {
+        return chain.getChainResults();
     }
 }

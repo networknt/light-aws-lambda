@@ -7,16 +7,16 @@ import com.networknt.aws.lambda.middleware.payload.ChainLinkReturn;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-public class HeaderMiddleware extends LambdaMiddleware<String> {
+public class HeaderMiddleware extends LambdaMiddleware {
 
     private static final Logger LOG = LoggerFactory.getLogger(HeaderMiddleware.class);
 
     public HeaderMiddleware(ChainLinkCallback middlewareCallback, final LambdaEventWrapper eventWrapper) {
-        super(middlewareCallback, eventWrapper, true, HeaderMiddleware.class);
+        super(middlewareCallback, eventWrapper, true, true, HeaderMiddleware.class);
     }
 
     @Override
-    protected ChainLinkReturn<String> executeMiddleware() {
+    protected ChainLinkReturn executeMiddleware() {
         return null;
     }
 }

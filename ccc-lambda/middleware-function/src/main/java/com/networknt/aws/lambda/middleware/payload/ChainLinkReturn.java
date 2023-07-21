@@ -2,35 +2,45 @@ package com.networknt.aws.lambda.middleware.payload;
 
 import java.util.Map;
 
-public class ChainLinkReturn<T> extends GenericResponse<T> {
+public class ChainLinkReturn {
 
     public enum Status
     {
         EXECUTION_SUCCESS,
-        EXECUTION_FAILED
+        EXECUTION_FAILED,
+        EXECUTION_INTERRUPTED
     }
 
-    protected final Status status;
-    protected final T response;
+    private final Status status;
+    private String message;
+    private String additionalDetails;
 
-    public ChainLinkReturn(T response, Status status) {
-        this.response = response;
+    public ChainLinkReturn(Status status) {
         this.status = status;
+    }
+
+    public ChainLinkReturn(Status status, String message) {
+        this.status = status;
+        this.message = message;
+        this.additionalDetails = "";
+    }
+
+    public ChainLinkReturn(Status status, String message, String additionalDetails) {
+        this.status = status;
+        this.message = message;
+        this.additionalDetails = additionalDetails;
+    }
+
+    public String getMessage() {
+        return message;
+    }
+
+    public String getAdditionalDetails() {
+        return additionalDetails;
     }
 
     public Status getStatus() {
         return status;
     }
 
-    public T getResponse() {
-        return response;
-    }
-
-    @SuppressWarnings("rawtypes")
-    public Class getResponseType() {
-        if (response != null)
-            return this.reflectClassType();
-
-        else return Object.class;
-    }
 }

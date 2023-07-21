@@ -23,19 +23,21 @@ import java.util.Map;
 import static com.networknt.aws.lambda.security.AuthPolicy.PolicyDocument.getAllowOnePolicy;
 import static com.networknt.aws.lambda.security.AuthPolicy.PolicyDocument.getDenyOnePolicy;
 
-public class SecurityMiddleware extends LambdaMiddleware<AuthPolicy> {
+public class SecurityMiddleware extends LambdaMiddleware {
 
     private static final Logger LOG = LoggerFactory.getLogger(SecurityMiddleware.class);
+
+    private static final LambdaEventWrapper.Attachable SECURITY_ATTACHMENT_KEY = LambdaEventWrapper.Attachable.createMiddlewareAttachable(SecurityMiddleware.class);
     ObjectMapper objectMapper = new ObjectMapper();
 
     /* We still need to figure out how we are going to load configs */
     Map<String, Map<String, Object>> config = new HashMap<>();
     public SecurityMiddleware(ChainLinkCallback middlewareCallback, final LambdaEventWrapper eventWrapper) {
-        super(middlewareCallback, eventWrapper, false, SecurityMiddleware.class);
+        super(middlewareCallback, eventWrapper, false, false, SecurityMiddleware.class);
     }
 
     @Override
-    protected ChainLinkReturn<AuthPolicy> executeMiddleware() {
+    protected ChainLinkReturn executeMiddleware() {
         try {
             LOG.debug(objectMapper.writerWithDefaultPrettyPrinter().writeValueAsString(this.eventWrapper));
         } catch (JsonProcessingException e) {
@@ -124,7 +126,7 @@ public class SecurityMiddleware extends LambdaMiddleware<AuthPolicy> {
 
             // secondary scopes
             if (secondaryToken != null) {
-                claims = jwtVerifier.verifyJwt(secondaryToken, ignoreExpiry == null ? false : ignoreExpiry);
+                claims = jwtVerifier.verifyJwt(secondaryToken, ignoreExpiry != null && ignoreExpiry);
                 List<String> secondaryScopes = null;
                 scopeClaim = claims.getClaimValue(Constants.SCOPE_STRING);
 
@@ -149,19 +151,26 @@ public class SecurityMiddleware extends LambdaMiddleware<AuthPolicy> {
 
         } catch (InvalidJwtException e) {
             LOG.error("ERR10000 InvalidJwtException:", e);
-            return new ChainLinkReturn<>(new AuthPolicy(principalId, getDenyOnePolicy(region, accountId, apiId, stage, AuthPolicy.HttpMethod.valueOf(httpMethod), "*"), ctx), ChainLinkReturn.Status.EXECUTION_FAILED);
+            this.eventWrapper.addRequestAttachment(SECURITY_ATTACHMENT_KEY, new AuthPolicy(principalId, getDenyOnePolicy(region, accountId, apiId, stage, AuthPolicy.HttpMethod.valueOf(httpMethod), "*"), ctx));
+
+            return new ChainLinkReturn( ChainLinkReturn.Status.EXECUTION_FAILED);
 
         } catch (ExpiredTokenException e) {
             LOG.error("ERR10001 ExpiredTokenException", e);
-            return new ChainLinkReturn<>(new AuthPolicy(principalId, getDenyOnePolicy(region, accountId, apiId, stage, AuthPolicy.HttpMethod.valueOf(httpMethod), "*"), ctx), ChainLinkReturn.Status.EXECUTION_FAILED);
+            this.eventWrapper.addRequestAttachment(SECURITY_ATTACHMENT_KEY, new AuthPolicy(principalId, getDenyOnePolicy(region, accountId, apiId, stage, AuthPolicy.HttpMethod.valueOf(httpMethod), "*"), ctx));
+
+            return new ChainLinkReturn(ChainLinkReturn.Status.EXECUTION_FAILED);
 
         } catch (MalformedClaimException e) {
             LOG.error("ERR10000 MalformedClaimException", e);
-            return new ChainLinkReturn<>(new AuthPolicy(principalId, getDenyOnePolicy(region, accountId, apiId, stage, AuthPolicy.HttpMethod.valueOf(httpMethod), "*"), ctx), ChainLinkReturn.Status.EXECUTION_FAILED);
+            this.eventWrapper.addRequestAttachment(SECURITY_ATTACHMENT_KEY, new AuthPolicy(principalId, getDenyOnePolicy(region, accountId, apiId, stage, AuthPolicy.HttpMethod.valueOf(httpMethod), "*"), ctx));
+
+            return new ChainLinkReturn(ChainLinkReturn.Status.EXECUTION_FAILED);
         }
 
         LOG.debug("Allow " + arn);
+        this.eventWrapper.addRequestAttachment(SECURITY_ATTACHMENT_KEY, new AuthPolicy(principalId, getAllowOnePolicy(region, accountId, apiId, stage, AuthPolicy.HttpMethod.valueOf(httpMethod), "*"), ctx));
 
-        return new ChainLinkReturn<>(new AuthPolicy(principalId, getAllowOnePolicy(region, accountId, apiId, stage, AuthPolicy.HttpMethod.valueOf(httpMethod), "*"), ctx), ChainLinkReturn.Status.EXECUTION_SUCCESS);
+        return new ChainLinkReturn(ChainLinkReturn.Status.EXECUTION_SUCCESS);
     }
 }

@@ -1,19 +1,32 @@
 package com.networknt.aws.lambda.middleware.chain;
 
 import com.networknt.aws.lambda.middleware.LambdaMiddleware;
+import com.networknt.aws.lambda.middleware.payload.ChainLinkReturn;
 
 import java.util.ArrayList;
 import java.util.LinkedList;
 
 public class Chain {
 
-    protected final LinkedList<LambdaMiddleware<?>> chain = new LinkedList<>();
-    protected final LinkedList<ArrayList<LambdaMiddleware<?>>> groupedChain = new LinkedList<>();
+    private final LinkedList<LambdaMiddleware> chain = new LinkedList<>();
+    private final LinkedList<ArrayList<LambdaMiddleware>> groupedChain = new LinkedList<>();
+
+    private final LinkedList<ChainLinkReturn> chainResults = new LinkedList<>();
     private boolean isFinalized;
 
-    public void addChainable(LambdaMiddleware<?> chainable) {
+    public Chain() {
+        this.isFinalized = false;
+    }
+
+    protected void addChainable(LambdaMiddleware chainable) {
         if (!this.isFinalized) {
             this.chain.add(chainable);
+        }
+    }
+
+    protected void addChainableResult(ChainLinkReturn result) {
+        if (this.isFinalized) {
+            this.chainResults.add(result);
         }
     }
 
@@ -21,7 +34,7 @@ public class Chain {
         return isFinalized;
     }
 
-    public LinkedList<ArrayList<LambdaMiddleware<?>>> getGroupedChain() {
+    public LinkedList<ArrayList<LambdaMiddleware>> getGroupedChain() {
         return groupedChain;
     }
 
@@ -34,7 +47,7 @@ public class Chain {
         if (this.isFinalized)
             return;
 
-        ArrayList<LambdaMiddleware<?>> group = new ArrayList<>();
+        ArrayList<LambdaMiddleware> group = new ArrayList<>();
         for (var chainable : this.chain) {
 
             if (!chainable.isSynchronous()) {
@@ -61,9 +74,11 @@ public class Chain {
         this.isFinalized = true;
     }
 
-    public LinkedList<LambdaMiddleware<?>> getChain() {
+    public LinkedList<LambdaMiddleware> getChain() {
         return chain;
     }
 
-
+    public LinkedList<ChainLinkReturn> getChainResults() {
+        return chainResults;
+    }
 }

@@ -7,16 +7,16 @@ import org.slf4j.LoggerFactory;
 
 import java.util.concurrent.ThreadLocalRandom;
 
-public class TestSynchronousMiddleware extends LambdaMiddleware<String> {
+public class TestSynchronousMiddleware extends LambdaMiddleware {
 
     private static final Logger LOG = LoggerFactory.getLogger(TestSynchronousMiddleware.class);
 
     public TestSynchronousMiddleware(ChainLinkCallback callback, LambdaEventWrapper eventWrapper) {
-        super(callback, eventWrapper, true, TestAsynchronousMiddleware.class);
+        super(callback, eventWrapper, true, false, TestAsynchronousMiddleware.class);
     }
 
     @Override
-    protected ChainLinkReturn<String> executeMiddleware() {
+    protected ChainLinkReturn executeMiddleware() throws InterruptedException {
         LOG.info("I am executing Synchronously");
 
         int randomSlept = ThreadLocalRandom.current().nextInt(5, 15);
@@ -24,18 +24,13 @@ public class TestSynchronousMiddleware extends LambdaMiddleware<String> {
 
         int slept = 0;
         while (slept < randomSlept) {
-            try {
-                LOG.info("I am working Synchronously... ({})", slept);
-                Thread.sleep(150);
-                slept++;
-            } catch (InterruptedException e) {
-                LOG.error(e.getMessage(), e);
-                return new ChainLinkReturn<>("Failed Synchronous Response", ChainLinkReturn.Status.EXECUTION_FAILED);
-            }
+            LOG.info("I am working Synchronously... ({})", slept);
+            Thread.sleep(150);
+            slept++;
         }
 
         LOG.info("I am done executing Synchronously, doing callback");
-        return new ChainLinkReturn<>("Success Synchronous Response", ChainLinkReturn.Status.EXECUTION_SUCCESS);
+        return new ChainLinkReturn(ChainLinkReturn.Status.EXECUTION_SUCCESS);
     }
 
 }

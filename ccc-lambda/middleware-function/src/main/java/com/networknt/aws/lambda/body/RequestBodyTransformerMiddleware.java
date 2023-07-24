@@ -10,6 +10,7 @@ import com.networknt.aws.lambda.utility.HeaderKey;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
+import java.util.HashMap;
 import java.util.Map;
 
 public class RequestBodyTransformerMiddleware extends LambdaMiddleware {
@@ -22,18 +23,22 @@ public class RequestBodyTransformerMiddleware extends LambdaMiddleware {
     }
 
     @Override
-    protected ChainLinkReturn executeMiddleware() {
+    protected ChainLinkReturn executeMiddleware() throws InterruptedException {
+
         if (this.eventWrapper.getRequest().getBody() != null) {
 
-            var body = this.eventWrapper.getResponse().getBody();
+            var body = this.eventWrapper.getRequest().getBody();
 
             if (this.eventWrapper.getRequest().getHeaders().get(HeaderKey.CONTENT_TYPE).equals("application/json")) {
 
-                var deserializedBody = LambdaMiddleware.OBJECT_MAPPER.convertValue(body, new TypeReference<Map<String, Object>>() {});
-
-                // TODO -- DO TRANSFORM HERE
-
                 try {
+                    var deserializedBody = LambdaMiddleware.OBJECT_MAPPER.readValue(body, new TypeReference<Map<String, Object>>() {});
+
+                    // TODO -- DO TRANSFORM HERE
+
+                    /* ----------------------< TEST -- transform >---------------------- */
+                    deserializedBody.put("AddedKey", "AddedValue");
+                    /*------------------------------------------------------------------*/
 
                     var serializedBody = LambdaMiddleware.OBJECT_MAPPER.writeValueAsString(deserializedBody);
                     this.eventWrapper.getRequest().setBody(serializedBody);

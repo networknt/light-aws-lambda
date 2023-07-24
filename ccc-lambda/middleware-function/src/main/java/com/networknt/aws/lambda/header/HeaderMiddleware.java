@@ -17,6 +17,8 @@ public class HeaderMiddleware extends LambdaMiddleware {
 
     @Override
     protected ChainLinkReturn executeMiddleware() {
-        return null;
+
+
+        return new ChainLinkReturn(ChainLinkReturn.Status.EXECUTION_SUCCESS);
     }
 }

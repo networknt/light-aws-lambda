@@ -1,5 +1,5 @@
 {
-  "body": "eyJ0ZXN0IjoiYm9keSJ9",
+  "body": "{\"foo\": \"bar\"}",
   "resource": "/{proxy+}",
   "path": "/path/to/resource",
   "httpMethod": "POST",
@@ -23,6 +23,7 @@
     "Accept-Encoding": "gzip, deflate, sdch",
     "Accept-Language": "en-US,en;q=0.8",
     "Cache-Control": "max-age=0",
+    "Content-Type": "application/json",
     "CloudFront-Forwarded-Proto": "https",
     "CloudFront-Is-Desktop-Viewer": "true",
     "CloudFront-Is-Mobile-Viewer": "false",

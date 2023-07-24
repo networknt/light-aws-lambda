@@ -33,7 +33,6 @@ public class PooledChainLinkExecutor extends ThreadPoolExecutor {
         this.lambdaEventWrapper = lambdaEventWrapper;
     }
 
-    @SuppressWarnings("rawtypes")
     public PooledChainLinkExecutor add(Class<? extends LambdaMiddleware> middleware) {
 
         try {
@@ -123,6 +122,7 @@ public class PooledChainLinkExecutor extends ThreadPoolExecutor {
 
             LOG.trace("Decrement counter = {}", this.decrementCounter.get());
         }
+        this.shutdown();
     }
 
     public LambdaEventWrapper GetResolvedChainResult() {
@@ -145,7 +145,11 @@ public class PooledChainLinkExecutor extends ThreadPoolExecutor {
             if (throwable instanceof InterruptedException)
                 chain.addChainableResult(new ChainLinkReturn(ChainLinkReturn.Status.EXECUTION_INTERRUPTED));
 
-            else chain.addChainableResult(new ChainLinkReturn(ChainLinkReturn.Status.EXECUTION_FAILED));
+            else {
+                LOG.error("Chain failed with exception: {}", throwable.getMessage(), throwable);
+                chain.addChainableResult(new ChainLinkReturn(ChainLinkReturn.Status.EXECUTION_FAILED));
+            }
+
 
             abortExecution();
         }

@@ -44,47 +44,52 @@ public class LambdaProxy implements RequestHandler<APIGatewayProxyRequestEvent, 
         // middleware is executed in the order they are added.
         final var requestChain = new PooledChainLinkExecutor(eventWrapper)
                 .add(SecurityMiddleware.class)
-                .add(LimitMiddleware.class)
-                .add(CorrelationMiddleware.class)
                 .add(TraceabilityMiddleware.class)
-                .add(HeaderMiddleware.class)
+                .add(CorrelationMiddleware.class)
                 .add(RequestBodyTransformerMiddleware.class);
 
         requestChain.finalizeChain();
         requestChain.executeChain();
 
-        try {
+        /* test response payload for lambda deployment */
+        APIGatewayProxyResponseEvent testResponse = new APIGatewayProxyResponseEvent();
+        testResponse.setBody(eventWrapper.getRequest().getBody());
+        testResponse.setHeaders(eventWrapper.getRequest().getHeaders());
 
-            InvokeRequest invokeRequest = InvokeRequest.builder()
-                    .functionName("FUNCTION-NAME")
-                    .payload(SdkBytes.fromString("GET FROM REQUEST EXECUTION CHAIN", StandardCharsets.UTF_8))
-                    .build();
+        return testResponse;
 
-            LambdaClient lambdaClient = LambdaClient.builder()
-                    .region(Region.US_EAST_1) // Replace with your desired region
-                    .build();
-
-            InvokeResponse invokeResult = lambdaClient.invoke(invokeRequest);
-
-
-        } catch (ServiceException e) {
-            System.out.println(e);
-        }
-
-        // TODO get response id?
-        final APIGatewayProxyResponseEvent responseEvent = new APIGatewayProxyResponseEvent();
-        final LambdaContext responseContext = new LambdaContext("" /* id here*/);
-
-        eventWrapper.setResponse(responseEvent);
-        eventWrapper.updateContext(responseContext);
-
-        final var responseChain = new PooledChainLinkExecutor(eventWrapper)
-                .add(ResponseBodyTransformerMiddleware.class);
-
-        responseChain.finalizeChain();
-        responseChain.executeChain();
-
-        return new APIGatewayProxyResponseEvent();
+//        try {
+//
+//            InvokeRequest invokeRequest = InvokeRequest.builder()
+//                    .functionName("FUNCTION-NAME")
+//                    .payload(SdkBytes.fromString("GET FROM REQUEST EXECUTION CHAIN", StandardCharsets.UTF_8))
+//                    .build();
+//
+//            LambdaClient lambdaClient = LambdaClient.builder()
+//                    .region(Region.US_EAST_1) // Replace with your desired region
+//                    .build();
+//
+//            InvokeResponse invokeResult = lambdaClient.invoke(invokeRequest);
+//
+//
+//        } catch (ServiceException e) {
+//            System.out.println(e);
+//        }
+//
+//        // TODO get response id?
+//        final APIGatewayProxyResponseEvent responseEvent = new APIGatewayProxyResponseEvent();
+//        final LambdaContext responseContext = new LambdaContext("" /* id here*/);
+//
+//        eventWrapper.setResponse(responseEvent);
+//        eventWrapper.updateContext(responseContext);
+//
+//        final var responseChain = new PooledChainLinkExecutor(eventWrapper)
+//                .add(ResponseBodyTransformerMiddleware.class);
+//
+//        responseChain.finalizeChain();
+//        responseChain.executeChain();
+//
+//        return new APIGatewayProxyResponseEvent();
 
     }
 }

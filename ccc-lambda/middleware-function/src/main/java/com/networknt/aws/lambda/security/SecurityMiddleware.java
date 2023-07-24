@@ -37,9 +37,9 @@ public class SecurityMiddleware extends LambdaMiddleware {
     }
 
     @Override
-    protected ChainLinkReturn executeMiddleware() {
+    protected ChainLinkReturn executeMiddleware() throws InterruptedException {
         try {
-            LOG.debug(objectMapper.writerWithDefaultPrettyPrinter().writeValueAsString(this.eventWrapper));
+            LOG.debug(objectMapper.writerWithDefaultPrettyPrinter().writeValueAsString(this.eventWrapper.getRequest()));
         } catch (JsonProcessingException e) {
             e.printStackTrace();
         }

@@ -5,17 +5,17 @@ import com.networknt.aws.lambda.middleware.payload.ChainLinkReturn;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-public class TestSynchronousFailedResponseMiddleware extends LambdaMiddleware<String> {
+public class TestSynchronousFailedResponseMiddleware extends LambdaMiddleware {
     private static final Logger LOG = LoggerFactory.getLogger(TestSynchronousMiddleware.class);
 
     public TestSynchronousFailedResponseMiddleware(ChainLinkCallback callback, LambdaEventWrapper eventWrapper) {
-        super(callback, eventWrapper, true, TestAsynchronousMiddleware.class);
+        super(callback, eventWrapper, true, false, TestAsynchronousMiddleware.class);
     }
 
     @Override
-    protected ChainLinkReturn<String> executeMiddleware() {
+    protected ChainLinkReturn executeMiddleware() throws InterruptedException {
         LOG.info("I am failing Synchronously");
-        return new ChainLinkReturn<>("Failed response", ChainLinkReturn.Status.EXECUTION_FAILED);
+        return new ChainLinkReturn(ChainLinkReturn.Status.EXECUTION_FAILED);
     }
 
 }

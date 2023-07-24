@@ -1,34 +1,33 @@
-package com.networknt.aws.lambda;
+package com.networknt.aws.lambda.middleware;
 
+import com.amazonaws.services.lambda.runtime.Context;
 import com.amazonaws.services.lambda.runtime.events.APIGatewayProxyRequestEvent;
-import com.amazonaws.services.lambda.runtime.events.APIGatewayProxyResponseEvent;
+import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.databind.DeserializationFeature;
 import com.fasterxml.jackson.databind.ObjectMapper;
-
-import java.io.IOException;
-import java.net.HttpURLConnection;
-
-import com.networknt.aws.lambda.body.RequestBodyTransformerMiddleware;
-import com.networknt.aws.lambda.correlation.CorrelationMiddleware;
-import com.networknt.aws.lambda.header.HeaderMiddleware;
-import com.networknt.aws.lambda.limit.LimitMiddleware;
-import com.networknt.aws.lambda.middleware.chain.PooledChainLinkExecutor;
+import com.networknt.aws.lambda.InvocationResponse;
+import com.networknt.aws.lambda.LambdaContext;
 import com.networknt.aws.lambda.middleware.payload.LambdaEventWrapper;
-import com.networknt.aws.lambda.security.SecurityMiddleware;
-import com.networknt.aws.lambda.traceability.TraceabilityMiddleware;
-import com.networknt.utility.NioUtils;
+import org.junit.jupiter.api.BeforeAll;
+import org.junit.jupiter.api.Test;
+import org.junit.jupiter.api.TestInstance;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
-public class Main {
+@TestInstance(TestInstance.Lifecycle.PER_CLASS)
+public class TraceabilityMiddlewareTest {
+    private static final Logger LOG = LoggerFactory.getLogger(ChainExecutorTest.class);
 
-    private static final String REQUEST_ID_HEADER = "lambda-runtime-aws-request-id";
     private static final ObjectMapper OBJECT_MAPPER = new ObjectMapper()
             .disable(DeserializationFeature.FAIL_ON_UNKNOWN_PROPERTIES);
 
-    public static void main(String[] args) throws IOException {
 
+    LambdaEventWrapper eventWrapper;
 
+    @BeforeAll
+    void setup() {
         String testInvoke = "{\n" +
-                "  \"body\": \"{\\\"foo\\\": \\\"bar\\\"}\",\n" +
+                "  \"body\": \"eyJ0ZXN0IjoiYm9keSJ9\",\n" +
                 "  \"resource\": \"/{proxy+}\",\n" +
                 "  \"path\": \"/path/to/resource\",\n" +
                 "  \"httpMethod\": \"POST\",\n" +
@@ -51,7 +50,6 @@ public class Main {
                 "    \"Accept\": \"text/html,application/xhtml+xml,application/xml;q=0.9,image/webp,*/*;q=0.8\",\n" +
                 "    \"Accept-Encoding\": \"gzip, deflate, sdch\",\n" +
                 "    \"Accept-Language\": \"en-US,en;q=0.8\",\n" +
-                "    \"Content-Type\": \"application/json\", \n" +
                 "    \"Cache-Control\": \"max-age=0\",\n" +
                 "    \"CloudFront-Forwarded-Proto\": \"https\",\n" +
                 "    \"CloudFront-Is-Desktop-Viewer\": \"true\",\n" +
@@ -153,86 +151,26 @@ public class Main {
                 "  }\n" +
                 "}";
 
-        APIGatewayProxyRequestEvent apiGatewayProxyRequestEvent = OBJECT_MAPPER.readValue(testInvoke, APIGatewayProxyRequestEvent.class);
+        APIGatewayProxyRequestEvent apiGatewayProxyRequestEvent = null;
+        try {
+            apiGatewayProxyRequestEvent = OBJECT_MAPPER.readValue(testInvoke, APIGatewayProxyRequestEvent.class);
+        } catch (JsonProcessingException e) {
+            LOG.error("Failed to read value as APIGatewayProxyRequestEvent");
+            throw new RuntimeException(e);
+        }
         InvocationResponse invocation = InvocationResponse.builder()
                 .requestId("12345")
                 .event(apiGatewayProxyRequestEvent)
                 .build();
-
-        final APIGatewayProxyRequestEvent requestEvent = invocation.getEvent();
-        final LambdaContext lambdaContext = new LambdaContext(invocation.getRequestId());
-
-        final LambdaEventWrapper eventWrapper = new LambdaEventWrapper();
-        eventWrapper.setRequest(requestEvent);
-        eventWrapper.updateContext(lambdaContext);
-
-        // middleware is executed in the order they are added.
-        final var requestChain = new PooledChainLinkExecutor(eventWrapper)
-                .add(SecurityMiddleware.class)
-                .add(TraceabilityMiddleware.class)
-                .add(CorrelationMiddleware.class)
-                .add(RequestBodyTransformerMiddleware.class);
-
-        requestChain.finalizeChain();
-        requestChain.executeChain();
-
-        APIGatewayProxyResponseEvent testResponse = new APIGatewayProxyResponseEvent();
-        testResponse.setBody(eventWrapper.getRequest().getBody());
-        testResponse.setHeaders(eventWrapper.getRequest().getHeaders());
-
-        System.out.println(testResponse);
-
-        //return testResponse;
-
-
-        /* ---------------------------------------------< END >--------------------------------------------- */
-
-//        String endpoint = System.getenv("AWS_LAMBDA_RUNTIME_API");
-//
-//        InvocationResponse invocation = getInvocation(endpoint);
-//
-//        try {
-//            Authorizer authorizer = new Authorizer();
-//
-//            // Actual invoke of the Authorizer
-//            AuthPolicy response = authorizer.handleRequest(invocation.getEvent(), new LambdaContext(invocation.getRequestId()));
-//
-//            // Post to Lambda success endpoint
-//            HttpUtils.post(
-//                    String.format("http://%s/2018-06-01/runtime/invocation/%s/response", endpoint, invocation.getRequestId()),
-//                    OBJECT_MAPPER.writeValueAsString(response)
-//            );
-//        } catch (Exception t) {
-//            String response = OBJECT_MAPPER.writeValueAsString(
-//                    DefaultResponse.builder()
-//                            .message(t.getMessage())
-//                            .build()
-//            );
-//
-//            t.printStackTrace();
-//
-//            // Post to Lambda error endpoint
-//            HttpUtils.post(
-//                    String.format("http://%s/2018-06-01/runtime/invocation/%s/error", endpoint, invocation.getRequestId()),
-//                    response
-//            );
-//        }
+        APIGatewayProxyRequestEvent requestEvent = invocation.getEvent();
+        Context lambdaContext = new LambdaContext(invocation.getRequestId());
+        this.eventWrapper = new LambdaEventWrapper();
+        this.eventWrapper.setRequest(requestEvent);
+        this.eventWrapper.updateContext(lambdaContext);
     }
 
-    private static InvocationResponse getInvocation(String endpoint) throws IOException {
-        HttpURLConnection connection = HttpUtils.get(
-                String.format("http://%s/2018-06-01/runtime/invocation/next", endpoint)
-        );
+    @Test
+    void basicTraceabilityTest() {
 
-        String response = NioUtils.toString(connection.getInputStream());
-
-        String requestId = connection.getHeaderField(REQUEST_ID_HEADER);
-
-        APIGatewayProxyRequestEvent event = OBJECT_MAPPER.readValue(response, APIGatewayProxyRequestEvent.class);
-
-        return InvocationResponse.builder()
-                .requestId(requestId)
-                .event(event)
-                .build();
     }
 }

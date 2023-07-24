@@ -20,20 +20,23 @@ public class TraceabilityMiddleware extends LambdaMiddleware {
     }
 
     @Override
-    protected ChainLinkReturn executeMiddleware() {
+    protected ChainLinkReturn executeMiddleware() throws InterruptedException {
 
         if (LOG.isDebugEnabled())
-            LOG.trace("TraceabilityMiddleware.executeMiddleware starts.");
+            LOG.debug("TraceabilityMiddleware.executeMiddleware starts.");
 
         var tid = this.eventWrapper.getRequest().getHeaders().get(HeaderKey.TRACEABILITY);
 
         if(tid != null) {
+
+
+
             MDC.put(LoggerKey.TRACEABILITY, tid);
             this.eventWrapper.addRequestAttachment(TRACEABILITY_ATTACHMENT_KEY, tid);
         }
 
         if (LOG.isDebugEnabled())
-            LOG.trace("TraceabilityMiddleware.executeMiddleware ends.");
+            LOG.debug("TraceabilityMiddleware.executeMiddleware ends.");
 
         return new ChainLinkReturn(ChainLinkReturn.Status.EXECUTION_SUCCESS);
     }

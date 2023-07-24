@@ -19,7 +19,7 @@ public abstract class LambdaMiddleware extends Chainable implements Runnable {
         this.eventWrapper = eventWrapper;
     }
 
-    protected abstract ChainLinkReturn executeMiddleware();
+    protected abstract ChainLinkReturn executeMiddleware() throws InterruptedException;
 
     @Override
     public void run() {

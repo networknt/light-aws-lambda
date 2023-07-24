@@ -7,15 +7,15 @@ import org.slf4j.LoggerFactory;
 
 import java.util.concurrent.ThreadLocalRandom;
 
-public class TestAsynchronousFailedResponseMiddleware extends LambdaMiddleware<String> {
+public class TestAsynchronousFailedResponseMiddleware extends LambdaMiddleware {
     private static final Logger LOG = LoggerFactory.getLogger(TestSynchronousMiddleware.class);
 
     public TestAsynchronousFailedResponseMiddleware(ChainLinkCallback callback, LambdaEventWrapper eventWrapper) {
-        super(callback, eventWrapper, false, TestAsynchronousMiddleware.class);
+        super(callback, eventWrapper, false, false, TestAsynchronousMiddleware.class);
     }
 
     @Override
-    protected ChainLinkReturn<String> executeMiddleware() {
+    protected ChainLinkReturn executeMiddleware() throws InterruptedException {
         LOG.info("I am failing Asynchronously");
 
         int randomSlept = ThreadLocalRandom.current().nextInt(5, 15);
@@ -23,18 +23,12 @@ public class TestAsynchronousFailedResponseMiddleware extends LambdaMiddleware<S
 
         int slept = 0;
         while (slept < randomSlept) {
-            try {
-                int randomSleep = ThreadLocalRandom.current().nextInt(0, 1000);
-                LOG.info("I am sleeping asynchronously for {}ms... ({})", randomSleep, slept);
-                Thread.sleep(randomSleep);
-                slept++;
-            } catch (InterruptedException e) {
-                LOG.error("Middleware exited on failure status!");
-                LOG.error(e.getMessage(), e);
-                return new ChainLinkReturn<>("Failed Asynchronous Response", ChainLinkReturn.Status.EXECUTION_FAILED);
-            }
+            int randomSleep = ThreadLocalRandom.current().nextInt(0, 1000);
+            LOG.info("I am sleeping asynchronously for {}ms... ({})", randomSleep, slept);
+            Thread.sleep(randomSleep);
+            slept++;
         }
-        return new ChainLinkReturn<>("Failed response", ChainLinkReturn.Status.EXECUTION_FAILED);
+        return new ChainLinkReturn(ChainLinkReturn.Status.EXECUTION_FAILED);
     }
 
 }

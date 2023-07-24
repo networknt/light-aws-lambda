@@ -24,21 +24,22 @@ public class CorrelationMiddleware extends LambdaMiddleware {
     }
 
     @Override
-    protected ChainLinkReturn executeMiddleware() {
+    protected ChainLinkReturn executeMiddleware() throws InterruptedException {
 
         if (LOG.isDebugEnabled())
             LOG.debug("CorrelationHandler.handleRequest starts.");
 
         // check if the cid is in the request header
-        var cid = this.eventWrapper.getRequest().getHeaders().get(HeaderKey.TRACEABILITY);
+        var cid = this.eventWrapper.getRequest().getHeaders().get(HeaderKey.CORRELATION);
 
         if (cid == null) {
 
             cid = this.getUUID();
             this.eventWrapper.getRequest().getHeaders().put(HeaderKey.CORRELATION, cid);
             this.eventWrapper.addRequestAttachment(CORRELATION_ATTACHMENT_KEY, cid);
-            var tid = this.eventWrapper.getRequest().getHeaders().get(HeaderKey.TRACEABILITY);
 
+            var tid = this.eventWrapper.getRequest().getHeaders().get(HeaderKey.TRACEABILITY);
+            this.eventWrapper.getRequest().getHeaders().put(HeaderKey.CORRELATION, cid);
             if (tid != null && LOG.isInfoEnabled()) {
                 LOG.info("Associate traceability Id " + tid + " with correlation Id " + cid);
             }

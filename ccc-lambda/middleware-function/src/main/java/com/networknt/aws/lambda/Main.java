@@ -67,7 +67,8 @@ public class Main {
                 "    \"X-Amz-Cf-Id\": \"cDehVQoZnx43VYQb9j2-nvCh-9z396Uhbp027Y2JvkCPNLmGJHqlaA==\",\n" +
                 "    \"X-Forwarded-For\": \"127.0.0.1, 127.0.0.2\",\n" +
                 "    \"X-Forwarded-Port\": \"443\",\n" +
-                "    \"X-Forwarded-Proto\": \"https\"\n" +
+                "    \"X-Forwarded-Proto\": \"https\",\n" +
+                "    \"x-traceability-id\": \"123-123-123\"\n" +
                 "  },\n" +
                 "  \"multiValueHeaders\": {\n" +
                 "    \"Accept\": [\n" +
@@ -169,6 +170,7 @@ public class Main {
         // middleware is executed in the order they are added.
         final var requestChain = new PooledChainLinkExecutor(eventWrapper)
                 .add(SecurityMiddleware.class)
+                .add(HeaderMiddleware.class)
                 .add(TraceabilityMiddleware.class)
                 .add(CorrelationMiddleware.class)
                 .add(RequestBodyTransformerMiddleware.class);

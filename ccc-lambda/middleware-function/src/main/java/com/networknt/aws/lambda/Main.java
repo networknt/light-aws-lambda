@@ -11,7 +11,7 @@ import java.net.HttpURLConnection;
 import com.networknt.aws.lambda.body.RequestBodyTransformerMiddleware;
 import com.networknt.aws.lambda.correlation.CorrelationMiddleware;
 import com.networknt.aws.lambda.header.HeaderMiddleware;
-import com.networknt.aws.lambda.limit.LimitMiddleware;
+import com.networknt.aws.lambda.middleware.chain.ChainDirection;
 import com.networknt.aws.lambda.middleware.chain.PooledChainLinkExecutor;
 import com.networknt.aws.lambda.middleware.payload.LambdaEventWrapper;
 import com.networknt.aws.lambda.security.SecurityMiddleware;
@@ -168,7 +168,7 @@ public class Main {
         eventWrapper.updateContext(lambdaContext);
 
         // middleware is executed in the order they are added.
-        final var requestChain = new PooledChainLinkExecutor(eventWrapper)
+        final var requestChain = new PooledChainLinkExecutor(eventWrapper, ChainDirection.REQUEST)
                 .add(SecurityMiddleware.class)
                 .add(HeaderMiddleware.class)
                 .add(TraceabilityMiddleware.class)

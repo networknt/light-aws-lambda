@@ -5,6 +5,7 @@ import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.networknt.aws.lambda.middleware.LambdaMiddleware;
 import com.networknt.aws.lambda.middleware.ChainLinkCallback;
+import com.networknt.aws.lambda.middleware.chain.ChainProperties;
 import com.networknt.aws.lambda.middleware.payload.LambdaEventWrapper;
 import com.networknt.aws.lambda.middleware.payload.ChainLinkReturn;
 import com.networknt.utility.Constants;
@@ -23,6 +24,7 @@ import java.util.Map;
 import static com.networknt.aws.lambda.security.AuthPolicy.PolicyDocument.getAllowOnePolicy;
 import static com.networknt.aws.lambda.security.AuthPolicy.PolicyDocument.getDenyOnePolicy;
 
+@ChainProperties(asynchronous = true, chainId = "SecurityMiddleware")
 public class SecurityMiddleware extends LambdaMiddleware {
 
     private static final Logger LOG = LoggerFactory.getLogger(SecurityMiddleware.class);
@@ -33,7 +35,7 @@ public class SecurityMiddleware extends LambdaMiddleware {
     /* We still need to figure out how we are going to load configs */
     Map<String, Map<String, Object>> config = new HashMap<>();
     public SecurityMiddleware(ChainLinkCallback middlewareCallback, final LambdaEventWrapper eventWrapper) {
-        super(middlewareCallback, eventWrapper, false, false, SecurityMiddleware.class);
+        super(middlewareCallback, eventWrapper);
     }
 
     @Override

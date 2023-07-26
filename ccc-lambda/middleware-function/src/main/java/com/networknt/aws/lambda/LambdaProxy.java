@@ -3,6 +3,7 @@ package com.networknt.aws.lambda;
 import com.amazonaws.auth.profile.ProfileCredentialsProvider;
 import com.amazonaws.regions.Regions;
 import com.networknt.aws.lambda.body.ResponseBodyTransformerMiddleware;
+import com.networknt.aws.lambda.middleware.chain.ChainDirection;
 import software.amazon.awssdk.core.SdkBytes;
 import software.amazon.awssdk.regions.Region;
 import software.amazon.awssdk.services.lambda.LambdaClient;
@@ -42,7 +43,7 @@ public class LambdaProxy implements RequestHandler<APIGatewayProxyRequestEvent, 
         eventWrapper.updateContext(context);
 
         // middleware is executed in the order they are added.
-        final var requestChain = new PooledChainLinkExecutor(eventWrapper)
+        final var requestChain = new PooledChainLinkExecutor(eventWrapper, ChainDirection.REQUEST)
                 .add(SecurityMiddleware.class)
                 .add(TraceabilityMiddleware.class)
                 .add(CorrelationMiddleware.class)
@@ -85,7 +86,7 @@ public class LambdaProxy implements RequestHandler<APIGatewayProxyRequestEvent, 
 //        eventWrapper.setResponse(responseEvent);
 //        eventWrapper.updateContext(responseContext);
 //
-//        final var responseChain = new PooledChainLinkExecutor(eventWrapper)
+//        final var responseChain = new PooledChainLinkExecutor(eventWrapper, ChainDirection.RESPONSE)
 //                .add(ResponseBodyTransformerMiddleware.class);
 //
 //        responseChain.finalizeChain();

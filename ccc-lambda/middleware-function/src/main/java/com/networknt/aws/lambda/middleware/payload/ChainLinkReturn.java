@@ -8,7 +8,8 @@ public class ChainLinkReturn {
     {
         EXECUTION_SUCCESS,
         EXECUTION_FAILED,
-        EXECUTION_INTERRUPTED
+        EXECUTION_INTERRUPTED,
+        DISABLED
     }
 
     private final Status status;

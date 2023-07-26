@@ -4,4 +4,4 @@ requestHeader:
   - headerKey: x-traceability-id
     changeDescriptor:
       changeType: APPEND
-      value: "append-test"
+      value: "-append-test"

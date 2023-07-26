@@ -1,5 +1,6 @@
 package com.networknt.aws.lambda.middleware;
 
+import com.networknt.aws.lambda.middleware.chain.ChainProperties;
 import com.networknt.aws.lambda.middleware.payload.LambdaEventWrapper;
 import com.networknt.aws.lambda.middleware.payload.ChainLinkReturn;
 import org.slf4j.Logger;
@@ -7,12 +8,13 @@ import org.slf4j.LoggerFactory;
 
 import java.util.concurrent.ThreadLocalRandom;
 
+@ChainProperties(asynchronous = true, chainId = "TestAsynchronousMiddleware")
 public class TestAsynchronousMiddleware extends LambdaMiddleware {
 
     private static final Logger LOG = LoggerFactory.getLogger(TestAsynchronousMiddleware.class);
 
     public TestAsynchronousMiddleware(ChainLinkCallback callback, LambdaEventWrapper eventWrapper) {
-        super(callback, eventWrapper, false, false, TestAsynchronousMiddleware.class);
+        super(callback, eventWrapper);
     }
 
     @Override

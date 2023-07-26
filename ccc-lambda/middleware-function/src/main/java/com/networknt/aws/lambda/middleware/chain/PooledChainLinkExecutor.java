@@ -1,9 +1,12 @@
 package com.networknt.aws.lambda.middleware.chain;
 
+import com.networknt.aws.lambda.header.HeaderConfig;
+import com.networknt.aws.lambda.middleware.Auditor;
 import com.networknt.aws.lambda.middleware.LambdaMiddleware;
 import com.networknt.aws.lambda.middleware.ChainLinkCallback;
 import com.networknt.aws.lambda.middleware.payload.LambdaEventWrapper;
 import com.networknt.aws.lambda.middleware.payload.ChainLinkReturn;
+import com.networknt.config.Config;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.slf4j.MDC;
@@ -20,31 +23,41 @@ import java.util.concurrent.Future;
 import java.util.concurrent.atomic.AtomicInteger;
 
 public class PooledChainLinkExecutor extends ThreadPoolExecutor {
+
     private final Logger LOG = LoggerFactory.getLogger(PooledChainLinkExecutor.class);
-    private final static int MAX_POOL_SIZE = 10;
-    private final static long KEEP_ALIVE_TIME = 0L;
+    private static final String CONFIG_NAME = "pooled-chain-executor";
+    private static final PooledChainConfig CONFIG = (PooledChainConfig) Config.getInstance().getJsonObjectConfig(CONFIG_NAME, PooledChainConfig.class);
+
     private final LambdaEventWrapper lambdaEventWrapper;
+    private final ChainDirection chainDirection;
     private final Chain chain = new Chain();
     private final AtomicInteger decrementCounter = new AtomicInteger(0);
     final Object lock = new Object();
 
-    public PooledChainLinkExecutor(final LambdaEventWrapper lambdaEventWrapper) {
-        super(MAX_POOL_SIZE, MAX_POOL_SIZE, KEEP_ALIVE_TIME, TimeUnit.MILLISECONDS, new LinkedBlockingQueue<>());
+    public PooledChainLinkExecutor(final LambdaEventWrapper lambdaEventWrapper, ChainDirection chainDirection) {
+        super(CONFIG.getCorePoolSize(), CONFIG.getMaxPoolSize(), CONFIG.getKeepAliveTime(), TimeUnit.MILLISECONDS, new LinkedBlockingQueue<>());
         this.lambdaEventWrapper = lambdaEventWrapper;
+        this.chainDirection = chainDirection;
     }
 
     public PooledChainLinkExecutor add(Class<? extends LambdaMiddleware> middleware) {
+
+        if (!middleware.isAnnotationPresent(ChainProperties.class)) {
+            LOG.error("Middleware '{}' is missing ChainProperties annotation.", middleware.getName());
+        }
 
         try {
             var newClazz = middleware
                     .getConstructor(ChainLinkCallback.class, LambdaEventWrapper.class)
                     .newInstance(this.chainLinkCallback, this.lambdaEventWrapper);
 
+            newClazz.setChainDirection(this.chainDirection);
+
             this.chain.addChainable(newClazz);
             int linkNumber = this.chain.getChainSize();
 
             if (LOG.isInfoEnabled())
-                LOG.info("Created new middleware instance: {}[{}]", newClazz.chainableId, linkNumber);
+                LOG.info("Created new middleware instance: {}[{}]", middleware.getAnnotation(ChainProperties.class).chainId(), linkNumber);
 
         } catch (InstantiationException | IllegalAccessException | InvocationTargetException | NoSuchMethodException e) {
             LOG.error("failed to create class: {}", e.getMessage());
@@ -77,11 +90,14 @@ public class PooledChainLinkExecutor extends ThreadPoolExecutor {
             for (var chainLink : chainLinkGroup) {
 
                 if (LOG.isDebugEnabled())
-                    LOG.debug("Creating thread for link '{}[{}]' in group '{}'.", chainLink.getChainableId(), linkNumber, groupNumber);
+                    LOG.debug("Creating thread for link '{}[{}]' in group '{}'.", chainLink.getClass().getAnnotation(ChainProperties.class).chainId(), linkNumber, groupNumber);
 
                 chainLinkWorkerGroup.add(new ChainLinkWorker(chainLink, new ChainLinkWorker.AuditThreadContext(MDC.getCopyOfContextMap())));
                 linkNumber++;
             }
+
+            if (LOG.isDebugEnabled())
+                LOG.debug("Setting decrement counter to: '{}'", this.decrementCounter.get());
 
             this.decrementCounter.getAndSet(chainLinkWorkerGroup.size());
             linkNumber = 1;
@@ -120,13 +136,14 @@ public class PooledChainLinkExecutor extends ThreadPoolExecutor {
             chainLinkWorkerGroup.clear();
             chainLinkWorkerFutures.clear();
 
-            LOG.trace("Decrement counter = {}", this.decrementCounter.get());
+            if (LOG.isDebugEnabled())
+                LOG.debug("Decrement counter: '{}'", this.decrementCounter.get());
         }
+
         this.shutdown();
     }
 
-    public LambdaEventWrapper GetResolvedChainResult() {
-
+    public LambdaEventWrapper getResolvedChainResult() {
         return this.lambdaEventWrapper;
     }
 
@@ -149,7 +166,6 @@ public class PooledChainLinkExecutor extends ThreadPoolExecutor {
                 LOG.error("Chain failed with exception: {}", throwable.getMessage(), throwable);
                 chain.addChainableResult(new ChainLinkReturn(ChainLinkReturn.Status.EXECUTION_FAILED));
             }
-
 
             abortExecution();
         }

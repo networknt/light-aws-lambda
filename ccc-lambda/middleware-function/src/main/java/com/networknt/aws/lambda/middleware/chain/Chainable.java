@@ -1,22 +1,20 @@
 package com.networknt.aws.lambda.middleware.chain;
 
+import com.networknt.aws.lambda.middleware.ChainLinkCallback;
+
 public abstract class Chainable {
-    protected final String chainableId;
-    protected final boolean isSynchronous;
-    protected final boolean isAudited;
+    protected final ChainLinkCallback middlewareCallback;
+    private ChainDirection chainDirection;
 
-    protected Chainable(final String chainableId, final boolean isSynchronous, final boolean isAudited) {
-        this.chainableId = chainableId;
-        this.isSynchronous = isSynchronous;
-        this.isAudited = isAudited;
+    protected Chainable(final ChainLinkCallback middlewareCallback) {
+        this.middlewareCallback = middlewareCallback;
     }
 
-    public String getChainableId() {
-        return chainableId;
+    public ChainDirection getChainDirection() {
+        return chainDirection;
     }
 
-    public boolean isSynchronous() {
-        return isSynchronous;
+    protected void setChainDirection(ChainDirection chainDirection) {
+        this.chainDirection = chainDirection;
     }
-
 }

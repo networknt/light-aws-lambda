@@ -50,17 +50,17 @@ public class Chain {
         ArrayList<LambdaMiddleware> group = new ArrayList<>();
         for (var chainable : this.chain) {
 
-            if (!chainable.isSynchronous()) {
+            if (chainable.getClass().getAnnotation(ChainProperties.class).asynchronous()) {
                 group.add(chainable);
 
-            } else if (chainable.isSynchronous() && !group.isEmpty()) {
+            } else if (!chainable.getClass().getAnnotation(ChainProperties.class).asynchronous() && !group.isEmpty()) {
                 this.groupedChain.add(group);
                 group = new ArrayList<>();
                 group.add(chainable);
                 this.groupedChain.add(group);
                 group = new ArrayList<>();
 
-            } else if (chainable.isSynchronous() && group.isEmpty()) {
+            } else if (!chainable.getClass().getAnnotation(ChainProperties.class).asynchronous() && group.isEmpty()) {
                 group.add(chainable);
                 this.groupedChain.add(group);
                 group = new ArrayList<>();

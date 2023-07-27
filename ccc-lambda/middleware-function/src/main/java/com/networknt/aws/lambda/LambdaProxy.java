@@ -39,15 +39,15 @@ public class LambdaProxy implements RequestHandler<APIGatewayProxyRequestEvent, 
         requestChain.finalizeChain();
         requestChain.executeChain();
 
-        /* test response payload for lambda deployment */
-        APIGatewayProxyResponseEvent testResponse = new APIGatewayProxyResponseEvent();
-        testResponse.setBody(eventWrapper.getRequest().getBody());
-        testResponse.setHeaders(eventWrapper.getRequest().getHeaders());
+        // TODO: Check chain results using 'requestChain.getResolvedChainResults() -- look for failed executions'
+        // TODO: if failed, return error in exception handler format
+        // TODO: if success, continue to pass request to backend business AWS lambda
 
+        for (var middlewareHandlerStatus : requestChain.getResolvedChainResults()) {
+            System.out.println(middlewareHandlerStatus.toString());
+        }
 
-
-        return testResponse;
-
+        /* send to backend */
 //        try {
 //
 //            InvokeRequest invokeRequest = InvokeRequest.builder()
@@ -65,21 +65,40 @@ public class LambdaProxy implements RequestHandler<APIGatewayProxyRequestEvent, 
 //        } catch (ServiceException e) {
 //            System.out.println(e);
 //        }
-//
-//        // TODO get response id?
-//        final APIGatewayProxyResponseEvent responseEvent = new APIGatewayProxyResponseEvent();
-//        final LambdaContext responseContext = new LambdaContext("" /* id here*/);
-//
+
+        // TODO: check if you get a correct response from backend business API
+        // TODO: if failed, return failure back
+        // TODO: if success, execute responseChain
+
+        /* update response wrapper with response from business lambda */
 //        eventWrapper.setResponse(responseEvent);
 //        eventWrapper.updateContext(responseContext);
-//
+
+
 //        final var responseChain = new PooledChainLinkExecutor(eventWrapper, ChainDirection.RESPONSE)
 //                .add(ResponseBodyTransformerMiddleware.class);
 //
 //        responseChain.finalizeChain();
 //        responseChain.executeChain();
+
+        // TODO: Check chain results using 'response.getResolvedChainResults() -- look for failed executions'
+        // TODO: if failed, return error in exception handler format
+        // TODO: if success, continue to pass response back to client
+
+
+        /* test response payload for lambda deployment */
+        APIGatewayProxyResponseEvent testResponse = new APIGatewayProxyResponseEvent();
+        testResponse.setBody(eventWrapper.getRequest().getBody());
+        testResponse.setHeaders(eventWrapper.getRequest().getHeaders());
+
+
+
+        return testResponse;
+
+
+
 //
-//        return new APIGatewayProxyResponseEvent();
+
 
     }
 }

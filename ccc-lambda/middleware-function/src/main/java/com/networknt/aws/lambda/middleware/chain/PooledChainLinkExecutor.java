@@ -1,6 +1,5 @@
 package com.networknt.aws.lambda.middleware.chain;
 
-import com.networknt.aws.lambda.middleware.Auditor;
 import com.networknt.aws.lambda.middleware.LambdaMiddleware;
 import com.networknt.aws.lambda.middleware.ChainLinkCallback;
 import com.networknt.aws.lambda.middleware.LambdaEventWrapper;
@@ -59,13 +58,7 @@ public class PooledChainLinkExecutor extends ThreadPoolExecutor {
             this.chain.addChainable(newClazz);
             int linkNumber = this.chain.getChainSize();
 
-            if (LOG.isInfoEnabled())
-                LOG.info("Created new middleware instance: {}[{}]", middleware.getAnnotation(ChainProperties.class).id(), linkNumber);
-
-            if (middleware.getAnnotation(ChainProperties.class).audited()) {
-                LOG.debug("Middleware '{}' is audited.", middleware.getName());
-                lambdaEventWrapper.addAuditKey(LambdaEventWrapper.Attachable.createMiddlewareAttachable(middleware));
-            }
+            LOG.debug("Created new middleware instance: {}[{}]", middleware.getAnnotation(ChainProperties.class).id(), linkNumber);
 
         } catch (InstantiationException | IllegalAccessException | InvocationTargetException | NoSuchMethodException e) {
             LOG.error("failed to create class: {}", e.getMessage());
@@ -147,8 +140,8 @@ public class PooledChainLinkExecutor extends ThreadPoolExecutor {
         this.shutdown();
     }
 
-    public LambdaEventWrapper getResolvedChainResult() {
-        return this.lambdaEventWrapper;
+    public LinkedList<ChainLinkReturn> getResolvedChainResults() {
+        return this.chain.getChainResults();
     }
 
     private final ChainLinkCallback chainLinkCallback = new ChainLinkCallback() {

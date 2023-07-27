@@ -26,23 +26,24 @@ public class Auditor implements Runnable {
         Map<String, Object> auditEntry = new HashMap<>();
         var requestAttachments = eventWrapper.getRequestAttachments();
         var responseAttachments = eventWrapper.getResponseAttachments();
-        var auditKeys = eventWrapper.getAuditKeys();
-
-
 
         Map<String, Object> request = new HashMap<>();
         for (var attachment : requestAttachments.entrySet()) {
-            var logKey = attachment.getKey().getKey().getAnnotation(ChainProperties.class).logKey();
-            var value = attachment.getValue();
-            request.put(logKey, value);
+            if (attachment.getKey().getKey().getAnnotation(ChainProperties.class).audited()) {
+                var logKey = attachment.getKey().getKey().getAnnotation(ChainProperties.class).logKey();
+                var value = attachment.getValue();
+                request.put(logKey, value);
+            }
         }
         auditEntry.put("request", request);
 
         Map<String, Object> response = new HashMap<>();
         for (var attachment : responseAttachments.entrySet()) {
-            var logKey = attachment.getKey().getKey().getAnnotation(ChainProperties.class).logKey();
-            var value = attachment.getValue();
-            response.put(logKey, value);
+            if (attachment.getKey().getKey().getAnnotation(ChainProperties.class).audited()) {
+                var logKey = attachment.getKey().getKey().getAnnotation(ChainProperties.class).logKey();
+                var value = attachment.getValue();
+                response.put(logKey, value);
+            }
         }
         auditEntry.put("response", response);
 

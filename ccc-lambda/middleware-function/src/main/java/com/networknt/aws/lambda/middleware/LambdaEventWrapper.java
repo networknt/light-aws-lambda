@@ -4,18 +4,16 @@ import com.amazonaws.services.lambda.runtime.Context;
 import com.amazonaws.services.lambda.runtime.events.APIGatewayProxyRequestEvent;
 import com.amazonaws.services.lambda.runtime.events.APIGatewayProxyResponseEvent;
 
-import java.util.ArrayList;
 import java.util.HashMap;
-import java.util.List;
 import java.util.Map;
 
+/**
+ * Shared object among middleware threads containing information on the request/response event.
+ */
 public class LambdaEventWrapper {
     private APIGatewayProxyRequestEvent request;
     private APIGatewayProxyResponseEvent response;
     private Context context;
-
-    private final List<Attachable<? extends LambdaMiddleware>> auditKeys = new ArrayList<>();
-
     private final Map<Attachable<? extends LambdaMiddleware>, Object> requestAttachments = new HashMap<>();
     private final Map<Attachable<? extends LambdaMiddleware>, Object> responseAttachments = new HashMap<>();
 
@@ -61,10 +59,6 @@ public class LambdaEventWrapper {
         return context;
     }
 
-    public <T extends LambdaMiddleware> void addAuditKey(Attachable<T> key) {
-        this.auditKeys.add(key);
-    }
-
     public <T extends LambdaMiddleware> void addRequestAttachment(Attachable<T> key, Object o) {
         if (!requestSet)
             return;
@@ -99,10 +93,6 @@ public class LambdaEventWrapper {
 
     protected Map<Attachable<? extends LambdaMiddleware>, Object> getResponseAttachments() {
         return responseAttachments;
-    }
-
-    protected List<Attachable<? extends LambdaMiddleware>> getAuditKeys() {
-        return this.auditKeys;
     }
 
     public static class Attachable<T extends LambdaMiddleware> {

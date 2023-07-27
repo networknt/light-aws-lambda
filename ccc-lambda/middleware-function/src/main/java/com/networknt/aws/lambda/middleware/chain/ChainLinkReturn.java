@@ -42,4 +42,12 @@ public class ChainLinkReturn {
         return status;
     }
 
+    @Override
+    public String toString() {
+        return "ChainLinkReturn{" +
+                "status=" + status +
+                ", message='" + message + '\'' +
+                ", additionalDetails='" + additionalDetails + '\'' +
+                '}';
+    }
 }

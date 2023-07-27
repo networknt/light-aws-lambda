@@ -24,7 +24,7 @@ import java.util.Map;
 import static com.networknt.aws.lambda.security.AuthPolicy.PolicyDocument.getAllowOnePolicy;
 import static com.networknt.aws.lambda.security.AuthPolicy.PolicyDocument.getDenyOnePolicy;
 
-@ChainProperties(asynchronous = true, id = "SecurityMiddleware")
+@ChainProperties(asynchronous = true, audited = false, id = "SecurityMiddleware")
 public class SecurityMiddleware extends LambdaMiddleware {
 
     private static final Logger LOG = LoggerFactory.getLogger(SecurityMiddleware.class);

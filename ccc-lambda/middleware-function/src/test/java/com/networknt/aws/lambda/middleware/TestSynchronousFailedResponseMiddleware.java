@@ -1,12 +1,11 @@
 package com.networknt.aws.lambda.middleware;
 
 import com.networknt.aws.lambda.middleware.chain.ChainProperties;
-import com.networknt.aws.lambda.middleware.payload.LambdaEventWrapper;
-import com.networknt.aws.lambda.middleware.payload.ChainLinkReturn;
+import com.networknt.aws.lambda.middleware.chain.ChainLinkReturn;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-@ChainProperties(chainId = "TestSynchronousFailedResponseMiddleware")
+@ChainProperties(id = "TestSynchronousFailedResponseMiddleware")
 public class TestSynchronousFailedResponseMiddleware extends LambdaMiddleware {
     private static final Logger LOG = LoggerFactory.getLogger(TestSynchronousMiddleware.class);
 

@@ -6,8 +6,8 @@ import com.fasterxml.jackson.databind.ObjectMapper;
 import com.networknt.aws.lambda.middleware.LambdaMiddleware;
 import com.networknt.aws.lambda.middleware.ChainLinkCallback;
 import com.networknt.aws.lambda.middleware.chain.ChainProperties;
-import com.networknt.aws.lambda.middleware.payload.LambdaEventWrapper;
-import com.networknt.aws.lambda.middleware.payload.ChainLinkReturn;
+import com.networknt.aws.lambda.middleware.LambdaEventWrapper;
+import com.networknt.aws.lambda.middleware.chain.ChainLinkReturn;
 import com.networknt.utility.Constants;
 import com.networknt.utility.StringUtils;
 import org.jose4j.jwt.JwtClaims;
@@ -24,12 +24,12 @@ import java.util.Map;
 import static com.networknt.aws.lambda.security.AuthPolicy.PolicyDocument.getAllowOnePolicy;
 import static com.networknt.aws.lambda.security.AuthPolicy.PolicyDocument.getDenyOnePolicy;
 
-@ChainProperties(asynchronous = true, chainId = "SecurityMiddleware")
+@ChainProperties(asynchronous = true, id = "SecurityMiddleware")
 public class SecurityMiddleware extends LambdaMiddleware {
 
     private static final Logger LOG = LoggerFactory.getLogger(SecurityMiddleware.class);
 
-    private static final LambdaEventWrapper.Attachable SECURITY_ATTACHMENT_KEY = LambdaEventWrapper.Attachable.createMiddlewareAttachable(SecurityMiddleware.class);
+    private static final LambdaEventWrapper.Attachable<SecurityMiddleware> SECURITY_ATTACHMENT_KEY = LambdaEventWrapper.Attachable.createMiddlewareAttachable(SecurityMiddleware.class);
     ObjectMapper objectMapper = new ObjectMapper();
 
     /* We still need to figure out how we are going to load configs */

@@ -19,6 +19,15 @@ public class HeaderConfig {
         return responseHeader;
     }
 
+    @Override
+    public String toString() {
+        return "HeaderConfig{" +
+                "enabled=" + enabled +
+                ", requestHeader=" + requestHeader.toString() +
+                ", responseHeader=" + responseHeader.toString() +
+                '}';
+    }
+
     public static class HeaderChange {
         private String headerKey;
         private ChangeDescriptor changeDescriptor;
@@ -31,6 +40,13 @@ public class HeaderConfig {
             return changeDescriptor;
         }
 
+        @Override
+        public String toString() {
+            return "HeaderChange{" +
+                    "headerKey='" + headerKey + '\'' +
+                    ", changeDescriptor=" + changeDescriptor.toString() +
+                    '}';
+        }
     }
 
     public static class ChangeDescriptor {
@@ -51,6 +67,14 @@ public class HeaderConfig {
 
         public String getValue() {
             return value;
+        }
+
+        @Override
+        public String toString() {
+            return "ChangeDescriptor{" +
+                    "changeType=" + changeType +
+                    ", value='" + value + '\'' +
+                    '}';
         }
     }
 }

@@ -1,7 +1,6 @@
 package com.networknt.aws.lambda.middleware;
 
-import com.networknt.aws.lambda.middleware.payload.LambdaEventWrapper;
-import com.networknt.aws.lambda.middleware.payload.ChainLinkReturn;
+import com.networknt.aws.lambda.middleware.chain.ChainLinkReturn;
 
 public interface ChainLinkCallback {
     void callback(final LambdaEventWrapper lambdaEventWrapper, ChainLinkReturn status);

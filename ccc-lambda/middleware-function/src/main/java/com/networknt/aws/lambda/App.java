@@ -12,7 +12,7 @@ import com.networknt.aws.lambda.header.HeaderMiddleware;
 import com.networknt.aws.lambda.limit.LimitMiddleware;
 import com.networknt.aws.lambda.middleware.chain.ChainDirection;
 import com.networknt.aws.lambda.middleware.chain.PooledChainLinkExecutor;
-import com.networknt.aws.lambda.middleware.payload.LambdaEventWrapper;
+import com.networknt.aws.lambda.middleware.LambdaEventWrapper;
 import com.networknt.aws.lambda.security.SecurityMiddleware;
 import com.networknt.aws.lambda.traceability.TraceabilityMiddleware;
 import org.slf4j.Logger;

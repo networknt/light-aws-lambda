@@ -11,9 +11,10 @@ import java.net.HttpURLConnection;
 import com.networknt.aws.lambda.body.RequestBodyTransformerMiddleware;
 import com.networknt.aws.lambda.correlation.CorrelationMiddleware;
 import com.networknt.aws.lambda.header.HeaderMiddleware;
+import com.networknt.aws.lambda.middleware.Auditor;
 import com.networknt.aws.lambda.middleware.chain.ChainDirection;
 import com.networknt.aws.lambda.middleware.chain.PooledChainLinkExecutor;
-import com.networknt.aws.lambda.middleware.payload.LambdaEventWrapper;
+import com.networknt.aws.lambda.middleware.LambdaEventWrapper;
 import com.networknt.aws.lambda.security.SecurityMiddleware;
 import com.networknt.aws.lambda.traceability.TraceabilityMiddleware;
 import com.networknt.utility.NioUtils;
@@ -68,7 +69,8 @@ public class Main {
                 "    \"X-Forwarded-For\": \"127.0.0.1, 127.0.0.2\",\n" +
                 "    \"X-Forwarded-Port\": \"443\",\n" +
                 "    \"X-Forwarded-Proto\": \"https\",\n" +
-                "    \"x-traceability-id\": \"123-123-123\"\n" +
+                "    \"x-traceability-id\": \"123-123-123\",\n" +
+                "    \"x-some-random-header\": \"randomHeaderValue\"\n" +
                 "  },\n" +
                 "  \"multiValueHeaders\": {\n" +
                 "    \"Accept\": [\n" +
@@ -167,6 +169,8 @@ public class Main {
         eventWrapper.setRequest(requestEvent);
         eventWrapper.updateContext(lambdaContext);
 
+
+
         // middleware is executed in the order they are added.
         final var requestChain = new PooledChainLinkExecutor(eventWrapper, ChainDirection.REQUEST)
                 .add(SecurityMiddleware.class)
@@ -181,6 +185,18 @@ public class Main {
         APIGatewayProxyResponseEvent testResponse = new APIGatewayProxyResponseEvent();
         testResponse.setBody(eventWrapper.getRequest().getBody());
         testResponse.setHeaders(eventWrapper.getRequest().getHeaders());
+
+        Auditor auditor = new Auditor(eventWrapper);
+        Thread auditThread = new Thread(auditor);
+        auditThread.start();
+
+        // send request
+
+        try {
+            auditThread.join();
+        } catch (InterruptedException e) {
+            throw new RuntimeException(e);
+        }
 
         System.out.println(testResponse);
 

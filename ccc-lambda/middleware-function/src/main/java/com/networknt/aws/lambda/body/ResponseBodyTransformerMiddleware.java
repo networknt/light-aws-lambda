@@ -5,8 +5,8 @@ import com.fasterxml.jackson.core.type.TypeReference;
 import com.networknt.aws.lambda.middleware.LambdaMiddleware;
 import com.networknt.aws.lambda.middleware.ChainLinkCallback;
 import com.networknt.aws.lambda.middleware.chain.ChainProperties;
-import com.networknt.aws.lambda.middleware.payload.LambdaEventWrapper;
-import com.networknt.aws.lambda.middleware.payload.ChainLinkReturn;
+import com.networknt.aws.lambda.middleware.LambdaEventWrapper;
+import com.networknt.aws.lambda.middleware.chain.ChainLinkReturn;
 import com.networknt.aws.lambda.utility.HeaderKey;
 import com.networknt.config.Config;
 import org.slf4j.Logger;
@@ -14,14 +14,14 @@ import org.slf4j.LoggerFactory;
 
 import java.util.Map;
 
-@ChainProperties(chainId = "ResponseBodyTransformerMiddleware")
+@ChainProperties(id = "ResponseBodyTransformerMiddleware", logKey = "responseBody")
 public class ResponseBodyTransformerMiddleware extends LambdaMiddleware {
 
     Logger LOG = LoggerFactory.getLogger(ResponseBodyTransformerMiddleware.class);
     private static final String CONFIG_NAME = "body";
     private static final BodyConfig CONFIG = (BodyConfig) Config.getInstance().getJsonObjectConfig(CONFIG_NAME, BodyConfig.class);
 
-    private static final LambdaEventWrapper.Attachable RESPONSE_BODY_ATTACHMENT_KEY = LambdaEventWrapper.Attachable.createMiddlewareAttachable(ResponseBodyTransformerMiddleware.class);
+    private static final LambdaEventWrapper.Attachable<ResponseBodyTransformerMiddleware> RESPONSE_BODY_ATTACHMENT_KEY = LambdaEventWrapper.Attachable.createMiddlewareAttachable(ResponseBodyTransformerMiddleware.class);
 
     public ResponseBodyTransformerMiddleware(ChainLinkCallback middlewareCallback, final LambdaEventWrapper eventWrapper) {
         super(middlewareCallback, eventWrapper);

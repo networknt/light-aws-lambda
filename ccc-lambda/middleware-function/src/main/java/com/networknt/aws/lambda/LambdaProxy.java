@@ -1,29 +1,16 @@
 package com.networknt.aws.lambda;
 
-import com.amazonaws.auth.profile.ProfileCredentialsProvider;
-import com.amazonaws.regions.Regions;
-import com.networknt.aws.lambda.body.ResponseBodyTransformerMiddleware;
 import com.networknt.aws.lambda.middleware.chain.ChainDirection;
-import software.amazon.awssdk.core.SdkBytes;
-import software.amazon.awssdk.regions.Region;
-import software.amazon.awssdk.services.lambda.LambdaClient;
-import software.amazon.awssdk.services.lambda.LambdaClientBuilder;
-import software.amazon.awssdk.services.lambda.model.*;
-import software.amazon.awssdk.services.lambda.LambdaClientBuilder;
 import com.amazonaws.services.lambda.runtime.Context;
 import com.amazonaws.services.lambda.runtime.RequestHandler;
 import com.amazonaws.services.lambda.runtime.events.APIGatewayProxyRequestEvent;
 import com.amazonaws.services.lambda.runtime.events.APIGatewayProxyResponseEvent;
 import com.networknt.aws.lambda.body.RequestBodyTransformerMiddleware;
 import com.networknt.aws.lambda.correlation.CorrelationMiddleware;
-import com.networknt.aws.lambda.header.HeaderMiddleware;
-import com.networknt.aws.lambda.limit.LimitMiddleware;
 import com.networknt.aws.lambda.middleware.chain.PooledChainLinkExecutor;
-import com.networknt.aws.lambda.middleware.payload.LambdaEventWrapper;
+import com.networknt.aws.lambda.middleware.LambdaEventWrapper;
 import com.networknt.aws.lambda.security.SecurityMiddleware;
 import com.networknt.aws.lambda.traceability.TraceabilityMiddleware;
-
-import java.nio.charset.StandardCharsets;
 
 
 /**

@@ -1,6 +1,4 @@
-package com.networknt.aws.lambda.middleware.payload;
-
-import java.util.Map;
+package com.networknt.aws.lambda.middleware.chain;
 
 public class ChainLinkReturn {
 

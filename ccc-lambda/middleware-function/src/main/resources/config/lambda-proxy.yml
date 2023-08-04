@@ -1,4 +1,4 @@
-region: ""
+region: "ca-central-1"
 endpointOverride:
 logType: ""
 functions:

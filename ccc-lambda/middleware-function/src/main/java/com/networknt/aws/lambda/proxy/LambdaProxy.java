@@ -34,10 +34,8 @@ import java.net.URI;
 public class LambdaProxy implements RequestHandler<APIGatewayProxyRequestEvent, APIGatewayProxyResponseEvent> {
 
     private static final Logger LOG = LoggerFactory.getLogger(LambdaProxy.class);
-
     private static final String CONFIG_NAME = "lambda-proxy";
-
-    private static final LambdaProxyConfig CONFIG = (LambdaProxyConfig) Config.getInstance().getJsonObjectConfig(CONFIG_NAME, HeaderConfig.class);
+    private static final LambdaProxyConfig CONFIG = (LambdaProxyConfig) Config.getInstance().getJsonObjectConfig(CONFIG_NAME, LambdaProxyConfig.class);
 
     private static LambdaClient client;
 
@@ -60,7 +58,11 @@ public class LambdaProxy implements RequestHandler<APIGatewayProxyRequestEvent, 
         final var auditThread = new Thread(auditor);
 
         // middleware is executed in the order they are added.
-        final var requestChain = new PooledChainLinkExecutor(eventWrapper, ChainDirection.REQUEST, "APPLICATION_ID", "ENV")
+        final var requestChain = new PooledChainLinkExecutor(
+                eventWrapper,
+                ChainDirection.REQUEST,
+                "arn:aws:lambda:ca-central-1:442513687360:function:eadp-light-lambda-test",
+                "dev")
                 .add(SecurityMiddleware.class)
                 .add(TraceabilityMiddleware.class)
                 .add(CorrelationMiddleware.class)

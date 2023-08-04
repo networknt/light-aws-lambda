@@ -7,7 +7,7 @@ import java.lang.reflect.Field;
 import java.util.HashMap;
 import java.util.Map;
 
-import com.networknt.aws.lambda.security.AuthPolicy;
+import com.networknt.aws.lambda.middleware.security.AuthPolicy;
 import org.junit.jupiter.api.Test;
 
 

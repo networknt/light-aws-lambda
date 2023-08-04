@@ -5,9 +5,9 @@ import com.amazonaws.services.lambda.runtime.RequestHandler;
 import com.amazonaws.services.lambda.runtime.events.APIGatewayProxyRequestEvent;
 import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.databind.ObjectMapper;
-import com.networknt.aws.lambda.security.AuthPolicy;
-import com.networknt.aws.lambda.security.ExpiredTokenException;
-import com.networknt.aws.lambda.security.JwtVerifier;
+import com.networknt.aws.lambda.middleware.security.AuthPolicy;
+import com.networknt.aws.lambda.middleware.security.ExpiredTokenException;
+import com.networknt.aws.lambda.middleware.security.JwtVerifier;
 import com.networknt.utility.Constants;
 import com.networknt.utility.StringUtils;
 import org.jose4j.jwt.JwtClaims;
@@ -18,8 +18,8 @@ import org.slf4j.LoggerFactory;
 
 import java.util.*;
 
-import static com.networknt.aws.lambda.security.AuthPolicy.PolicyDocument.getAllowOnePolicy;
-import static com.networknt.aws.lambda.security.AuthPolicy.PolicyDocument.getDenyOnePolicy;
+import static com.networknt.aws.lambda.middleware.security.AuthPolicy.PolicyDocument.getAllowOnePolicy;
+import static com.networknt.aws.lambda.middleware.security.AuthPolicy.PolicyDocument.getDenyOnePolicy;
 
 public class Authorizer implements RequestHandler<APIGatewayProxyRequestEvent, AuthPolicy> {
     private static Logger logger = LoggerFactory.getLogger(Authorizer.class);

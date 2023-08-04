@@ -87,11 +87,11 @@ public class LambdaEventWrapper {
         return this.responseAttachments.get(attachable);
     }
 
-    protected Map<Attachable<? extends LambdaMiddleware>, Object> getRequestAttachments() {
+    public Map<Attachable<? extends LambdaMiddleware>, Object> getRequestAttachments() {
         return requestAttachments;
     }
 
-    protected Map<Attachable<? extends LambdaMiddleware>, Object> getResponseAttachments() {
+    public Map<Attachable<? extends LambdaMiddleware>, Object> getResponseAttachments() {
         return responseAttachments;
     }
 

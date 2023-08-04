@@ -1,0 +1,7 @@
+region: ""
+endpointOverride:
+logType: ""
+functions:
+  functionName: functionVal
+metricsInjection: false
+metricsName: ""

@@ -2,6 +2,7 @@ package com.networknt.aws.lambda.middleware;
 
 import com.fasterxml.jackson.databind.DeserializationFeature;
 import com.fasterxml.jackson.databind.ObjectMapper;
+import com.networknt.aws.lambda.middleware.chain.ChainLinkCallback;
 import com.networknt.aws.lambda.middleware.chain.Chainable;
 import com.networknt.aws.lambda.middleware.chain.ChainLinkReturn;
 import org.slf4j.Logger;
@@ -21,6 +22,7 @@ public abstract class LambdaMiddleware extends Chainable implements Runnable {
     }
 
     protected abstract ChainLinkReturn executeMiddleware() throws InterruptedException;
+    public abstract void initMiddlewareConfig(String applicationId, String env);
 
     @Override
     public void run() {

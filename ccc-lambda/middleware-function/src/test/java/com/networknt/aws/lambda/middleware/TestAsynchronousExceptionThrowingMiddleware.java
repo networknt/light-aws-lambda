@@ -1,5 +1,6 @@
 package com.networknt.aws.lambda.middleware;
 
+import com.networknt.aws.lambda.middleware.chain.ChainLinkCallback;
 import com.networknt.aws.lambda.middleware.chain.ChainProperties;
 import com.networknt.aws.lambda.middleware.chain.ChainLinkReturn;
 import org.slf4j.Logger;
@@ -32,6 +33,11 @@ public class TestAsynchronousExceptionThrowingMiddleware extends LambdaMiddlewar
 
         /* force throw an exception after some time. */
         throw new RuntimeException("I am throwing an exception asynchronously");
+    }
+
+    @Override
+    public void initMiddlewareConfig(String applicationId, String env) {
+
     }
 
 }

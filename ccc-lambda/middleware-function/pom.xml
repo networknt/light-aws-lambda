@@ -20,6 +20,7 @@
         <version.lambda-core>1.2.2</version.lambda-core>
         <version.lambda-events>3.11.0</version.lambda-events>
         <version.lambda-awssdk>2.20.38</version.lambda-awssdk>
+        <version.appconfigdata-aws>2.20.118</version.appconfigdata-aws>
         <version.lambda-lambdasdk>1.11.648</version.lambda-lambdasdk>
         <version.lambda-iam>1.12.441</version.lambda-iam>
         <version.jose4j>0.9.3</version.jose4j>
@@ -70,6 +71,11 @@
             <groupId>com.amazonaws</groupId>
             <artifactId>aws-lambda-java-core</artifactId>
             <version>${version.lambda-core}</version>
+        </dependency>
+        <dependency>
+            <groupId>software.amazon.awssdk</groupId>
+            <artifactId>appconfigdata</artifactId>
+            <version>${version.appconfigdata-aws}</version>
         </dependency>
         <dependency>
             <groupId>com.amazonaws</groupId>

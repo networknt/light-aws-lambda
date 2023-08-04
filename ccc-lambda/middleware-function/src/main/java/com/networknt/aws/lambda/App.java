@@ -5,16 +5,16 @@ import com.amazonaws.services.lambda.runtime.RequestHandler;
 import com.amazonaws.services.lambda.runtime.events.APIGatewayProxyRequestEvent;
 import com.amazonaws.services.lambda.runtime.events.APIGatewayProxyResponseEvent;
 import com.fasterxml.jackson.databind.ObjectMapper;
-import com.networknt.aws.lambda.body.RequestBodyTransformerMiddleware;
-import com.networknt.aws.lambda.body.ResponseBodyTransformerMiddleware;
-import com.networknt.aws.lambda.correlation.CorrelationMiddleware;
-import com.networknt.aws.lambda.header.HeaderMiddleware;
-import com.networknt.aws.lambda.limit.LimitMiddleware;
+import com.networknt.aws.lambda.middleware.body.RequestBodyTransformerMiddleware;
+import com.networknt.aws.lambda.middleware.body.ResponseBodyTransformerMiddleware;
+import com.networknt.aws.lambda.middleware.correlation.CorrelationMiddleware;
+import com.networknt.aws.lambda.middleware.header.HeaderMiddleware;
+import com.networknt.aws.lambda.middleware.limit.LimitMiddleware;
 import com.networknt.aws.lambda.middleware.chain.ChainDirection;
 import com.networknt.aws.lambda.middleware.chain.PooledChainLinkExecutor;
 import com.networknt.aws.lambda.middleware.LambdaEventWrapper;
-import com.networknt.aws.lambda.security.SecurityMiddleware;
-import com.networknt.aws.lambda.traceability.TraceabilityMiddleware;
+import com.networknt.aws.lambda.middleware.security.SecurityMiddleware;
+import com.networknt.aws.lambda.middleware.traceability.TraceabilityMiddleware;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import software.amazon.awssdk.core.SdkBytes;
@@ -44,7 +44,7 @@ public class App extends LightRequestHandler implements RequestHandler<APIGatewa
         eventWrapper.updateContext(context);
 
         // middleware is executed in the order they are added.
-        final var requestChain = new PooledChainLinkExecutor(eventWrapper, ChainDirection.REQUEST)
+        final var requestChain = new PooledChainLinkExecutor(eventWrapper, ChainDirection.REQUEST, "APPLICATION_ID", "ENV")
                 .add(SecurityMiddleware.class)
                 .add(LimitMiddleware.class)
                 .add(CorrelationMiddleware.class)
@@ -80,7 +80,7 @@ public class App extends LightRequestHandler implements RequestHandler<APIGatewa
         eventWrapper.setResponse(responseEvent);
         eventWrapper.updateContext(responseContext);
 
-        final var responseChain = new PooledChainLinkExecutor(eventWrapper, ChainDirection.RESPONSE)
+        final var responseChain = new PooledChainLinkExecutor(eventWrapper, ChainDirection.RESPONSE, "APPLICATION_ID", "ENV")
                 .add(ResponseBodyTransformerMiddleware.class);
 
         responseChain.finalizeChain();

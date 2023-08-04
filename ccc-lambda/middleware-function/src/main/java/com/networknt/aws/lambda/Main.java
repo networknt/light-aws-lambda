@@ -8,15 +8,14 @@ import com.fasterxml.jackson.databind.ObjectMapper;
 import java.io.IOException;
 import java.net.HttpURLConnection;
 
-import com.networknt.aws.lambda.body.RequestBodyTransformerMiddleware;
-import com.networknt.aws.lambda.correlation.CorrelationMiddleware;
-import com.networknt.aws.lambda.header.HeaderMiddleware;
-import com.networknt.aws.lambda.middleware.Auditor;
+import com.networknt.aws.lambda.middleware.body.RequestBodyTransformerMiddleware;
+import com.networknt.aws.lambda.middleware.correlation.CorrelationMiddleware;
+import com.networknt.aws.lambda.middleware.header.HeaderMiddleware;
 import com.networknt.aws.lambda.middleware.chain.ChainDirection;
 import com.networknt.aws.lambda.middleware.chain.PooledChainLinkExecutor;
 import com.networknt.aws.lambda.middleware.LambdaEventWrapper;
-import com.networknt.aws.lambda.security.SecurityMiddleware;
-import com.networknt.aws.lambda.traceability.TraceabilityMiddleware;
+import com.networknt.aws.lambda.middleware.security.SecurityMiddleware;
+import com.networknt.aws.lambda.middleware.traceability.TraceabilityMiddleware;
 import com.networknt.utility.NioUtils;
 
 public class Main {
@@ -169,10 +168,8 @@ public class Main {
         eventWrapper.setRequest(requestEvent);
         eventWrapper.updateContext(lambdaContext);
 
-
-
         // middleware is executed in the order they are added.
-        final var requestChain = new PooledChainLinkExecutor(eventWrapper, ChainDirection.REQUEST)
+        final var requestChain = new PooledChainLinkExecutor(eventWrapper, ChainDirection.REQUEST, "APPLICATION_ID", "ENV")
                 .add(SecurityMiddleware.class)
                 .add(HeaderMiddleware.class)
                 .add(TraceabilityMiddleware.class)
@@ -186,17 +183,17 @@ public class Main {
         testResponse.setBody(eventWrapper.getRequest().getBody());
         testResponse.setHeaders(eventWrapper.getRequest().getHeaders());
 
-        Auditor auditor = new Auditor(eventWrapper);
-        Thread auditThread = new Thread(auditor);
-        auditThread.start();
+        //Auditor auditor = new Auditor(eventWrapper);
+        //Thread auditThread = new Thread(auditor);
+        //auditThread.start();
 
         // send request
 
-        try {
-            auditThread.join();
-        } catch (InterruptedException e) {
-            throw new RuntimeException(e);
-        }
+//        try {
+//            auditThread.join();
+//        } catch (InterruptedException e) {
+//            throw new RuntimeException(e);
+//        }
 
         System.out.println(testResponse);
 

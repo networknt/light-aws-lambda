@@ -1,7 +1,5 @@
 package com.networknt.aws.lambda.middleware.chain;
 
-import com.networknt.aws.lambda.middleware.ChainLinkCallback;
-
 public abstract class Chainable {
     protected final ChainLinkCallback middlewareCallback;
     private ChainDirection chainDirection;

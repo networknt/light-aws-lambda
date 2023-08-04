@@ -1,5 +1,6 @@
 package com.networknt.aws.lambda.middleware;
 
+import com.networknt.aws.lambda.middleware.chain.ChainLinkCallback;
 import com.networknt.aws.lambda.middleware.chain.ChainProperties;
 import com.networknt.aws.lambda.middleware.chain.ChainLinkReturn;
 import org.slf4j.Logger;
@@ -32,7 +33,12 @@ public class TestAsynchronousMiddleware extends LambdaMiddleware {
         }
 
         LOG.info("I am done executing asynchronously, doing callback");
-        return new ChainLinkReturn(ChainLinkReturn.Status.EXECUTION_SUCCESS);
+        return ChainLinkReturn.successMiddlewareReturn();
+    }
+
+    @Override
+    public void initMiddlewareConfig(String applicationId, String env) {
+
     }
 
 }

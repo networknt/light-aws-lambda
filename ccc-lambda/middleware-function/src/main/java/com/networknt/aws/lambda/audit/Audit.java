@@ -26,41 +26,41 @@ public class Audit implements Runnable {
 
     @Override
     public void run() {
-        if (CONFIG.isEnabled()) {
-            var auditEntry = new HashMap<String, Object>();
-            var requestAttachments = eventWrapper.getRequestAttachments();
-            var responseAttachments = eventWrapper.getResponseAttachments();
-
-            var request = new HashMap<String, Object>();
-
-            for (var attachment : requestAttachments.entrySet()) {
-
-                if (attachment.getKey().getKey().getAnnotation(ChainProperties.class).audited()) {
-                    var logKey = attachment.getKey().getKey().getAnnotation(ChainProperties.class).logKey();
-                    var value = attachment.getValue();
-                    request.put(logKey, value);
-                }
-            }
-            auditEntry.put("request", request);
-
-            var response = new HashMap<String, Object>();
-
-            for (var attachment : responseAttachments.entrySet()) {
-
-                if (attachment.getKey().getKey().getAnnotation(ChainProperties.class).audited()) {
-                    var logKey = attachment.getKey().getKey().getAnnotation(ChainProperties.class).logKey();
-                    var value = attachment.getValue();
-                    response.put(logKey, value);
-                }
-            }
-            auditEntry.put("response", response);
-
-            try {
-                var out = OBJECT_MAPPER.writeValueAsString(auditEntry);
-                System.out.println(out);
-            } catch (JsonProcessingException e) {
-                throw new RuntimeException(e);
-            }
-        }
+//        if (CONFIG.isEnabled()) {
+//            var auditEntry = new HashMap<String, Object>();
+//            var requestAttachments = eventWrapper.getRequestAttachments();
+//            var responseAttachments = eventWrapper.getResponseAttachments();
+//
+//            var request = new HashMap<String, Object>();
+//
+//            for (var attachment : requestAttachments.entrySet()) {
+//
+//                if (attachment.getKey().getKey().getAnnotation(ChainProperties.class).audited()) {
+//                    var logKey = attachment.getKey().getKey().getAnnotation(ChainProperties.class).logKey();
+//                    var value = attachment.getValue();
+//                    request.put(logKey, value);
+//                }
+//            }
+//            auditEntry.put("request", request);
+//
+//            var response = new HashMap<String, Object>();
+//
+//            for (var attachment : responseAttachments.entrySet()) {
+//
+//                if (attachment.getKey().getKey().getAnnotation(ChainProperties.class).audited()) {
+//                    var logKey = attachment.getKey().getKey().getAnnotation(ChainProperties.class).logKey();
+//                    var value = attachment.getValue();
+//                    response.put(logKey, value);
+//                }
+//            }
+//            auditEntry.put("response", response);
+//
+//            try {
+//                var out = OBJECT_MAPPER.writeValueAsString(auditEntry);
+//                System.out.println(out);
+//            } catch (JsonProcessingException e) {
+//                throw new RuntimeException(e);
+//            }
+//        }
     }
 }

@@ -39,7 +39,7 @@ public class App extends LightRequestHandler implements RequestHandler<APIGatewa
 
     public APIGatewayProxyResponseEvent handleRequest(final APIGatewayProxyRequestEvent input, final Context context) {
 
-        final LambdaEventWrapper eventWrapper = new LambdaEventWrapper();
+        final LambdaEventWrapper eventWrapper = new LambdaEventWrapper(context);
         eventWrapper.setRequest(input);
         eventWrapper.updateContext(context);
 

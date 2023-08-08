@@ -22,7 +22,7 @@ public abstract class LambdaMiddleware extends Chainable implements Runnable {
     }
 
     protected abstract ChainLinkReturn executeMiddleware() throws InterruptedException;
-    public abstract void initMiddlewareConfig(String applicationId, String env);
+    public abstract void getAppConfigProfileConfigurations(String applicationId, String env);
 
     @Override
     public void run() {

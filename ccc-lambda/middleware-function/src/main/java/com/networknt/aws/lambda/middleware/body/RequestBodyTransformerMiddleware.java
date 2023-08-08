@@ -7,7 +7,7 @@ import com.networknt.aws.lambda.middleware.chain.ChainLinkCallback;
 import com.networknt.aws.lambda.middleware.chain.ChainProperties;
 import com.networknt.aws.lambda.middleware.LambdaEventWrapper;
 import com.networknt.aws.lambda.middleware.chain.ChainLinkReturn;
-import com.networknt.aws.lambda.utility.AwsConfigUtil;
+import com.networknt.aws.lambda.utility.AwsAppConfigUtil;
 import com.networknt.aws.lambda.utility.HeaderKey;
 import com.networknt.aws.lambda.utility.HeaderValue;
 import com.networknt.config.Config;
@@ -16,7 +16,7 @@ import org.slf4j.LoggerFactory;
 
 import java.util.Map;
 
-@ChainProperties(id = "RequestBodyTransformerMiddleware", logKey = "requestBody")
+@ChainProperties()
 public class RequestBodyTransformerMiddleware extends LambdaMiddleware {
 
     private static final LambdaEventWrapper.Attachable<RequestBodyTransformerMiddleware> REQUEST_BODY_ATTACHMENT_KEY = LambdaEventWrapper.Attachable.createMiddlewareAttachable(RequestBodyTransformerMiddleware.class);
@@ -72,8 +72,8 @@ public class RequestBodyTransformerMiddleware extends LambdaMiddleware {
     }
 
     @Override
-    public void initMiddlewareConfig(String applicationId, String env) {
-        String configResponse = AwsConfigUtil.getConfiguration(applicationId, env, CONFIG_NAME);
+    public void getAppConfigProfileConfigurations(String applicationId, String env) {
+        String configResponse = AwsAppConfigUtil.getConfiguration(applicationId, env, CONFIG_NAME);
         if (configResponse != null) {
             try {
                 CONFIG = OBJECT_MAPPER.readValue(configResponse, BodyConfig.class);

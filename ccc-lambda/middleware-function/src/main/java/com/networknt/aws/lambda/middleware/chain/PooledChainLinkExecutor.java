@@ -31,7 +31,6 @@ public class PooledChainLinkExecutor extends ThreadPoolExecutor {
     private final String env;
     private final ChainDirection chainDirection;
     private final Chain chain = new Chain();
-    private final AtomicInteger decrementCounter = new AtomicInteger(0);
     final Object lock = new Object();
 
     public PooledChainLinkExecutor(final LambdaEventWrapper lambdaEventWrapper, ChainDirection chainDirection, String applicationId, String env) {
@@ -42,30 +41,44 @@ public class PooledChainLinkExecutor extends ThreadPoolExecutor {
         this.applicationId = applicationId;
     }
 
+    public PooledChainLinkExecutor add(String className) {
+        try {
+            if (Class.forName(className).getSuperclass().equals(LambdaMiddleware.class))
+                return this.add((Class<? extends LambdaMiddleware>) Class.forName(className));
+
+            else throw new RuntimeException(className + " is not a member of LambdaMiddleware...");
+        } catch (ClassNotFoundException e) {
+            throw new RuntimeException(e);
+        }
+    }
+
     public PooledChainLinkExecutor add(Class<? extends LambdaMiddleware> middleware) {
+
+        if (CONFIG.getMaxChainSize() <= this.chain.getChainSize()) {
+            LOG.error("Chain is already at maxChainSize({}), cannot add anymore middleware to the chain.", CONFIG.getMaxChainSize());
+            return this;
+        }
 
         if (!middleware.isAnnotationPresent(ChainProperties.class)) {
             LOG.error("Middleware '{}' is missing ChainProperties annotation.", middleware.getName());
             return this;
         }
 
-        if (middleware.getAnnotation(ChainProperties.class).id().equals(ChainProperties.DEFAULT_CHAIN_ID)) {
-            LOG.error("Middleware '{}' does not have chainId defined!", middleware.getName());
-            return this;
-        }
-
         try {
             var newClazz = middleware.getConstructor(ChainLinkCallback.class, LambdaEventWrapper.class).newInstance(this.chainLinkCallback, this.lambdaEventWrapper);
             newClazz.setChainDirection(this.chainDirection);
-            newClazz.initMiddlewareConfig(this.applicationId, this.env);
+
+            // TODO - Connection keeps timing out in AWS Lambda -- fix before uncomment
+            //newClazz.getAppConfigProfileConfigurations(this.applicationId, this.env);
+
             this.chain.addChainable(newClazz);
 
             int linkNumber = this.chain.getChainSize();
 
-            LOG.debug("Created new middleware instance: {}[{}]", middleware.getAnnotation(ChainProperties.class).id(), linkNumber);
+            LOG.debug("Created new middleware instance: {}[{}]", middleware.getName(), linkNumber);
 
         } catch (InstantiationException | IllegalAccessException | InvocationTargetException | NoSuchMethodException e) {
-            LOG.error("failed to create class: {}", e.getMessage());
+            LOG.error("failed to create class instance: {}", e.getMessage());
         }
 
         return this;
@@ -82,67 +95,67 @@ public class PooledChainLinkExecutor extends ThreadPoolExecutor {
             return;
         }
 
-        int groupNumber = 1;
-        int linkNumber;
-
         for (var chainLinkGroup : this.chain.getGroupedChain()) {
+            /* create workers & submit to queue */
+            final var chainLinkWorkerGroup = this.createChainListWorkers(chainLinkGroup);
+            final var chainLinkWorkerFutures = this.createChainLinkWorkerFutures(chainLinkWorkerGroup);
 
-            final ArrayList<ChainLinkWorker> chainLinkWorkerGroup = new ArrayList<>();
-            final Collection<Future<?>> chainLinkWorkerFutures = new LinkedList<>();
-            linkNumber = 1;
-
-            /* create a worker for each link in a group */
-            for (var chainLink : chainLinkGroup) {
-
-                LOG.debug("Creating thread for link '{}[{}]' in group '{}'.", chainLink.getClass().getAnnotation(ChainProperties.class).id(), linkNumber, groupNumber);
-
-                chainLinkWorkerGroup.add(new ChainLinkWorker(chainLink, new ChainLinkWorker.AuditThreadContext(MDC.getCopyOfContextMap())));
-                linkNumber++;
-            }
-
-            LOG.debug("Setting decrement counter to: '{}'", this.decrementCounter.get());
-
-            this.decrementCounter.getAndSet(chainLinkWorkerGroup.size());
-            linkNumber = 1;
-
-            /* submit each link in the group into a queue */
-            for (var chainLinkWorker : chainLinkWorkerGroup) {
-
-                LOG.debug("Submitting link '{}' in group '{}' for execution.", linkNumber, groupNumber);
-
-                synchronized (lock) {
-
-                    if (!this.isShutdown() && !this.isTerminating())
-                        chainLinkWorkerFutures.add(this.submit(chainLinkWorker));
-
-                }
-
-                this.decrementCounter.decrementAndGet();
-                linkNumber++;
-            }
-
-
-            /* wait out the future results of the submitted tasks. */
-            for (var chainLinkWorkerFuture : chainLinkWorkerFutures) {
-
-                try {
-                    chainLinkWorkerFuture.get();
-
-                } catch (InterruptedException | ExecutionException e) {
-                    throw new RuntimeException(e);
-                }
-            }
-
+            /* await worker completion */
+            this.awaitChainWorkerFutures(chainLinkWorkerFutures);
             if (this.isTerminating() || this.isTerminated() || this.isShutdown())
                 break;
 
             chainLinkWorkerGroup.clear();
             chainLinkWorkerFutures.clear();
-
-            LOG.trace("Decrement counter: '{}'", this.decrementCounter.get());
         }
 
         this.shutdown();
+    }
+
+    private void awaitChainWorkerFutures(final Collection<Future<?>> chainLinkWorkerFutures) {
+        /* wait out the future results of the submitted tasks. */
+        for (var chainLinkWorkerFuture : chainLinkWorkerFutures) {
+
+            try {
+                chainLinkWorkerFuture.get();
+
+            } catch (InterruptedException | ExecutionException e) {
+                LOG.error(e.getMessage(), e);
+                return;
+            }
+        }
+    }
+
+    private Collection<Future<?>> createChainLinkWorkerFutures(ArrayList<ChainLinkWorker> chainLinkWorkerGroup) {
+        Collection<Future<?>> chainLinkWorkerFutures = new ArrayList<>();
+        int linkNumber = 1;
+
+        /* submit each link in the group into a queue */
+        for (var chainLinkWorker : chainLinkWorkerGroup) {
+            LOG.debug("Submitting link '{}' for execution.", linkNumber);
+
+            synchronized (lock) {
+
+                if (!this.isShutdown() && !this.isTerminating())
+                    chainLinkWorkerFutures.add(this.submit(chainLinkWorker));
+            }
+
+            linkNumber++;
+        }
+        return chainLinkWorkerFutures;
+    }
+
+    private ArrayList<ChainLinkWorker> createChainListWorkers(ArrayList<LambdaMiddleware> chainLinkGroup) {
+        final ArrayList<ChainLinkWorker> chainLinkWorkerGroup = new ArrayList<>();
+        int linkNumber = 1;
+
+        /* create a worker for each link in a group */
+        for (var chainLink : chainLinkGroup) {
+            LOG.debug("Creating thread for link '{}[{}]'.", chainLink.getClass().getName(), linkNumber);
+            chainLinkWorkerGroup.add(new ChainLinkWorker(chainLink, new ChainLinkWorker.AuditThreadContext(MDC.getCopyOfContextMap())));
+            linkNumber++;
+        }
+        return chainLinkWorkerGroup;
     }
 
     public LinkedList<ChainLinkReturn> getResolvedChainResults() {
@@ -152,7 +165,7 @@ public class PooledChainLinkExecutor extends ThreadPoolExecutor {
     private final ChainLinkCallback chainLinkCallback = new ChainLinkCallback() {
         @Override
         public void callback(final LambdaEventWrapper eventWrapper, ChainLinkReturn middlewareReturn) {
-            chain.addChainableResult(middlewareReturn);
+            PooledChainLinkExecutor.this.chain.addChainableResult(middlewareReturn);
 
             if (middlewareReturn.getStatus() == ChainLinkReturn.Status.EXECUTION_FAILED) {
                 abortExecution();
@@ -165,6 +178,7 @@ public class PooledChainLinkExecutor extends ThreadPoolExecutor {
         @Override
         public void exceptionCallback(final LambdaEventWrapper eventWrapper, Throwable throwable) {
             abortExecution();
+
             if (throwable instanceof InterruptedException)
                 ExceptionHandler.handle(new ChainLinkReturn(ChainLinkReturn.Status.EXECUTION_INTERRUPTED, MIDDLEWARE_THREAD_INTERRUPT));
 

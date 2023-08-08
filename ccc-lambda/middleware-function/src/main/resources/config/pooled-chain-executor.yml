@@ -1,3 +1,4 @@
 maxPoolSize: 10
 corePoolSize: 10
 keepAliveTime: 0
+maxChainSize: 20

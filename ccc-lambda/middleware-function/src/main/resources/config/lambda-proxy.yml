@@ -1,7 +1,24 @@
 region: "ca-central-1"
+
 endpointOverride:
+
 logType: ""
+
 functions:
-  functionName: functionVal
+  /v1/pets : functionVal
+
 metricsInjection: false
+
 metricsName: ""
+
+lambdaAppId: "arn:aws:lambda:ca-central-1:442513687360:function:eadp-light-lambda-test"
+
+
+requestChain:
+  - "com.networknt.aws.lambda.middleware.security.SecurityMiddleware"
+  - "com.networknt.aws.lambda.middleware.header.HeaderMiddleware"
+  - "com.networknt.aws.lambda.middleware.traceability.TraceabilityMiddleware"
+  - "com.networknt.aws.lambda.middleware.correlation.CorrelationMiddleware"
+  - "com.networknt.aws.lambda.middleware.body.RequestBodyTransformerMiddleware"
+
+responseChain:

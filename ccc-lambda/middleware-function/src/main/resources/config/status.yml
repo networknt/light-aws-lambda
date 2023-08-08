@@ -1440,3 +1440,8 @@ ERR14005:
   code: ERR14005
   message: UNKNOWN_HEADER_OPERATION
   description: Header operation is unknown (config issue).
+ERR14006:
+  statusCode: 500
+  code: ERR14005
+  message: HEADER_MISSING_FOR_OPERATION
+  description: Header value %s is missing. Header must be present for this operation.

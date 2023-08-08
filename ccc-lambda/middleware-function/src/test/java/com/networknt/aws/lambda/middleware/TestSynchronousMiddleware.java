@@ -8,7 +8,7 @@ import org.slf4j.LoggerFactory;
 
 import java.util.concurrent.ThreadLocalRandom;
 
-@ChainProperties(id = "TestSynchronousMiddleware")
+@ChainProperties()
 public class TestSynchronousMiddleware extends LambdaMiddleware {
 
     private static final Logger LOG = LoggerFactory.getLogger(TestSynchronousMiddleware.class);
@@ -36,7 +36,7 @@ public class TestSynchronousMiddleware extends LambdaMiddleware {
     }
 
     @Override
-    public void initMiddlewareConfig(String applicationId, String env) {
+    public void getAppConfigProfileConfigurations(String applicationId, String env) {
 
     }
 

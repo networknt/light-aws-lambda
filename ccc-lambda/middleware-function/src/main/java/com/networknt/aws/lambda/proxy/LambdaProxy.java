@@ -1,27 +1,35 @@
 package com.networknt.aws.lambda.proxy;
 
-import com.networknt.aws.lambda.middleware.header.HeaderConfig;
+import com.fasterxml.jackson.core.JsonProcessingException;
+import com.fasterxml.jackson.databind.ObjectMapper;
+import com.networknt.aws.lambda.exception.ExceptionHandler;
+import com.networknt.aws.lambda.middleware.body.ResponseBodyTransformerMiddleware;
+import com.networknt.aws.lambda.middleware.chain.ChainLinkReturn;
 import com.networknt.aws.lambda.audit.Audit;
 import com.networknt.aws.lambda.middleware.chain.ChainDirection;
 import com.amazonaws.services.lambda.runtime.Context;
 import com.amazonaws.services.lambda.runtime.RequestHandler;
 import com.amazonaws.services.lambda.runtime.events.APIGatewayProxyRequestEvent;
 import com.amazonaws.services.lambda.runtime.events.APIGatewayProxyResponseEvent;
-import com.networknt.aws.lambda.middleware.body.RequestBodyTransformerMiddleware;
-import com.networknt.aws.lambda.middleware.correlation.CorrelationMiddleware;
 import com.networknt.aws.lambda.middleware.chain.PooledChainLinkExecutor;
 import com.networknt.aws.lambda.middleware.LambdaEventWrapper;
-import com.networknt.aws.lambda.middleware.security.SecurityMiddleware;
-import com.networknt.aws.lambda.middleware.traceability.TraceabilityMiddleware;
 import com.networknt.config.Config;
+import com.networknt.config.JsonMapper;
 import com.networknt.utility.StringUtils;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+import software.amazon.awssdk.core.SdkBytes;
 import software.amazon.awssdk.regions.Region;
 import software.amazon.awssdk.services.lambda.LambdaClient;
 import software.amazon.awssdk.services.lambda.LambdaClientBuilder;
+import software.amazon.awssdk.services.lambda.model.InvokeRequest;
+import software.amazon.awssdk.services.lambda.model.InvokeResponse;
+import software.amazon.awssdk.services.lambda.model.LambdaException;
 
 import java.net.URI;
+import java.util.HashMap;
+import java.util.List;
+import java.util.Map;
 
 
 /**
@@ -39,9 +47,11 @@ public class LambdaProxy implements RequestHandler<APIGatewayProxyRequestEvent, 
 
     private static LambdaClient client;
 
+    private static final ObjectMapper OBJECT_MAPPER = new ObjectMapper();
+
     public LambdaProxy() {
         LambdaClientBuilder builder = LambdaClient.builder().region(Region.of(CONFIG.getRegion()));
-        if(!StringUtils.isEmpty(CONFIG.getEndpointOverride())) {
+        if (!StringUtils.isEmpty(CONFIG.getEndpointOverride())) {
             builder.endpointOverride(URI.create(CONFIG.getEndpointOverride()));
         }
         client = builder.build();
@@ -49,98 +59,68 @@ public class LambdaProxy implements RequestHandler<APIGatewayProxyRequestEvent, 
 
     @Override
     public APIGatewayProxyResponseEvent handleRequest(final APIGatewayProxyRequestEvent apiGatewayProxyRequestEvent, final Context context) {
+        LOG.debug("Lambda CCC --start");
 
-        final LambdaEventWrapper eventWrapper = new LambdaEventWrapper();
+        final var eventWrapper = new LambdaEventWrapper(context);
         eventWrapper.setRequest(apiGatewayProxyRequestEvent);
-        eventWrapper.updateContext(context);
-
-        final var auditor = new Audit(eventWrapper);
-        final var auditThread = new Thread(auditor);
-
-        // middleware is executed in the order they are added.
-        final var requestChain = new PooledChainLinkExecutor(
-                eventWrapper,
-                ChainDirection.REQUEST,
-                "arn:aws:lambda:ca-central-1:442513687360:function:eadp-light-lambda-test",
-                "dev")
-                .add(SecurityMiddleware.class)
-                .add(TraceabilityMiddleware.class)
-                .add(CorrelationMiddleware.class)
-                .add(RequestBodyTransformerMiddleware.class);
-
-        requestChain.finalizeChain();
-        requestChain.executeChain();
-
-
-
-        // TODO: Check chain results using 'requestChain.getResolvedChainResults() -- look for failed executions'
-        // TODO: if failed, return error in exception handler format
-        // TODO: if success, continue to pass request to backend business AWS lambda
-
-        for (var middlewareHandlerStatus : requestChain.getResolvedChainResults()) {
-            System.out.println(middlewareHandlerStatus.toString());
-        }
-
-        /* send to backend */
-//        try {
-//
-//            InvokeRequest invokeRequest = InvokeRequest.builder()
-//                    .functionName("FUNCTION-NAME")
-//                    .payload(SdkBytes.fromString("GET FROM REQUEST EXECUTION CHAIN", StandardCharsets.UTF_8))
-//                    .build();
-//
-//            LambdaClient lambdaClient = LambdaClient.builder()
-//                    .region(Region.US_EAST_1) // Replace with your desired region
-//                    .build();
-//
-//            InvokeResponse invokeResult = lambdaClient.invoke(invokeRequest);
-//
-//
-//        } catch (ServiceException e) {
-//            System.out.println(e);
-//        }
-
-        // TODO: check if you get a correct response from backend business API
-        // TODO: if failed, return failure back
-        // TODO: if success, execute responseChain
-
-        /* update response wrapper with response from business lambda */
-//        eventWrapper.setResponse(responseEvent);
-//        eventWrapper.updateContext(responseContext);
-
-
-//        final var responseChain = new PooledChainLinkExecutor(eventWrapper, ChainDirection.RESPONSE)
-//                .add(ResponseBodyTransformerMiddleware.class);
-//
-//        responseChain.finalizeChain();
-//        responseChain.executeChain();
-
-        // TODO: Check chain results using 'response.getResolvedChainResults() -- look for failed executions'
-
-        auditThread.start();
-
-        // TODO: if failed, return error in exception handler format
-        // TODO: if success, continue to pass response back to client
 
         try {
-            auditThread.join();
-        } catch (InterruptedException e) {
+            /* exec request chain */
+            LambdaProxy.createAndExecuteChain(eventWrapper, CONFIG.getRequestChain(), ChainDirection.REQUEST, CONFIG.getLambdaAppId(), CONFIG.getEnv());
+
+            /* invoke lambda function */
+            final var res = this.invokeFunction(client, CONFIG.getFunctions().get("TODO"), eventWrapper);
+            final var responseEvent = JsonMapper.fromJson(res, APIGatewayProxyResponseEvent.class);
+            eventWrapper.setResponse(responseEvent);
+
+            /* exec response chain */
+            LambdaProxy.createAndExecuteChain(eventWrapper, CONFIG.getResponseChain(), ChainDirection.RESPONSE, CONFIG.getLambdaAppId(), CONFIG.getEnv());
+
+        } catch (JsonProcessingException e) {
             throw new RuntimeException(e);
         }
 
-        /* test response payload for lambda deployment */
-        APIGatewayProxyResponseEvent testResponse = new APIGatewayProxyResponseEvent();
-        testResponse.setBody(eventWrapper.getRequest().getBody());
-        testResponse.setHeaders(eventWrapper.getRequest().getHeaders());
+        LOG.debug("Lambda CCC --end");
+        return eventWrapper.getResponse();
+    }
 
+    private String invokeFunction(LambdaClient awsLambda, String functionName, final LambdaEventWrapper eventWrapper) throws JsonProcessingException {
 
+        String serializedEvent = OBJECT_MAPPER.writeValueAsString(eventWrapper.getRequest());
+        String response = null;
+        try {
+            //Need a SdkBytes instance for the payload
+            var payload = SdkBytes.fromUtf8String(serializedEvent);
 
-        return testResponse;
+            //Setup an InvokeRequest
+            var request = InvokeRequest.builder()
+                    .functionName(functionName)
+                    .logType(CONFIG.getLogType())
+                    .payload(payload)
+                    .build();
 
+            //Invoke the Lambda function
+            var res = awsLambda.invoke(request);
+            if (LOG.isDebugEnabled()) {
+                LOG.debug("lambda call function error:" + res.functionError());
+                LOG.debug("lambda logger result:" + res.logResult());
+                LOG.debug("lambda call status:" + res.statusCode());
+            }
 
+            response = res.payload().asUtf8String();
+        } catch (LambdaException e) {
+            LOG.error("LambdaException", e);
+        }
+        return response;
+    }
 
-//
+    private static void createAndExecuteChain(final LambdaEventWrapper eventWrapper, List<String> chainList, ChainDirection direction, String lambdaAppId, String env) {
+        final var chain = new PooledChainLinkExecutor(eventWrapper, direction, lambdaAppId, env);
 
+        for (var className : chainList)
+            chain.add(className);
 
+        chain.finalizeChain();
+        chain.executeChain();
     }
 }

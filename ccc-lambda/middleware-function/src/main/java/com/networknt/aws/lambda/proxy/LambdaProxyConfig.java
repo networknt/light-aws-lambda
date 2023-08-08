@@ -1,5 +1,6 @@
 package com.networknt.aws.lambda.proxy;
 
+import java.util.List;
 import java.util.Map;
 
 public class LambdaProxyConfig {
@@ -7,9 +8,22 @@ public class LambdaProxyConfig {
     private String region;
     private String endpointOverride;
     private String logType;
+    private String lambdaAppId;
+    private String env;
     private Map<String, String> functions;
     private boolean metricsInjection;
     private String metricsName;
+
+    private List<String> requestChain;
+    private List<String> responseChain;
+
+    public List<String> getRequestChain() {
+        return requestChain;
+    }
+
+    public List<String> getResponseChain() {
+        return responseChain;
+    }
 
     public String getRegion() {
         return region;
@@ -33,5 +47,13 @@ public class LambdaProxyConfig {
 
     public String getMetricsName() {
         return metricsName;
+    }
+
+    public String getLambdaAppId() {
+        return lambdaAppId;
+    }
+
+    public String getEnv() {
+        return env;
     }
 }

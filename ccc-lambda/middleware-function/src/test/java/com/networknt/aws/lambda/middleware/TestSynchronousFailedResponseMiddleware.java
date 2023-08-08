@@ -6,7 +6,7 @@ import com.networknt.aws.lambda.middleware.chain.ChainLinkReturn;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-@ChainProperties(id = "TestSynchronousFailedResponseMiddleware")
+@ChainProperties()
 public class TestSynchronousFailedResponseMiddleware extends LambdaMiddleware {
     private static final Logger LOG = LoggerFactory.getLogger(TestSynchronousMiddleware.class);
 
@@ -21,7 +21,7 @@ public class TestSynchronousFailedResponseMiddleware extends LambdaMiddleware {
     }
 
     @Override
-    public void initMiddlewareConfig(String applicationId, String env) {
+    public void getAppConfigProfileConfigurations(String applicationId, String env) {
 
     }
 

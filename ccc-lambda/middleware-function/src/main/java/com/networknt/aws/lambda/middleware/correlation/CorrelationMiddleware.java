@@ -6,7 +6,7 @@ import com.networknt.aws.lambda.middleware.chain.ChainLinkCallback;
 import com.networknt.aws.lambda.middleware.chain.ChainProperties;
 import com.networknt.aws.lambda.middleware.LambdaEventWrapper;
 import com.networknt.aws.lambda.middleware.chain.ChainLinkReturn;
-import com.networknt.aws.lambda.utility.AwsConfigUtil;
+import com.networknt.aws.lambda.utility.AwsAppConfigUtil;
 import com.networknt.aws.lambda.utility.HeaderKey;
 import com.networknt.aws.lambda.utility.LoggerKey;
 import com.networknt.config.Config;
@@ -19,7 +19,7 @@ import java.nio.ByteBuffer;
 import java.util.UUID;
 
 
-@ChainProperties(id = "CorrelationMiddleware", logKey = "correlationId")
+@ChainProperties()
 public class CorrelationMiddleware extends LambdaMiddleware {
 
     private static final String CONFIG_NAME = "correlation";
@@ -68,8 +68,8 @@ public class CorrelationMiddleware extends LambdaMiddleware {
     }
 
     @Override
-    public void initMiddlewareConfig(String applicationId, String env) {
-        String configResponse = AwsConfigUtil.getConfiguration(applicationId, env, CONFIG_NAME);
+    public void getAppConfigProfileConfigurations(String applicationId, String env) {
+        String configResponse = AwsAppConfigUtil.getConfiguration(applicationId, env, CONFIG_NAME);
         if (configResponse != null) {
             try {
                 CONFIG = OBJECT_MAPPER.readValue(configResponse, CorrelationConfig.class);

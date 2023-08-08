@@ -6,7 +6,7 @@ import com.networknt.aws.lambda.middleware.chain.ChainLinkCallback;
 import com.networknt.aws.lambda.middleware.chain.ChainProperties;
 import com.networknt.aws.lambda.middleware.LambdaEventWrapper;
 import com.networknt.aws.lambda.middleware.chain.ChainLinkReturn;
-import com.networknt.aws.lambda.utility.AwsConfigUtil;
+import com.networknt.aws.lambda.utility.AwsAppConfigUtil;
 import com.networknt.aws.lambda.utility.HeaderKey;
 import com.networknt.aws.lambda.utility.LoggerKey;
 import com.networknt.config.Config;
@@ -14,7 +14,7 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.slf4j.MDC;
 
-@ChainProperties(id = "TraceabilityMiddleware", logKey = "traceabilityId")
+@ChainProperties()
 public class TraceabilityMiddleware extends LambdaMiddleware {
 
     private static final Logger LOG = LoggerFactory.getLogger(TraceabilityMiddleware.class);
@@ -53,8 +53,8 @@ public class TraceabilityMiddleware extends LambdaMiddleware {
     }
 
     @Override
-    public void initMiddlewareConfig(String applicationId, String env) {
-        String configResponse = AwsConfigUtil.getConfiguration(applicationId, env, CONFIG_NAME);
+    public void getAppConfigProfileConfigurations(String applicationId, String env) {
+        String configResponse = AwsAppConfigUtil.getConfiguration(applicationId, env, CONFIG_NAME);
         if (configResponse != null) {
             try {
                 CONFIG = OBJECT_MAPPER.readValue(configResponse, TraceabilityConfig.class);

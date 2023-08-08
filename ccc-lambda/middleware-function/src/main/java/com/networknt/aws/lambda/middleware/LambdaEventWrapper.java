@@ -13,22 +13,18 @@ import java.util.Map;
 public class LambdaEventWrapper {
     private APIGatewayProxyRequestEvent request;
     private APIGatewayProxyResponseEvent response;
-    private Context context;
+    private final Context context;
     private final Map<Attachable<? extends LambdaMiddleware>, Object> requestAttachments = new HashMap<>();
     private final Map<Attachable<? extends LambdaMiddleware>, Object> responseAttachments = new HashMap<>();
 
     private boolean requestSet;
     private boolean responseSet;
 
-    public LambdaEventWrapper() {
+    public LambdaEventWrapper(Context context) {
         requestSet = false;
         responseSet = false;
-    }
-
-    public void updateContext(Context context) {
         this.context = context;
     }
-
     public void setResponse(APIGatewayProxyResponseEvent response) {
 
         if (responseSet)

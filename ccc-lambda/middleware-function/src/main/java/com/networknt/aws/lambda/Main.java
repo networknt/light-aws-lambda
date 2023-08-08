@@ -164,7 +164,7 @@ public class Main {
         final APIGatewayProxyRequestEvent requestEvent = invocation.getEvent();
         final LambdaContext lambdaContext = new LambdaContext(invocation.getRequestId());
 
-        final LambdaEventWrapper eventWrapper = new LambdaEventWrapper();
+        final LambdaEventWrapper eventWrapper = new LambdaEventWrapper(context);
         eventWrapper.setRequest(requestEvent);
         eventWrapper.updateContext(lambdaContext);
 

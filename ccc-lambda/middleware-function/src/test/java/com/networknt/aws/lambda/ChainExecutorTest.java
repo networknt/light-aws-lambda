@@ -167,9 +167,8 @@ public class ChainExecutorTest {
                 .build();
         APIGatewayProxyRequestEvent requestEvent = invocation.getEvent();
         Context lambdaContext = new LambdaContext(invocation.getRequestId());
-        this.eventWrapper = new LambdaEventWrapper();
+        this.eventWrapper = new LambdaEventWrapper(lambdaContext);
         this.eventWrapper.setRequest(requestEvent);
-        this.eventWrapper.updateContext(lambdaContext);
     }
 
     @Test

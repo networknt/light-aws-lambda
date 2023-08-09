@@ -1,8 +1,7 @@
 package com.networknt.aws.lambda.middleware.chain;
 
-import com.networknt.aws.lambda.exception.ExceptionHandler;
 import com.networknt.aws.lambda.middleware.LambdaMiddleware;
-import com.networknt.aws.lambda.middleware.LambdaEventWrapper;
+import com.networknt.aws.lambda.middleware.LightLambdaExchange;
 import com.networknt.config.Config;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -17,7 +16,6 @@ import java.util.concurrent.LinkedBlockingQueue;
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.ExecutionException;
 import java.util.concurrent.Future;
-import java.util.concurrent.atomic.AtomicInteger;
 
 public class PooledChainLinkExecutor extends ThreadPoolExecutor {
 
@@ -26,14 +24,14 @@ public class PooledChainLinkExecutor extends ThreadPoolExecutor {
     private static final String MIDDLEWARE_THREAD_INTERRUPT = "ERR14003";
     private static final String MIDDLEWARE_UNHANDLED_EXCEPTION = "ERR14004";
     private static final PooledChainConfig CONFIG = (PooledChainConfig) Config.getInstance().getJsonObjectConfig(CONFIG_NAME, PooledChainConfig.class);
-    private final LambdaEventWrapper lambdaEventWrapper;
+    private final LightLambdaExchange lambdaEventWrapper;
     private final String applicationId;
     private final String env;
     private final ChainDirection chainDirection;
     private final Chain chain = new Chain();
     final Object lock = new Object();
 
-    public PooledChainLinkExecutor(final LambdaEventWrapper lambdaEventWrapper, ChainDirection chainDirection, String applicationId, String env) {
+    public PooledChainLinkExecutor(final LightLambdaExchange lambdaEventWrapper, ChainDirection chainDirection, String applicationId, String env) {
         super(CONFIG.getCorePoolSize(), CONFIG.getMaxPoolSize(), CONFIG.getKeepAliveTime(), TimeUnit.MILLISECONDS, new LinkedBlockingQueue<>());
         this.lambdaEventWrapper = lambdaEventWrapper;
         this.chainDirection = chainDirection;
@@ -41,6 +39,12 @@ public class PooledChainLinkExecutor extends ThreadPoolExecutor {
         this.applicationId = applicationId;
     }
 
+    /**
+     * Add to chain from string parameter
+     *
+     * @param className - class name in string format
+     * @return - this
+     */
     public PooledChainLinkExecutor add(String className) {
         try {
             if (Class.forName(className).getSuperclass().equals(LambdaMiddleware.class))
@@ -52,6 +56,11 @@ public class PooledChainLinkExecutor extends ThreadPoolExecutor {
         }
     }
 
+    /**
+     * Add to chain from class parameter
+     * @param  middleware - middleware class
+     * @return - this
+     */
     public PooledChainLinkExecutor add(Class<? extends LambdaMiddleware> middleware) {
 
         if (CONFIG.getMaxChainSize() <= this.chain.getChainSize()) {
@@ -65,7 +74,7 @@ public class PooledChainLinkExecutor extends ThreadPoolExecutor {
         }
 
         try {
-            var newClazz = middleware.getConstructor(ChainLinkCallback.class, LambdaEventWrapper.class).newInstance(this.chainLinkCallback, this.lambdaEventWrapper);
+            var newClazz = middleware.getConstructor(ChainLinkCallback.class, LightLambdaExchange.class).newInstance(this.chainLinkCallback, this.lambdaEventWrapper);
             newClazz.setChainDirection(this.chainDirection);
 
             // TODO - Connection keeps timing out in AWS Lambda -- fix before uncomment
@@ -96,6 +105,7 @@ public class PooledChainLinkExecutor extends ThreadPoolExecutor {
         }
 
         for (var chainLinkGroup : this.chain.getGroupedChain()) {
+
             /* create workers & submit to queue */
             final var chainLinkWorkerGroup = this.createChainListWorkers(chainLinkGroup);
             final var chainLinkWorkerFutures = this.createChainLinkWorkerFutures(chainLinkWorkerGroup);
@@ -112,7 +122,13 @@ public class PooledChainLinkExecutor extends ThreadPoolExecutor {
         this.shutdown();
     }
 
+    /**
+     * Wait on future results.
+     *
+     * @param chainLinkWorkerFutures - list of futures from submitted tasks.
+     */
     private void awaitChainWorkerFutures(final Collection<Future<?>> chainLinkWorkerFutures) {
+
         /* wait out the future results of the submitted tasks. */
         for (var chainLinkWorkerFuture : chainLinkWorkerFutures) {
 
@@ -126,65 +142,70 @@ public class PooledChainLinkExecutor extends ThreadPoolExecutor {
         }
     }
 
+    /**
+     * Creates a collection of futures. One for each submitted task.
+     *
+     * @param chainLinkWorkerGroup  - list of threads for submission.
+     * @return                      - list of futures for submitted tasks.
+     */
     private Collection<Future<?>> createChainLinkWorkerFutures(ArrayList<ChainLinkWorker> chainLinkWorkerGroup) {
-        Collection<Future<?>> chainLinkWorkerFutures = new ArrayList<>();
+
+        final Collection<Future<?>> chainLinkWorkerFutures = new ArrayList<>();
         int linkNumber = 1;
 
         /* submit each link in the group into a queue */
         for (var chainLinkWorker : chainLinkWorkerGroup) {
-            LOG.debug("Submitting link '{}' for execution.", linkNumber);
+            LOG.debug("Submitting link '{}' for execution.", linkNumber++);
 
             synchronized (lock) {
 
                 if (!this.isShutdown() && !this.isTerminating())
                     chainLinkWorkerFutures.add(this.submit(chainLinkWorker));
             }
-
-            linkNumber++;
         }
         return chainLinkWorkerFutures;
     }
 
+    /**
+     * Creates the chain workers array to prepare for submission.
+     *
+     * @param chainLinkGroup    - sub-group of main chain
+     * @return                  - List of thread workers for the tasks.
+     */
     private ArrayList<ChainLinkWorker> createChainListWorkers(ArrayList<LambdaMiddleware> chainLinkGroup) {
         final ArrayList<ChainLinkWorker> chainLinkWorkerGroup = new ArrayList<>();
         int linkNumber = 1;
 
         /* create a worker for each link in a group */
         for (var chainLink : chainLinkGroup) {
-            LOG.debug("Creating thread for link '{}[{}]'.", chainLink.getClass().getName(), linkNumber);
+            LOG.debug("Creating thread for link '{}[{}]'.", chainLink.getClass().getName(), linkNumber++);
             chainLinkWorkerGroup.add(new ChainLinkWorker(chainLink, new ChainLinkWorker.AuditThreadContext(MDC.getCopyOfContextMap())));
-            linkNumber++;
         }
         return chainLinkWorkerGroup;
     }
 
-    public LinkedList<ChainLinkReturn> getResolvedChainResults() {
-        return this.chain.getChainResults();
-    }
-
     private final ChainLinkCallback chainLinkCallback = new ChainLinkCallback() {
         @Override
-        public void callback(final LambdaEventWrapper eventWrapper, ChainLinkReturn middlewareReturn) {
+        public void callback(final LightLambdaExchange eventWrapper, ChainLinkReturn middlewareReturn) {
             PooledChainLinkExecutor.this.chain.addChainableResult(middlewareReturn);
 
             if (middlewareReturn.getStatus() == ChainLinkReturn.Status.EXECUTION_FAILED) {
                 abortExecution();
-                ExceptionHandler.handle(middlewareReturn);
             }
 
         }
 
         /* handles any generic throwable that occurred during middleware execution. */
         @Override
-        public void exceptionCallback(final LambdaEventWrapper eventWrapper, Throwable throwable) {
+        public void exceptionCallback(final LightLambdaExchange eventWrapper, Throwable throwable) {
             abortExecution();
 
             if (throwable instanceof InterruptedException)
-                ExceptionHandler.handle(new ChainLinkReturn(ChainLinkReturn.Status.EXECUTION_INTERRUPTED, MIDDLEWARE_THREAD_INTERRUPT));
+                PooledChainLinkExecutor.this.chain.addChainableResult(new ChainLinkReturn(ChainLinkReturn.Status.EXECUTION_INTERRUPTED, MIDDLEWARE_THREAD_INTERRUPT));
 
             else {
                 LOG.error("Chain failed with exception: {}", throwable.getMessage(), throwable);
-                ExceptionHandler.handle(new ChainLinkReturn(ChainLinkReturn.Status.EXECUTION_FAILED, MIDDLEWARE_UNHANDLED_EXCEPTION));
+                PooledChainLinkExecutor.this.chain.addChainableResult(new ChainLinkReturn(ChainLinkReturn.Status.EXECUTION_FAILED, MIDDLEWARE_UNHANDLED_EXCEPTION));
             }
 
         }

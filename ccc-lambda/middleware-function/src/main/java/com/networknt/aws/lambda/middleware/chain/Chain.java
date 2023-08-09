@@ -8,7 +8,6 @@ import java.util.ArrayList;
 import java.util.LinkedList;
 
 public class Chain {
-
     private static final Logger LOG = LoggerFactory.getLogger(Chain.class);
     private final LinkedList<LambdaMiddleware> chain = new LinkedList<>();
     private final LinkedList<ArrayList<LambdaMiddleware>> groupedChain = new LinkedList<>();

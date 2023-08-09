@@ -22,7 +22,7 @@ public class TraceabilityMiddlewareTest {
             .disable(DeserializationFeature.FAIL_ON_UNKNOWN_PROPERTIES);
 
 
-    LambdaEventWrapper eventWrapper;
+    LightLambdaExchange exchange;
 
     @BeforeAll
     void setup() {
@@ -164,8 +164,8 @@ public class TraceabilityMiddlewareTest {
                 .build();
         APIGatewayProxyRequestEvent requestEvent = invocation.getEvent();
         Context lambdaContext = new LambdaContext(invocation.getRequestId());
-        this.eventWrapper = new LambdaEventWrapper(lambdaContext);
-        this.eventWrapper.setRequest(requestEvent);
+        this.exchange = new LightLambdaExchange(lambdaContext, "APPLICATION_ID", "ENV");
+        this.exchange.setRequest(requestEvent);
     }
 
     @Test

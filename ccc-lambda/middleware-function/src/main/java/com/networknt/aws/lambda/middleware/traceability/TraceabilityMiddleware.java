@@ -4,7 +4,7 @@ import com.fasterxml.jackson.core.JsonProcessingException;
 import com.networknt.aws.lambda.middleware.LambdaMiddleware;
 import com.networknt.aws.lambda.middleware.chain.ChainLinkCallback;
 import com.networknt.aws.lambda.middleware.chain.ChainProperties;
-import com.networknt.aws.lambda.middleware.LambdaEventWrapper;
+import com.networknt.aws.lambda.middleware.LightLambdaExchange;
 import com.networknt.aws.lambda.middleware.chain.ChainLinkReturn;
 import com.networknt.aws.lambda.utility.AwsAppConfigUtil;
 import com.networknt.aws.lambda.utility.HeaderKey;
@@ -22,14 +22,14 @@ public class TraceabilityMiddleware extends LambdaMiddleware {
     private static final String CONFIG_NAME = "traceability";
     private static TraceabilityConfig CONFIG = (TraceabilityConfig) Config.getInstance().getJsonObjectConfig(CONFIG_NAME, TraceabilityConfig.class);
 
-    private static final LambdaEventWrapper.Attachable<TraceabilityMiddleware> TRACEABILITY_ATTACHMENT_KEY = LambdaEventWrapper.Attachable.createMiddlewareAttachable(TraceabilityMiddleware.class);
+    private static final LightLambdaExchange.Attachable<TraceabilityMiddleware> TRACEABILITY_ATTACHMENT_KEY = LightLambdaExchange.Attachable.createMiddlewareAttachable(TraceabilityMiddleware.class);
 
-    public TraceabilityMiddleware(ChainLinkCallback middlewareCallback, final LambdaEventWrapper eventWrapper) {
+    public TraceabilityMiddleware(ChainLinkCallback middlewareCallback, final LightLambdaExchange eventWrapper) {
         super(middlewareCallback, eventWrapper);
     }
 
     @Override
-    protected ChainLinkReturn executeMiddleware() throws InterruptedException {
+    protected ChainLinkReturn executeMiddleware(final LightLambdaExchange exchange) throws InterruptedException {
 
         if (!CONFIG.isEnabled())
             return ChainLinkReturn.disabledMiddlewareReturn();
@@ -37,13 +37,13 @@ public class TraceabilityMiddleware extends LambdaMiddleware {
         if (LOG.isDebugEnabled())
             LOG.debug("TraceabilityMiddleware.executeMiddleware starts.");
 
-        var tid = this.eventWrapper.getRequest().getHeaders().get(HeaderKey.TRACEABILITY);
+        var tid = exchange.getRequest().getHeaders().get(HeaderKey.TRACEABILITY);
 
         if (tid != null) {
 
 
             MDC.put(LoggerKey.TRACEABILITY, tid);
-            this.eventWrapper.addRequestAttachment(TRACEABILITY_ATTACHMENT_KEY, tid);
+            exchange.addRequestAttachment(TRACEABILITY_ATTACHMENT_KEY, tid);
         }
 
         if (LOG.isDebugEnabled())

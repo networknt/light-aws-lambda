@@ -6,21 +6,11 @@ import com.fasterxml.jackson.databind.DeserializationFeature;
 import com.fasterxml.jackson.databind.ObjectMapper;
 
 import java.io.IOException;
-import java.net.HttpURLConnection;
+import com.networknt.aws.lambda.proxy.LambdaProxy;
 
-import com.networknt.aws.lambda.middleware.body.RequestBodyTransformerMiddleware;
-import com.networknt.aws.lambda.middleware.correlation.CorrelationMiddleware;
-import com.networknt.aws.lambda.middleware.header.HeaderMiddleware;
-import com.networknt.aws.lambda.middleware.chain.ChainDirection;
-import com.networknt.aws.lambda.middleware.chain.PooledChainLinkExecutor;
-import com.networknt.aws.lambda.middleware.LambdaEventWrapper;
-import com.networknt.aws.lambda.middleware.security.SecurityMiddleware;
-import com.networknt.aws.lambda.middleware.traceability.TraceabilityMiddleware;
-import com.networknt.utility.NioUtils;
 
 public class Main {
 
-    private static final String REQUEST_ID_HEADER = "lambda-runtime-aws-request-id";
     private static final ObjectMapper OBJECT_MAPPER = new ObjectMapper()
             .disable(DeserializationFeature.FAIL_ON_UNKNOWN_PROPERTIES);
 
@@ -164,90 +154,11 @@ public class Main {
         final APIGatewayProxyRequestEvent requestEvent = invocation.getEvent();
         final LambdaContext lambdaContext = new LambdaContext(invocation.getRequestId());
 
-        final LambdaEventWrapper eventWrapper = new LambdaEventWrapper(context);
-        eventWrapper.setRequest(requestEvent);
-        eventWrapper.updateContext(lambdaContext);
+        LambdaProxy lambdaProxy = new LambdaProxy();
+        APIGatewayProxyResponseEvent responseEvent = lambdaProxy.handleRequest(requestEvent, lambdaContext);
 
-        // middleware is executed in the order they are added.
-        final var requestChain = new PooledChainLinkExecutor(eventWrapper, ChainDirection.REQUEST, "APPLICATION_ID", "ENV")
-                .add(SecurityMiddleware.class)
-                .add(HeaderMiddleware.class)
-                .add(TraceabilityMiddleware.class)
-                .add(CorrelationMiddleware.class)
-                .add(RequestBodyTransformerMiddleware.class);
-
-        requestChain.finalizeChain();
-        requestChain.executeChain();
-
-        APIGatewayProxyResponseEvent testResponse = new APIGatewayProxyResponseEvent();
-        testResponse.setBody(eventWrapper.getRequest().getBody());
-        testResponse.setHeaders(eventWrapper.getRequest().getHeaders());
-
-        //Auditor auditor = new Auditor(eventWrapper);
-        //Thread auditThread = new Thread(auditor);
-        //auditThread.start();
-
-        // send request
-
-//        try {
-//            auditThread.join();
-//        } catch (InterruptedException e) {
-//            throw new RuntimeException(e);
-//        }
-
-        System.out.println(testResponse);
-
-        //return testResponse;
+        System.out.println(responseEvent.toString());
 
 
-        /* ---------------------------------------------< END >--------------------------------------------- */
-
-//        String endpoint = System.getenv("AWS_LAMBDA_RUNTIME_API");
-//
-//        InvocationResponse invocation = getInvocation(endpoint);
-//
-//        try {
-//            Authorizer authorizer = new Authorizer();
-//
-//            // Actual invoke of the Authorizer
-//            AuthPolicy response = authorizer.handleRequest(invocation.getEvent(), new LambdaContext(invocation.getRequestId()));
-//
-//            // Post to Lambda success endpoint
-//            HttpUtils.post(
-//                    String.format("http://%s/2018-06-01/runtime/invocation/%s/response", endpoint, invocation.getRequestId()),
-//                    OBJECT_MAPPER.writeValueAsString(response)
-//            );
-//        } catch (Exception t) {
-//            String response = OBJECT_MAPPER.writeValueAsString(
-//                    DefaultResponse.builder()
-//                            .message(t.getMessage())
-//                            .build()
-//            );
-//
-//            t.printStackTrace();
-//
-//            // Post to Lambda error endpoint
-//            HttpUtils.post(
-//                    String.format("http://%s/2018-06-01/runtime/invocation/%s/error", endpoint, invocation.getRequestId()),
-//                    response
-//            );
-//        }
-    }
-
-    private static InvocationResponse getInvocation(String endpoint) throws IOException {
-        HttpURLConnection connection = HttpUtils.get(
-                String.format("http://%s/2018-06-01/runtime/invocation/next", endpoint)
-        );
-
-        String response = NioUtils.toString(connection.getInputStream());
-
-        String requestId = connection.getHeaderField(REQUEST_ID_HEADER);
-
-        APIGatewayProxyRequestEvent event = OBJECT_MAPPER.readValue(response, APIGatewayProxyRequestEvent.class);
-
-        return InvocationResponse.builder()
-                .requestId(requestId)
-                .event(event)
-                .build();
     }
 }

@@ -5,7 +5,7 @@ import com.fasterxml.jackson.core.type.TypeReference;
 import com.networknt.aws.lambda.middleware.LambdaMiddleware;
 import com.networknt.aws.lambda.middleware.chain.ChainLinkCallback;
 import com.networknt.aws.lambda.middleware.chain.ChainProperties;
-import com.networknt.aws.lambda.middleware.LambdaEventWrapper;
+import com.networknt.aws.lambda.middleware.LightLambdaExchange;
 import com.networknt.aws.lambda.middleware.chain.ChainLinkReturn;
 import com.networknt.aws.lambda.utility.AwsAppConfigUtil;
 import com.networknt.aws.lambda.utility.HeaderKey;
@@ -18,52 +18,45 @@ import java.util.Map;
 
 @ChainProperties()
 public class ResponseBodyTransformerMiddleware extends LambdaMiddleware {
-
     Logger LOG = LoggerFactory.getLogger(ResponseBodyTransformerMiddleware.class);
     private static final String CONFIG_NAME = "body";
     private static final String LAMBDA_BODY_TRANSFORMATION_EXCEPTION = "ERR14002";
     private static BodyConfig CONFIG = (BodyConfig) Config.getInstance().getJsonObjectConfig(CONFIG_NAME, BodyConfig.class);
+    private static final LightLambdaExchange.Attachable<ResponseBodyTransformerMiddleware> RESPONSE_BODY_ATTACHMENT_KEY = LightLambdaExchange.Attachable.createMiddlewareAttachable(ResponseBodyTransformerMiddleware.class);
 
-    private static final LambdaEventWrapper.Attachable<ResponseBodyTransformerMiddleware> RESPONSE_BODY_ATTACHMENT_KEY = LambdaEventWrapper.Attachable.createMiddlewareAttachable(ResponseBodyTransformerMiddleware.class);
-
-    public ResponseBodyTransformerMiddleware(ChainLinkCallback middlewareCallback, final LambdaEventWrapper eventWrapper) {
+    public ResponseBodyTransformerMiddleware(ChainLinkCallback middlewareCallback, final LightLambdaExchange eventWrapper) {
         super(middlewareCallback, eventWrapper);
     }
 
     @Override
-    protected ChainLinkReturn executeMiddleware() {
+    protected ChainLinkReturn executeMiddleware(final LightLambdaExchange exchange) {
 
         if (!CONFIG.isEnabled())
             return ChainLinkReturn.disabledMiddlewareReturn();
 
-        if (this.eventWrapper.getResponse().getBody() != null) {
+        if (exchange.getResponse().getBody() != null) {
+            var body = exchange.getResponse().getBody();
 
-            var body = this.eventWrapper.getResponse().getBody();
-
-            if (this.eventWrapper.getResponse().getHeaders().get(HeaderKey.CONTENT_TYPE).equals(HeaderValue.APPLICATION_JSON)) {
-
+            if (exchange.getResponse().getHeaders().get(HeaderKey.CONTENT_TYPE).equals(HeaderValue.APPLICATION_JSON)) {
                 var deserializedBody = LambdaMiddleware.OBJECT_MAPPER.convertValue(body, new TypeReference<Map<String, Object>>() {});
 
                 // TODO -- DO TRANSFORM HERE
 
                 try {
-
                     var serializedBody = LambdaMiddleware.OBJECT_MAPPER.writeValueAsString(deserializedBody);
-                    this.eventWrapper.getResponse().setBody(serializedBody);
-
-                    this.eventWrapper.addResponseAttachment(RESPONSE_BODY_ATTACHMENT_KEY, serializedBody);
+                    exchange.getResponse().setBody(serializedBody);
+                    exchange.addResponseAttachment(RESPONSE_BODY_ATTACHMENT_KEY, serializedBody);
                     return ChainLinkReturn.successMiddlewareReturn();
 
                 } catch (JsonProcessingException e) {
-
                     LOG.error("Body transformation failed with exception: {}", e.getMessage());
-                    this.eventWrapper.addResponseAttachment(RESPONSE_BODY_ATTACHMENT_KEY, body);
+                    exchange.addResponseAttachment(RESPONSE_BODY_ATTACHMENT_KEY, body);
                     return new ChainLinkReturn(ChainLinkReturn.Status.EXECUTION_FAILED, LAMBDA_BODY_TRANSFORMATION_EXCEPTION);
                 }
 
             } else {
                 LOG.error("Response body does not have a supported content type.");
-                this.eventWrapper.addResponseAttachment(RESPONSE_BODY_ATTACHMENT_KEY, body);
+                exchange.addResponseAttachment(RESPONSE_BODY_ATTACHMENT_KEY, body);
             }
         }
 

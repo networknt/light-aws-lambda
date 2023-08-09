@@ -4,7 +4,7 @@ import com.fasterxml.jackson.core.JsonProcessingException;
 import com.networknt.aws.lambda.middleware.LambdaMiddleware;
 import com.networknt.aws.lambda.middleware.chain.ChainLinkCallback;
 import com.networknt.aws.lambda.middleware.chain.ChainProperties;
-import com.networknt.aws.lambda.middleware.LambdaEventWrapper;
+import com.networknt.aws.lambda.middleware.LightLambdaExchange;
 import com.networknt.aws.lambda.middleware.chain.ChainLinkReturn;
 import com.networknt.aws.lambda.utility.AwsAppConfigUtil;
 import com.networknt.config.Config;
@@ -23,12 +23,12 @@ public class HeaderMiddleware extends LambdaMiddleware {
     private static HeaderConfig CONFIG = (HeaderConfig) Config.getInstance().getJsonObjectConfig(CONFIG_NAME, HeaderConfig.class);
     private static final Logger LOG = LoggerFactory.getLogger(HeaderMiddleware.class);
 
-    public HeaderMiddleware(ChainLinkCallback middlewareCallback, final LambdaEventWrapper eventWrapper) {
+    public HeaderMiddleware(ChainLinkCallback middlewareCallback, final LightLambdaExchange eventWrapper) {
         super(middlewareCallback, eventWrapper);
     }
 
     @Override
-    protected ChainLinkReturn executeMiddleware() {
+    protected ChainLinkReturn executeMiddleware(final LightLambdaExchange exchange) {
 
         if (!CONFIG.isEnabled())
             return ChainLinkReturn.disabledMiddlewareReturn();
@@ -36,10 +36,10 @@ public class HeaderMiddleware extends LambdaMiddleware {
         switch (this.getChainDirection()) {
 
             case REQUEST:
-                return this.handleRequestHeaders();
+                return this.handleRequestHeaders(exchange);
 
             case RESPONSE:
-                return this.handleResponseHeaders();
+                return this.handleResponseHeaders(exchange);
 
             default:
                 return ChainLinkReturn.successMiddlewareReturn();
@@ -48,7 +48,7 @@ public class HeaderMiddleware extends LambdaMiddleware {
 
     @Override
     public void getAppConfigProfileConfigurations(String applicationId, String env) {
-        String configResponse = AwsAppConfigUtil.getConfiguration(applicationId, env, CONFIG_NAME);
+        var configResponse = AwsAppConfigUtil.getConfiguration(applicationId, env, CONFIG_NAME);
         if (configResponse != null) {
             try {
                 CONFIG = OBJECT_MAPPER.readValue(configResponse, HeaderConfig.class);
@@ -58,16 +58,24 @@ public class HeaderMiddleware extends LambdaMiddleware {
         }
     }
 
-    private ChainLinkReturn handleRequestHeaders() {
-        var headers = this.eventWrapper.getRequest().getHeaders();
+    private ChainLinkReturn handleRequestHeaders(LightLambdaExchange exchange) {
+
+        var headers = exchange.getRequest().getHeaders();
         var transforms = CONFIG.getRequestHeader();
+
+        if (headers == null || transforms == null)
+            return ChainLinkReturn.successMiddlewareReturn();
 
         return this.handleTransforms(headers, transforms);
     }
 
-    private ChainLinkReturn handleResponseHeaders() {
-        var headers = this.eventWrapper.getResponse().getHeaders();
+    private ChainLinkReturn handleResponseHeaders(LightLambdaExchange exchange) {
+        var headers = exchange.getResponse().getHeaders();
         var transforms = CONFIG.getResponseHeader();
+
+        if (headers == null || transforms == null)
+            return ChainLinkReturn.successMiddlewareReturn();
+
         return this.handleTransforms(headers, transforms);
     }
 

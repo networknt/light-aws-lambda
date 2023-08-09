@@ -6,10 +6,8 @@ import com.networknt.config.Config;
 import java.util.Map;
 
 public class ChainLinkReturn {
-
     private static final String CONFIG_NAME = "status";
     private static final Map<String, Object> STATUS = Config.getInstance().getJsonMapConfig(CONFIG_NAME);
-
     private static final String MIDDLEWARE_OK = "SUC14200";
     private static final String LAMBDA_NATIVE_HANDLER_DISABLED = "ERR14001";
 

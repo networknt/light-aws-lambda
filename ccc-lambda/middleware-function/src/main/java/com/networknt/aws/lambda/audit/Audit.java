@@ -1,15 +1,10 @@
 package com.networknt.aws.lambda.audit;
 
-import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.databind.ObjectMapper;
-import com.networknt.aws.lambda.middleware.LambdaEventWrapper;
-import com.networknt.aws.lambda.middleware.chain.ChainProperties;
+import com.networknt.aws.lambda.middleware.LightLambdaExchange;
 import com.networknt.config.Config;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
-
-import java.util.HashMap;
-import java.util.Map;
 
 public class Audit implements Runnable {
 
@@ -18,9 +13,9 @@ public class Audit implements Runnable {
     private static final Logger LOG = LoggerFactory.getLogger(Audit.class);
     private static final String CONFIG_NAME = "audit";
     private static final AuditConfig CONFIG = (AuditConfig) Config.getInstance().getJsonObjectConfig(CONFIG_NAME, AuditConfig.class);
-    private final LambdaEventWrapper eventWrapper;
+    private final LightLambdaExchange eventWrapper;
 
-    public Audit(final LambdaEventWrapper eventWrapper) {
+    public Audit(final LightLambdaExchange eventWrapper) {
         this.eventWrapper = eventWrapper;
     }
 

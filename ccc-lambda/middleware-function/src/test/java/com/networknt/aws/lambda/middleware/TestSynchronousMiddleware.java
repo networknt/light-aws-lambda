@@ -13,12 +13,12 @@ public class TestSynchronousMiddleware extends LambdaMiddleware {
 
     private static final Logger LOG = LoggerFactory.getLogger(TestSynchronousMiddleware.class);
 
-    public TestSynchronousMiddleware(ChainLinkCallback callback, LambdaEventWrapper eventWrapper) {
+    public TestSynchronousMiddleware(ChainLinkCallback callback, LightLambdaExchange eventWrapper) {
         super(callback, eventWrapper);
     }
 
     @Override
-    protected ChainLinkReturn executeMiddleware() throws InterruptedException {
+    protected ChainLinkReturn executeMiddleware(final LightLambdaExchange exchange) throws InterruptedException {
         LOG.info("I am executing Synchronously");
 
         int randomSlept = ThreadLocalRandom.current().nextInt(5, 15);

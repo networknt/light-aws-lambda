@@ -4,7 +4,7 @@ import com.fasterxml.jackson.core.JsonProcessingException;
 import com.networknt.aws.lambda.middleware.LambdaMiddleware;
 import com.networknt.aws.lambda.middleware.chain.ChainLinkCallback;
 import com.networknt.aws.lambda.middleware.chain.ChainProperties;
-import com.networknt.aws.lambda.middleware.LambdaEventWrapper;
+import com.networknt.aws.lambda.middleware.LightLambdaExchange;
 import com.networknt.aws.lambda.middleware.chain.ChainLinkReturn;
 import com.networknt.aws.lambda.utility.AwsAppConfigUtil;
 import com.networknt.aws.lambda.utility.HeaderKey;
@@ -24,17 +24,15 @@ public class CorrelationMiddleware extends LambdaMiddleware {
 
     private static final String CONFIG_NAME = "correlation";
     private static CorrelationConfig CONFIG = (CorrelationConfig) Config.getInstance().getJsonObjectConfig(CONFIG_NAME, CorrelationConfig.class);
-
     private static final Logger LOG = LoggerFactory.getLogger(CorrelationMiddleware.class);
+    private static final LightLambdaExchange.Attachable<CorrelationMiddleware> CORRELATION_ATTACHMENT_KEY = LightLambdaExchange.Attachable.createMiddlewareAttachable(CorrelationMiddleware.class);
 
-    private static final LambdaEventWrapper.Attachable<CorrelationMiddleware> CORRELATION_ATTACHMENT_KEY = LambdaEventWrapper.Attachable.createMiddlewareAttachable(CorrelationMiddleware.class);
-
-    public CorrelationMiddleware(ChainLinkCallback middlewareCallback, final LambdaEventWrapper eventWrapper) {
+    public CorrelationMiddleware(ChainLinkCallback middlewareCallback, final LightLambdaExchange eventWrapper) {
         super(middlewareCallback, eventWrapper);
     }
 
     @Override
-    protected ChainLinkReturn executeMiddleware() throws InterruptedException {
+    protected ChainLinkReturn executeMiddleware(final LightLambdaExchange exchange) throws InterruptedException {
 
         if (!CONFIG.isEnabled())
             return ChainLinkReturn.disabledMiddlewareReturn();
@@ -43,15 +41,15 @@ public class CorrelationMiddleware extends LambdaMiddleware {
             LOG.debug("CorrelationHandler.handleRequest starts.");
 
         // check if the cid is in the request header
-        var cid = this.eventWrapper.getRequest().getHeaders().get(HeaderKey.CORRELATION);
+        var cid = exchange.getRequest().getHeaders().get(HeaderKey.CORRELATION);
 
         if (cid == null && CONFIG.isAutogenCorrelationID()) {
 
             cid = this.getUUID();
-            this.eventWrapper.getRequest().getHeaders().put(HeaderKey.CORRELATION, cid);
-            this.eventWrapper.addRequestAttachment(CORRELATION_ATTACHMENT_KEY, cid);
+            exchange.getRequest().getHeaders().put(HeaderKey.CORRELATION, cid);
+            exchange.addRequestAttachment(CORRELATION_ATTACHMENT_KEY, cid);
 
-            var tid = this.eventWrapper.getRequest().getHeaders().get(HeaderKey.TRACEABILITY);
+            var tid = exchange.getRequest().getHeaders().get(HeaderKey.TRACEABILITY);
 
             if (tid != null && LOG.isInfoEnabled())
                 LOG.info("Associate traceability Id " + tid + " with correlation Id " + cid);

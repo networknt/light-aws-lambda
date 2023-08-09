@@ -5,7 +5,7 @@ import com.fasterxml.jackson.core.JsonProcessingException;
 import com.networknt.aws.lambda.middleware.LambdaMiddleware;
 import com.networknt.aws.lambda.middleware.chain.ChainLinkCallback;
 import com.networknt.aws.lambda.middleware.chain.ChainProperties;
-import com.networknt.aws.lambda.middleware.LambdaEventWrapper;
+import com.networknt.aws.lambda.middleware.LightLambdaExchange;
 import com.networknt.aws.lambda.middleware.chain.ChainLinkReturn;
 import com.networknt.aws.lambda.utility.AwsAppConfigUtil;
 import com.networknt.config.Config;
@@ -32,21 +32,21 @@ public class SecurityMiddleware extends LambdaMiddleware {
     private static final String CONFIG_NAME = "security";
 
     private static SecurityConfig CONFIG = (SecurityConfig) Config.getInstance().getJsonObjectConfig(CONFIG_NAME, SecurityConfig.class);
-    private static final LambdaEventWrapper.Attachable<SecurityMiddleware> SECURITY_ATTACHMENT_KEY = LambdaEventWrapper.Attachable.createMiddlewareAttachable(SecurityMiddleware.class);
+    private static final LightLambdaExchange.Attachable<SecurityMiddleware> SECURITY_ATTACHMENT_KEY = LightLambdaExchange.Attachable.createMiddlewareAttachable(SecurityMiddleware.class);
 
-    public SecurityMiddleware(ChainLinkCallback middlewareCallback, final LambdaEventWrapper eventWrapper) {
+    public SecurityMiddleware(ChainLinkCallback middlewareCallback, final LightLambdaExchange eventWrapper) {
         super(middlewareCallback, eventWrapper);
     }
 
     @Override
-    protected ChainLinkReturn executeMiddleware() throws InterruptedException {
+    protected ChainLinkReturn executeMiddleware(final LightLambdaExchange exchange) throws InterruptedException {
         try {
-            LOG.debug(OBJECT_MAPPER.writerWithDefaultPrettyPrinter().writeValueAsString(this.eventWrapper.getRequest()));
+            LOG.debug(OBJECT_MAPPER.writerWithDefaultPrettyPrinter().writeValueAsString(exchange.getRequest()));
         } catch (JsonProcessingException e) {
             e.printStackTrace();
         }
 
-        APIGatewayProxyRequestEvent.ProxyRequestContext proxyContext = this.eventWrapper.getRequest().getRequestContext();
+        APIGatewayProxyRequestEvent.ProxyRequestContext proxyContext = exchange.getRequest().getRequestContext();
 
         String region = System.getenv("AWS_REGION");  // use the env to get the region for REQUEST authorizer.
         String accountId = proxyContext.getAccountId();
@@ -55,7 +55,7 @@ public class SecurityMiddleware extends LambdaMiddleware {
         String httpMethod = proxyContext.getHttpMethod();
         String arn = String.format("arn:aws:execute-api:%s:%s:%s/%s/%s/%s", region, accountId, apiId, stage, httpMethod, "*");
         String principalId = null;
-        Map<String, String> headers = this.eventWrapper.getRequest().getHeaders();
+        Map<String, String> headers = exchange.getRequest().getHeaders();
         String authorization = headers.get("Authorization");
 
         LOG.debug("authorization = " + authorization);
@@ -149,25 +149,25 @@ public class SecurityMiddleware extends LambdaMiddleware {
 
         } catch (InvalidJwtException e) {
             LOG.error("ERR10000 InvalidJwtException:", e);
-            this.eventWrapper.addRequestAttachment(SECURITY_ATTACHMENT_KEY, new AuthPolicy(principalId, getDenyOnePolicy(region, accountId, apiId, stage, AuthPolicy.HttpMethod.valueOf(httpMethod), "*"), ctx));
+            exchange.addRequestAttachment(SECURITY_ATTACHMENT_KEY, new AuthPolicy(principalId, getDenyOnePolicy(region, accountId, apiId, stage, AuthPolicy.HttpMethod.valueOf(httpMethod), "*"), ctx));
 
             return new ChainLinkReturn(ChainLinkReturn.Status.EXECUTION_FAILED, "ERR10000");
 
         } catch (ExpiredTokenException e) {
             LOG.error("ERR10001 ExpiredTokenException", e);
-            this.eventWrapper.addRequestAttachment(SECURITY_ATTACHMENT_KEY, new AuthPolicy(principalId, getDenyOnePolicy(region, accountId, apiId, stage, AuthPolicy.HttpMethod.valueOf(httpMethod), "*"), ctx));
+            exchange.addRequestAttachment(SECURITY_ATTACHMENT_KEY, new AuthPolicy(principalId, getDenyOnePolicy(region, accountId, apiId, stage, AuthPolicy.HttpMethod.valueOf(httpMethod), "*"), ctx));
 
             return new ChainLinkReturn(ChainLinkReturn.Status.EXECUTION_FAILED, "ERR10001");
 
         } catch (MalformedClaimException e) {
             LOG.error("ERR10000 MalformedClaimException", e);
-            this.eventWrapper.addRequestAttachment(SECURITY_ATTACHMENT_KEY, new AuthPolicy(principalId, getDenyOnePolicy(region, accountId, apiId, stage, AuthPolicy.HttpMethod.valueOf(httpMethod), "*"), ctx));
+            exchange.addRequestAttachment(SECURITY_ATTACHMENT_KEY, new AuthPolicy(principalId, getDenyOnePolicy(region, accountId, apiId, stage, AuthPolicy.HttpMethod.valueOf(httpMethod), "*"), ctx));
 
             return new ChainLinkReturn(ChainLinkReturn.Status.EXECUTION_FAILED, "ERR10000");
         }
 
         LOG.debug("Allow " + arn);
-        this.eventWrapper.addRequestAttachment(SECURITY_ATTACHMENT_KEY, new AuthPolicy(principalId, getAllowOnePolicy(region, accountId, apiId, stage, AuthPolicy.HttpMethod.valueOf(httpMethod), "*"), ctx));
+        exchange.addRequestAttachment(SECURITY_ATTACHMENT_KEY, new AuthPolicy(principalId, getAllowOnePolicy(region, accountId, apiId, stage, AuthPolicy.HttpMethod.valueOf(httpMethod), "*"), ctx));
 
         return ChainLinkReturn.successMiddlewareReturn();
     }

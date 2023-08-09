@@ -25,7 +25,7 @@ public class ChainExecutorTest {
             .disable(DeserializationFeature.FAIL_ON_UNKNOWN_PROPERTIES);
 
 
-    LambdaEventWrapper eventWrapper;
+    LightLambdaExchange eventWrapper;
 
     @BeforeAll
     void setup() {
@@ -167,7 +167,7 @@ public class ChainExecutorTest {
                 .build();
         APIGatewayProxyRequestEvent requestEvent = invocation.getEvent();
         Context lambdaContext = new LambdaContext(invocation.getRequestId());
-        this.eventWrapper = new LambdaEventWrapper(lambdaContext);
+        this.eventWrapper = new LightLambdaExchange(lambdaContext,"APPLICATION_ID", "ENV");
         this.eventWrapper.setRequest(requestEvent);
     }
 

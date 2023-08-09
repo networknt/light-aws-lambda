@@ -1,9 +1,8 @@
 package com.networknt.aws.lambda.middleware.chain;
 
-import com.networknt.aws.lambda.middleware.LambdaEventWrapper;
-import com.networknt.aws.lambda.middleware.chain.ChainLinkReturn;
+import com.networknt.aws.lambda.middleware.LightLambdaExchange;
 
 public interface ChainLinkCallback {
-    void callback(final LambdaEventWrapper lambdaEventWrapper, ChainLinkReturn status);
-    void exceptionCallback(final LambdaEventWrapper lambdaEventWrapper, Throwable throwable);
+    void callback(final LightLambdaExchange lambdaEventWrapper, ChainLinkReturn status);
+    void exceptionCallback(final LightLambdaExchange lambdaEventWrapper, Throwable throwable);
 }

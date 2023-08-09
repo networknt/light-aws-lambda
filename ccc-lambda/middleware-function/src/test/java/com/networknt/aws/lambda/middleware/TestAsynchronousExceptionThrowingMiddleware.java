@@ -12,12 +12,12 @@ import java.util.concurrent.ThreadLocalRandom;
 public class TestAsynchronousExceptionThrowingMiddleware extends LambdaMiddleware {
     private static final Logger LOG = LoggerFactory.getLogger(TestSynchronousMiddleware.class);
 
-    public TestAsynchronousExceptionThrowingMiddleware(ChainLinkCallback callback, LambdaEventWrapper eventWrapper) {
+    public TestAsynchronousExceptionThrowingMiddleware(ChainLinkCallback callback, LightLambdaExchange eventWrapper) {
         super(callback, eventWrapper);
     }
 
     @Override
-    protected ChainLinkReturn executeMiddleware() throws InterruptedException {
+    protected ChainLinkReturn executeMiddleware(final LightLambdaExchange exchange) throws InterruptedException {
         LOG.info("I am failing Asynchronously");
 
         int randomSlept = ThreadLocalRandom.current().nextInt(1, 3);

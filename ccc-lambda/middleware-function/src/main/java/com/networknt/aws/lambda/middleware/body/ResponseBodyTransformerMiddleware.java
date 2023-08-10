@@ -4,9 +4,8 @@ import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.core.type.TypeReference;
 import com.networknt.aws.lambda.middleware.LambdaMiddleware;
 import com.networknt.aws.lambda.middleware.chain.ChainLinkCallback;
-import com.networknt.aws.lambda.middleware.chain.ChainProperties;
 import com.networknt.aws.lambda.middleware.LightLambdaExchange;
-import com.networknt.aws.lambda.middleware.chain.ChainLinkReturn;
+import com.networknt.aws.lambda.middleware.status.LambdaStatus;
 import com.networknt.aws.lambda.utility.AwsAppConfigUtil;
 import com.networknt.aws.lambda.utility.HeaderKey;
 import com.networknt.aws.lambda.utility.HeaderValue;
@@ -16,7 +15,6 @@ import org.slf4j.LoggerFactory;
 
 import java.util.Map;
 
-@ChainProperties()
 public class ResponseBodyTransformerMiddleware extends LambdaMiddleware {
     Logger LOG = LoggerFactory.getLogger(ResponseBodyTransformerMiddleware.class);
     private static final String CONFIG_NAME = "body";
@@ -25,14 +23,14 @@ public class ResponseBodyTransformerMiddleware extends LambdaMiddleware {
     private static final LightLambdaExchange.Attachable<ResponseBodyTransformerMiddleware> RESPONSE_BODY_ATTACHMENT_KEY = LightLambdaExchange.Attachable.createMiddlewareAttachable(ResponseBodyTransformerMiddleware.class);
 
     public ResponseBodyTransformerMiddleware(ChainLinkCallback middlewareCallback, final LightLambdaExchange eventWrapper) {
-        super(middlewareCallback, eventWrapper);
+        super(true, false, false, middlewareCallback, eventWrapper);
     }
 
     @Override
-    protected ChainLinkReturn executeMiddleware(final LightLambdaExchange exchange) {
+    protected LambdaStatus executeMiddleware(final LightLambdaExchange exchange) {
 
         if (!CONFIG.isEnabled())
-            return ChainLinkReturn.disabledMiddlewareReturn();
+            return LambdaStatus.disabledMiddlewareReturn();
 
         if (exchange.getResponse().getBody() != null) {
             var body = exchange.getResponse().getBody();
@@ -46,12 +44,12 @@ public class ResponseBodyTransformerMiddleware extends LambdaMiddleware {
                     var serializedBody = LambdaMiddleware.OBJECT_MAPPER.writeValueAsString(deserializedBody);
                     exchange.getResponse().setBody(serializedBody);
                     exchange.addResponseAttachment(RESPONSE_BODY_ATTACHMENT_KEY, serializedBody);
-                    return ChainLinkReturn.successMiddlewareReturn();
+                    return LambdaStatus.successMiddlewareReturn();
 
                 } catch (JsonProcessingException e) {
                     LOG.error("Body transformation failed with exception: {}", e.getMessage());
                     exchange.addResponseAttachment(RESPONSE_BODY_ATTACHMENT_KEY, body);
-                    return new ChainLinkReturn(ChainLinkReturn.Status.EXECUTION_FAILED, LAMBDA_BODY_TRANSFORMATION_EXCEPTION);
+                    return new LambdaStatus(LambdaStatus.Status.EXECUTION_FAILED, LAMBDA_BODY_TRANSFORMATION_EXCEPTION);
                 }
 
             } else {
@@ -60,7 +58,7 @@ public class ResponseBodyTransformerMiddleware extends LambdaMiddleware {
             }
         }
 
-        return ChainLinkReturn.successMiddlewareReturn();
+        return LambdaStatus.successMiddlewareReturn();
     }
 
     @Override

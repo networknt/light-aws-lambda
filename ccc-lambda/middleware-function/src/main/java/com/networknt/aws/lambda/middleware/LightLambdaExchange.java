@@ -5,8 +5,8 @@ import com.amazonaws.services.lambda.runtime.events.APIGatewayProxyRequestEvent;
 import com.amazonaws.services.lambda.runtime.events.APIGatewayProxyResponseEvent;
 import com.networknt.aws.lambda.exception.ExceptionHandler;
 import com.networknt.aws.lambda.middleware.chain.ChainDirection;
-import com.networknt.aws.lambda.middleware.chain.ChainLinkReturn;
 import com.networknt.aws.lambda.middleware.chain.PooledChainLinkExecutor;
+import com.networknt.aws.lambda.middleware.status.LambdaStatus;
 
 import java.util.HashMap;
 import java.util.List;
@@ -46,10 +46,7 @@ public final class LightLambdaExchange {
         if (stateHasAnyFlags(FLAG_REQUEST_CHAIN_READY))
             return;
 
-        if (requestChain != null && requestChain.size() > 0)
-            for (var className : requestChain)
-                this.requestExecutor.add(className);
-
+        this.loadChain(requestChain, this.requestExecutor);
         this.state |= FLAG_REQUEST_CHAIN_READY;
     }
 
@@ -58,11 +55,14 @@ public final class LightLambdaExchange {
         if (stateHasAnyFlags(FLAG_RESPONSE_CHAIN_READY))
             return;
 
-        if (responseChain != null && responseChain.size() > 0)
-            for (var className : responseChain)
-                this.responseExecutor.add(className);
-
+        this.loadChain(responseChain, this.responseExecutor);
         this.state |= FLAG_RESPONSE_CHAIN_READY;
+    }
+
+    private void loadChain(List<String> chain, PooledChainLinkExecutor executor) {
+        if (chain != null && chain.size() > 0)
+            for (var className : chain)
+                executor.add(className);
     }
 
     public void executeRequestChain() {
@@ -164,7 +164,7 @@ public final class LightLambdaExchange {
 
             for (var res : this.requestExecutor.getChainLinkReturns()) {
 
-                if (!res.getStatus().equals(ChainLinkReturn.Status.EXECUTION_SUCCESS)) {
+                if (!res.getStatus().equals(LambdaStatus.Status.EXECUTION_SUCCESS)) {
                     this.raiseRequestFailureFlag();
                     break;
                 }
@@ -182,7 +182,8 @@ public final class LightLambdaExchange {
         if (stateHasAllFlagsClear(FLAG_RESPONSE_DONE)) {
 
             for (var res : this.responseExecutor.getChainLinkReturns()) {
-                if (!res.getStatus().equals(ChainLinkReturn.Status.EXECUTION_SUCCESS)) {
+
+                if (!res.getStatus().equals(LambdaStatus.Status.EXECUTION_SUCCESS)) {
                     this.raiseResponseFailureFlag();
                     break;
                 }
@@ -215,7 +216,7 @@ public final class LightLambdaExchange {
         return (this.state & flags) != 0;
     }
 
-    private boolean stateHasAnyFlagClear(int flags) {
+    private boolean stateHasAnyFlagsClear(int flags) {
         return (this.state & flags) != flags;
     }
 

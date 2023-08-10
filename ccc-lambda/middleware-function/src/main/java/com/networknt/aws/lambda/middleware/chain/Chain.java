@@ -1,6 +1,7 @@
 package com.networknt.aws.lambda.middleware.chain;
 
 import com.networknt.aws.lambda.middleware.LambdaMiddleware;
+import com.networknt.aws.lambda.middleware.status.LambdaStatus;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -11,7 +12,7 @@ public class Chain {
     private static final Logger LOG = LoggerFactory.getLogger(Chain.class);
     private final LinkedList<LambdaMiddleware> chain = new LinkedList<>();
     private final LinkedList<ArrayList<LambdaMiddleware>> groupedChain = new LinkedList<>();
-    private final LinkedList<ChainLinkReturn> chainResults = new LinkedList<>();
+    private final LinkedList<LambdaStatus> chainResults = new LinkedList<>();
     private boolean isFinalized;
 
     public Chain() {
@@ -26,7 +27,7 @@ public class Chain {
         else LOG.error("Attempting to add chain link after chain has been finalized!");
     }
 
-    protected void addChainableResult(ChainLinkReturn result) {
+    protected void addChainableResult(LambdaStatus result) {
 
         if (this.isFinalized)
             this.chainResults.add(result);
@@ -80,14 +81,14 @@ public class Chain {
 
     private boolean isMiddlewareAsynchronous(LambdaMiddleware chainable) {
         LOG.trace("Checking if chainable class '{}' is asynchronous.", chainable.getClass());
-        return chainable.getClass().getAnnotation(ChainProperties.class).asynchronous();
+        return chainable.asynchronous;
     }
 
     public LinkedList<LambdaMiddleware> getChain() {
         return chain;
     }
 
-    public LinkedList<ChainLinkReturn> getChainResults() {
+    public LinkedList<LambdaStatus> getChainResults() {
         return chainResults;
     }
 }

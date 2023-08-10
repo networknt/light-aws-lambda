@@ -1,23 +1,21 @@
 package com.networknt.aws.lambda.middleware;
 
 import com.networknt.aws.lambda.middleware.chain.ChainLinkCallback;
-import com.networknt.aws.lambda.middleware.chain.ChainProperties;
-import com.networknt.aws.lambda.middleware.chain.ChainLinkReturn;
+import com.networknt.aws.lambda.middleware.status.LambdaStatus;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import java.util.concurrent.ThreadLocalRandom;
 
-@ChainProperties(asynchronous = true)
 public class TestAsynchronousExceptionThrowingMiddleware extends LambdaMiddleware {
     private static final Logger LOG = LoggerFactory.getLogger(TestSynchronousMiddleware.class);
 
     public TestAsynchronousExceptionThrowingMiddleware(ChainLinkCallback callback, LightLambdaExchange eventWrapper) {
-        super(callback, eventWrapper);
+        super(true, true, false, callback, eventWrapper);
     }
 
     @Override
-    protected ChainLinkReturn executeMiddleware(final LightLambdaExchange exchange) throws InterruptedException {
+    protected LambdaStatus executeMiddleware(final LightLambdaExchange exchange) throws InterruptedException {
         LOG.info("I am failing Asynchronously");
 
         int randomSlept = ThreadLocalRandom.current().nextInt(1, 3);

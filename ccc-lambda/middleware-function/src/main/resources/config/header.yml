@@ -1,22 +1,3 @@
-enabled: true
-
-requestHeader:
-  - headerKey: x-traceability-id
-    changeDescriptor:
-      changeType: APPEND
-      value: "-append-test"
-
-  - headerKey: x-added-header
-    changeDescriptor:
-      changeType: ADD
-      value: "addedHeaderValue"
-
-  - headerKey: x-traceability-id
-    changeDescriptor:
-      changeType: PREPEND
-      value: "prepend-test-"
-
-  - headerKey: x-some-random-header
-    changeDescriptor:
-      changeType: REMOVE
-      value: ""
+enabled: ${header.enabled:true}
+requestHeader: ${header.requestHeader:}
+responseHeader: ${header.responseHeader:}

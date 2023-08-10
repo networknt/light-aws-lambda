@@ -1,24 +1,12 @@
-region: "ca-central-1"
+region: ${lambda-proxy.region:}
+endpointOverride: ${lambda-proxy.endpointOverride:}
+logType: ${lambda-proxy.logType:}
 
-endpointOverride:
+functions: ${lambda-proxy.functions:}
 
-logType: ""
+metricsInjection: ${lambda-proxy.metricsInjection:true}
+metricsName: ${lambda-proxy.metricsName:}
 
-functions:
-  /v1/pets : functionVal
-
-metricsInjection: false
-
-metricsName: ""
-
-lambdaAppId: "arn:aws:lambda:ca-central-1:442513687360:function:eadp-light-lambda-test"
-
-
-requestChain:
-  - "com.networknt.aws.lambda.middleware.security.SecurityMiddleware"
-  - "com.networknt.aws.lambda.middleware.header.HeaderMiddleware"
-  - "com.networknt.aws.lambda.middleware.traceability.TraceabilityMiddleware"
-  - "com.networknt.aws.lambda.middleware.correlation.CorrelationMiddleware"
-  - "com.networknt.aws.lambda.middleware.body.RequestBodyTransformerMiddleware"
-
-responseChain:
+lambdaAppId: ${lambda-proxy.lambdaAppId:}
+requestChain: ${lambda-proxy.requestChain:}
+responseChain: ${lambda-proxy.responseChain:}

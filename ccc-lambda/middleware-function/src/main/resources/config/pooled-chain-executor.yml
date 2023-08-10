@@ -1,4 +1,4 @@
-maxPoolSize: 10
-corePoolSize: 10
-keepAliveTime: 0
-maxChainSize: 20
+maxPoolSize: ${pooled-chain-executor.maxPoolSize:10}
+corePoolSize: ${pooled-chain-executor.corePoolSize:10}
+keepAliveTime: ${pooled-chain-executor.keepAliveTime:0}
+maxChainSize: ${pooled-chain-executor.maxChainSize:20}

@@ -21,6 +21,7 @@ public class Audit implements Runnable {
 
     @Override
     public void run() {
+        // TODO later release
 //        if (CONFIG.isEnabled()) {
 //            var auditEntry = new HashMap<String, Object>();
 //            var requestAttachments = eventWrapper.getRequestAttachments();

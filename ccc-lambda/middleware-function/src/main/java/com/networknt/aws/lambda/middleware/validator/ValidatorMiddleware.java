@@ -4,24 +4,26 @@ import com.fasterxml.jackson.core.JsonProcessingException;
 import com.networknt.aws.lambda.middleware.LightLambdaExchange;
 import com.networknt.aws.lambda.middleware.LambdaMiddleware;
 import com.networknt.aws.lambda.middleware.chain.ChainLinkCallback;
-import com.networknt.aws.lambda.middleware.chain.ChainLinkReturn;
-import com.networknt.aws.lambda.middleware.chain.ChainProperties;
+import com.networknt.aws.lambda.middleware.status.LambdaStatus;
 import com.networknt.aws.lambda.utility.AwsAppConfigUtil;
 import com.networknt.config.Config;
 
-@ChainProperties(asynchronous = true, audited = false)
 public class ValidatorMiddleware extends LambdaMiddleware {
 
     private static final String CONFIG_NAME = "validator";
     private static ValidatorConfig CONFIG = (ValidatorConfig) Config.getInstance().getJsonObjectConfig(CONFIG_NAME, ValidatorConfig.class);
 
     public ValidatorMiddleware(ChainLinkCallback middlewareCallback, LightLambdaExchange eventWrapper) {
-        super(middlewareCallback, eventWrapper);
+        super(false, true, false, middlewareCallback, eventWrapper);
     }
 
     @Override
-    protected ChainLinkReturn executeMiddleware(final LightLambdaExchange exchange) throws InterruptedException {
-        return ChainLinkReturn.successMiddlewareReturn();
+    protected LambdaStatus executeMiddleware(final LightLambdaExchange exchange) throws InterruptedException {
+
+        if (!CONFIG.isEnabled())
+            return LambdaStatus.disabledMiddlewareReturn();
+
+        return LambdaStatus.successMiddlewareReturn();
     }
 
     @Override

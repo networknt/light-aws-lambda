@@ -3,9 +3,8 @@ package com.networknt.aws.lambda.middleware.traceability;
 import com.fasterxml.jackson.core.JsonProcessingException;
 import com.networknt.aws.lambda.middleware.LambdaMiddleware;
 import com.networknt.aws.lambda.middleware.chain.ChainLinkCallback;
-import com.networknt.aws.lambda.middleware.chain.ChainProperties;
 import com.networknt.aws.lambda.middleware.LightLambdaExchange;
-import com.networknt.aws.lambda.middleware.chain.ChainLinkReturn;
+import com.networknt.aws.lambda.middleware.status.LambdaStatus;
 import com.networknt.aws.lambda.utility.AwsAppConfigUtil;
 import com.networknt.aws.lambda.utility.HeaderKey;
 import com.networknt.aws.lambda.utility.LoggerKey;
@@ -14,7 +13,6 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.slf4j.MDC;
 
-@ChainProperties()
 public class TraceabilityMiddleware extends LambdaMiddleware {
 
     private static final Logger LOG = LoggerFactory.getLogger(TraceabilityMiddleware.class);
@@ -25,14 +23,14 @@ public class TraceabilityMiddleware extends LambdaMiddleware {
     private static final LightLambdaExchange.Attachable<TraceabilityMiddleware> TRACEABILITY_ATTACHMENT_KEY = LightLambdaExchange.Attachable.createMiddlewareAttachable(TraceabilityMiddleware.class);
 
     public TraceabilityMiddleware(ChainLinkCallback middlewareCallback, final LightLambdaExchange eventWrapper) {
-        super(middlewareCallback, eventWrapper);
+        super(true, false, false, middlewareCallback, eventWrapper);
     }
 
     @Override
-    protected ChainLinkReturn executeMiddleware(final LightLambdaExchange exchange) throws InterruptedException {
+    protected LambdaStatus executeMiddleware(final LightLambdaExchange exchange) throws InterruptedException {
 
         if (!CONFIG.isEnabled())
-            return ChainLinkReturn.disabledMiddlewareReturn();
+            return LambdaStatus.disabledMiddlewareReturn();
 
         if (LOG.isDebugEnabled())
             LOG.debug("TraceabilityMiddleware.executeMiddleware starts.");
@@ -49,7 +47,7 @@ public class TraceabilityMiddleware extends LambdaMiddleware {
         if (LOG.isDebugEnabled())
             LOG.debug("TraceabilityMiddleware.executeMiddleware ends.");
 
-        return ChainLinkReturn.successMiddlewareReturn();
+        return LambdaStatus.successMiddlewareReturn();
     }
 
     @Override

@@ -2,6 +2,7 @@ package com.networknt.aws.lambda.middleware.chain;
 
 import com.networknt.aws.lambda.middleware.LambdaMiddleware;
 import com.networknt.aws.lambda.middleware.LightLambdaExchange;
+import com.networknt.aws.lambda.middleware.status.LambdaStatus;
 import com.networknt.config.Config;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -68,17 +69,12 @@ public class PooledChainLinkExecutor extends ThreadPoolExecutor {
             return this;
         }
 
-        if (!middleware.isAnnotationPresent(ChainProperties.class)) {
-            LOG.error("Middleware '{}' is missing ChainProperties annotation.", middleware.getName());
-            return this;
-        }
-
         try {
             var newClazz = middleware.getConstructor(ChainLinkCallback.class, LightLambdaExchange.class).newInstance(this.chainLinkCallback, this.lambdaEventWrapper);
             newClazz.setChainDirection(this.chainDirection);
 
             // TODO - Connection keeps timing out in AWS Lambda -- fix before uncomment
-            //newClazz.getAppConfigProfileConfigurations(this.applicationId, this.env);
+            newClazz.getAppConfigProfileConfigurations(this.applicationId, this.env);
 
             this.chain.addChainable(newClazz);
 
@@ -186,10 +182,10 @@ public class PooledChainLinkExecutor extends ThreadPoolExecutor {
 
     private final ChainLinkCallback chainLinkCallback = new ChainLinkCallback() {
         @Override
-        public void callback(final LightLambdaExchange eventWrapper, ChainLinkReturn middlewareReturn) {
+        public void callback(final LightLambdaExchange eventWrapper, LambdaStatus middlewareReturn) {
             PooledChainLinkExecutor.this.chain.addChainableResult(middlewareReturn);
 
-            if (middlewareReturn.getStatus() == ChainLinkReturn.Status.EXECUTION_FAILED) {
+            if (middlewareReturn.getStatus() == LambdaStatus.Status.EXECUTION_FAILED) {
                 abortExecution();
             }
 
@@ -201,11 +197,11 @@ public class PooledChainLinkExecutor extends ThreadPoolExecutor {
             abortExecution();
 
             if (throwable instanceof InterruptedException)
-                PooledChainLinkExecutor.this.chain.addChainableResult(new ChainLinkReturn(ChainLinkReturn.Status.EXECUTION_INTERRUPTED, MIDDLEWARE_THREAD_INTERRUPT));
+                PooledChainLinkExecutor.this.chain.addChainableResult(new LambdaStatus(LambdaStatus.Status.EXECUTION_INTERRUPTED, MIDDLEWARE_THREAD_INTERRUPT));
 
             else {
                 LOG.error("Chain failed with exception: {}", throwable.getMessage(), throwable);
-                PooledChainLinkExecutor.this.chain.addChainableResult(new ChainLinkReturn(ChainLinkReturn.Status.EXECUTION_FAILED, MIDDLEWARE_UNHANDLED_EXCEPTION));
+                PooledChainLinkExecutor.this.chain.addChainableResult(new LambdaStatus(LambdaStatus.Status.EXECUTION_FAILED, MIDDLEWARE_UNHANDLED_EXCEPTION));
             }
 
         }
@@ -221,7 +217,7 @@ public class PooledChainLinkExecutor extends ThreadPoolExecutor {
         return chain;
     }
 
-    public LinkedList<ChainLinkReturn> getChainLinkReturns() {
+    public LinkedList<LambdaStatus> getChainLinkReturns() {
         return chain.getChainResults();
     }
 }

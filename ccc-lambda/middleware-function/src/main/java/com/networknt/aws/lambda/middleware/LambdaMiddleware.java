@@ -4,7 +4,7 @@ import com.fasterxml.jackson.databind.DeserializationFeature;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.networknt.aws.lambda.middleware.chain.ChainLinkCallback;
 import com.networknt.aws.lambda.middleware.chain.Chainable;
-import com.networknt.aws.lambda.middleware.chain.ChainLinkReturn;
+import com.networknt.aws.lambda.middleware.status.LambdaStatus;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -16,12 +16,12 @@ public abstract class LambdaMiddleware extends Chainable implements Runnable {
     protected static final ObjectMapper OBJECT_MAPPER = new ObjectMapper()
             .disable(DeserializationFeature.FAIL_ON_UNKNOWN_PROPERTIES);
 
-    public LambdaMiddleware(ChainLinkCallback middlewareCallback, final LightLambdaExchange exchange) {
-        super(middlewareCallback);
+    public LambdaMiddleware(boolean audited, boolean asynchronous, boolean continueOnFailure, ChainLinkCallback middlewareCallback, final LightLambdaExchange exchange) {
+        super(audited, asynchronous, continueOnFailure, middlewareCallback);
         this.exchange = exchange;
     }
 
-    protected abstract ChainLinkReturn executeMiddleware(final LightLambdaExchange exchange) throws InterruptedException;
+    protected abstract LambdaStatus executeMiddleware(final LightLambdaExchange exchange) throws InterruptedException;
 
     public abstract void getAppConfigProfileConfigurations(String applicationId, String env);
 
@@ -31,7 +31,7 @@ public abstract class LambdaMiddleware extends Chainable implements Runnable {
         try {
 
             var status = this.executeMiddleware(exchange);
-            LOG.debug("Middleware '{}' returned.", status.toStringConditionally(true, true, true));
+            LOG.debug("Middleware returned with status: '{}'.", status.toStringConditionally());
             this.middlewareCallback.callback(this.exchange, status);
 
         } catch (Throwable e) {

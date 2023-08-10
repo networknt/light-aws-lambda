@@ -1,26 +1,26 @@
 
 # Enable JWT verification flag.
-enableVerifyJwt: true
+enableVerifyJwt: ${security.enableVerifyJwt:true}
 
 # Extract JWT scope token from the X-Scope-Token header and validate the JWT token
-enableExtractScopeToken: true
+enableExtractScopeToken: ${security.enableExtractScopeToken:true}
 
 # Enable JWT scope verification.
 # Only valid when (enableVerifyJwt is true) AND (enableVerifyJWTScopeToken is true)
-enableVerifyScope: true
+enableVerifyScope: ${security.enableVerifyScope:true}
 
 # User for test only. should be always be false on official environment.
-enableMockJwt: false
+enableMockJwt: ${security.enableMockJwt:false}
 
 # For test only, should be always be true on official environment.
-ignoreJwtExpiry: true
+ignoreJwtExpiry: ${security.ignoreJwtExpiry:false}
 
 # Enable or disable JWT token logging
-logJwtToken: true
+logJwtToken: ${security.logJwtToken:false}
 
 # Enable or disable client_id, user_id and scope logging.
-logClientUserScope: false
+logClientUserScope: ${security.logClientUserScope:false}
 
 # Enable JWT token cache to speed up verification. This will only verify expired time
 # and skip the signature verification as it takes more CPU power and long time.
-enableJwtCache: true
+enableJwtCache: ${security.enableJwtCache:true}

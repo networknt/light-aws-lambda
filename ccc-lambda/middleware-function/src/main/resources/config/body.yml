@@ -1,5 +1,3 @@
-enabled: true
-
-requestBodyTransform:
-
-responseBodyTransform:
+enabled: ${body.enabled:true}
+requestBodyTransform: ${body.requestBodyTransform:}
+responseBodyTransform: ${body.responseBodyTransform:}

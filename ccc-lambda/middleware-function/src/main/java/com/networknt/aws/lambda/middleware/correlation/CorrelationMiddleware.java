@@ -3,9 +3,8 @@ package com.networknt.aws.lambda.middleware.correlation;
 import com.fasterxml.jackson.core.JsonProcessingException;
 import com.networknt.aws.lambda.middleware.LambdaMiddleware;
 import com.networknt.aws.lambda.middleware.chain.ChainLinkCallback;
-import com.networknt.aws.lambda.middleware.chain.ChainProperties;
 import com.networknt.aws.lambda.middleware.LightLambdaExchange;
-import com.networknt.aws.lambda.middleware.chain.ChainLinkReturn;
+import com.networknt.aws.lambda.middleware.status.LambdaStatus;
 import com.networknt.aws.lambda.utility.AwsAppConfigUtil;
 import com.networknt.aws.lambda.utility.HeaderKey;
 import com.networknt.aws.lambda.utility.LoggerKey;
@@ -19,7 +18,6 @@ import java.nio.ByteBuffer;
 import java.util.UUID;
 
 
-@ChainProperties()
 public class CorrelationMiddleware extends LambdaMiddleware {
 
     private static final String CONFIG_NAME = "correlation";
@@ -28,14 +26,14 @@ public class CorrelationMiddleware extends LambdaMiddleware {
     private static final LightLambdaExchange.Attachable<CorrelationMiddleware> CORRELATION_ATTACHMENT_KEY = LightLambdaExchange.Attachable.createMiddlewareAttachable(CorrelationMiddleware.class);
 
     public CorrelationMiddleware(ChainLinkCallback middlewareCallback, final LightLambdaExchange eventWrapper) {
-        super(middlewareCallback, eventWrapper);
+        super(true, false, false, middlewareCallback, eventWrapper);
     }
 
     @Override
-    protected ChainLinkReturn executeMiddleware(final LightLambdaExchange exchange) throws InterruptedException {
+    protected LambdaStatus executeMiddleware(final LightLambdaExchange exchange) throws InterruptedException {
 
         if (!CONFIG.isEnabled())
-            return ChainLinkReturn.disabledMiddlewareReturn();
+            return LambdaStatus.disabledMiddlewareReturn();
 
         if (LOG.isDebugEnabled())
             LOG.debug("CorrelationHandler.handleRequest starts.");
@@ -62,7 +60,7 @@ public class CorrelationMiddleware extends LambdaMiddleware {
         if (LOG.isDebugEnabled())
             LOG.debug("CorrelationHandler.handleRequest ends.");
 
-        return ChainLinkReturn.successMiddlewareReturn();
+        return LambdaStatus.successMiddlewareReturn();
     }
 
     @Override

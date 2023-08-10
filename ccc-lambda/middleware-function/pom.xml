@@ -54,11 +54,6 @@
         </dependency>
         <dependency>
             <groupId>com.networknt</groupId>
-            <artifactId>http-client</artifactId>
-            <version>${version.http-client}</version>
-        </dependency>
-        <dependency>
-            <groupId>com.networknt</groupId>
             <artifactId>utility</artifactId>
             <version>${version.light-4j}</version>
         </dependency>

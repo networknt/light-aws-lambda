@@ -1,5 +1,21 @@
 # Change Log
 
+## [2.1.25](https://github.com/networknt/light-aws-lambda/tree/2.1.25) (2023-08-08)
+
+
+**Merged pull requests:**
+
+
+
+
+## [2.1.24](https://github.com/networknt/light-aws-lambda/tree/2.1.24) (2023-08-07)
+
+
+**Merged pull requests:**
+
+
+
+
 ## [2.1.23](https://github.com/networknt/light-aws-lambda/tree/2.1.23) (2023-07-11)
 
 

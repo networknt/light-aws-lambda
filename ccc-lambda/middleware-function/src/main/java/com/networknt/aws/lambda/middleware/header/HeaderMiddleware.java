@@ -4,9 +4,9 @@ import com.fasterxml.jackson.core.JsonProcessingException;
 import com.networknt.aws.lambda.middleware.LambdaMiddleware;
 import com.networknt.aws.lambda.middleware.chain.ChainLinkCallback;
 import com.networknt.aws.lambda.middleware.LightLambdaExchange;
-import com.networknt.aws.lambda.status.LambdaStatus;
 import com.networknt.aws.lambda.utility.AwsAppConfigUtil;
 import com.networknt.config.Config;
+import com.networknt.status.Status;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -26,10 +26,10 @@ public class HeaderMiddleware extends LambdaMiddleware {
     }
 
     @Override
-    protected LambdaStatus executeMiddleware(final LightLambdaExchange exchange) {
+    protected Status executeMiddleware(final LightLambdaExchange exchange) {
 
         if (!CONFIG.isEnabled())
-            return LambdaStatus.disabledMiddlewareReturn();
+            return LambdaMiddleware.disabledMiddlewareStatus();
 
         switch (this.getChainDirection()) {
 
@@ -40,7 +40,7 @@ public class HeaderMiddleware extends LambdaMiddleware {
                 return this.handleResponseHeaders(exchange);
 
             default:
-                return LambdaStatus.successMiddlewareReturn();
+                return new Status(UNKNOWN_HEADER_OPERATION);
         }
     }
 
@@ -56,28 +56,28 @@ public class HeaderMiddleware extends LambdaMiddleware {
         }
     }
 
-    private LambdaStatus handleRequestHeaders(LightLambdaExchange exchange) {
+    private Status handleRequestHeaders(LightLambdaExchange exchange) {
 
         var headers = exchange.getRequest().getHeaders();
         var transforms = CONFIG.getRequestHeader();
 
         if (headers == null || transforms == null)
-            return LambdaStatus.successMiddlewareReturn();
+            return LambdaMiddleware.successMiddlewareStatus();
 
         return this.handleTransforms(headers, transforms);
     }
 
-    private LambdaStatus handleResponseHeaders(LightLambdaExchange exchange) {
+    private Status handleResponseHeaders(LightLambdaExchange exchange) {
         var headers = exchange.getResponse().getHeaders();
         var transforms = CONFIG.getResponseHeader();
 
         if (headers == null || transforms == null)
-            return LambdaStatus.successMiddlewareReturn();
+            return LambdaMiddleware.successMiddlewareStatus();
 
         return this.handleTransforms(headers, transforms);
     }
 
-    private LambdaStatus handleTransforms(Map<String, String> headers, List<HeaderConfig.HeaderChange> headerChanges) {
+    private Status handleTransforms(Map<String, String> headers, List<HeaderConfig.HeaderChange> headerChanges) {
 
         LOG.debug("Using transforms '{}' on headers '{}'", headerChanges, headers);
 
@@ -87,7 +87,7 @@ public class HeaderMiddleware extends LambdaMiddleware {
 
                 case REPLACE: {
                     if (headers.get(headerChange.getHeaderKey()) == null)
-                        return new LambdaStatus(LambdaStatus.Status.EXECUTION_FAILED, HEADER_MISSING_FOR_OPERATION);
+                        return new Status(HEADER_MISSING_FOR_OPERATION);
                 }
 
                 case ADD: {
@@ -103,7 +103,7 @@ public class HeaderMiddleware extends LambdaMiddleware {
                 case APPEND: {
                     var appendedHeader = headers.get(headerChange.getHeaderKey());
                     if (appendedHeader == null)
-                        return new LambdaStatus(LambdaStatus.Status.EXECUTION_FAILED, HEADER_MISSING_FOR_OPERATION);
+                        return new Status(HEADER_MISSING_FOR_OPERATION);
                     appendedHeader = appendedHeader + headerChange.getChangeDescriptor().getValue();
                     headers.put(headerChange.getHeaderKey(), appendedHeader);
                     break;
@@ -112,17 +112,17 @@ public class HeaderMiddleware extends LambdaMiddleware {
                 case PREPEND: {
                     var prependedHeader = headers.get(headerChange.getHeaderKey());
                     if (prependedHeader == null)
-                        return new LambdaStatus(LambdaStatus.Status.EXECUTION_FAILED, HEADER_MISSING_FOR_OPERATION);
+                        return new Status(HEADER_MISSING_FOR_OPERATION);
                     prependedHeader = headerChange.getChangeDescriptor().getValue() + prependedHeader;
                     headers.put(headerChange.getHeaderKey(), prependedHeader);
                     break;
                 }
 
                 default:
-                    return new LambdaStatus(LambdaStatus.Status.EXECUTION_FAILED, UNKNOWN_HEADER_OPERATION);
+                    return new Status(UNKNOWN_HEADER_OPERATION);
             }
         }
 
-        return LambdaStatus.successMiddlewareReturn();
+        return LambdaMiddleware.successMiddlewareStatus();
     }
 }

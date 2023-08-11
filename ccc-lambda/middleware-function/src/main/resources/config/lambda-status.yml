@@ -1420,6 +1420,7 @@ status:
     statusCode: 200
     code: SUC14200
     message: MIDDLEWARE_OK
+    severity: NA
     description: Lambda native handler returned success execution.
   ERR14001:
     statusCode: 500

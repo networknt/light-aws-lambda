@@ -2,10 +2,10 @@ package com.networknt.aws.lambda.exception;
 import com.amazonaws.services.lambda.runtime.events.APIGatewayProxyResponseEvent;
 import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.databind.ObjectMapper;
-import com.networknt.aws.lambda.status.LambdaStatus;
 import com.networknt.aws.lambda.utility.HeaderKey;
 import com.networknt.aws.lambda.utility.HeaderValue;
 import com.networknt.config.Config;
+import com.networknt.status.Status;
 
 import java.util.ArrayList;
 import java.util.HashMap;
@@ -21,7 +21,7 @@ public class ExceptionHandler {
     private static final ExceptionConfig CONFIG = (ExceptionConfig) Config.getInstance().getJsonObjectConfig(CONFIG_NAME, ExceptionConfig.class);
     private static final ObjectMapper OBJECT_MAPPER = new ObjectMapper();
 
-    public static APIGatewayProxyResponseEvent handle(List<LambdaStatus> middlewareResults) {
+    public static APIGatewayProxyResponseEvent handle(List<Status> middlewareResults) {
         if (CONFIG.isEnabled()) {
             var responseEvent = new APIGatewayProxyResponseEvent();
             Map<String, String> headers = new HashMap<>();
@@ -33,7 +33,7 @@ public class ExceptionHandler {
             var notifications = new ArrayList<>();
 
             for (var res : middlewareResults)
-                if (!res.getStatus().equals(LambdaStatus.Status.EXECUTION_SUCCESS))
+                if (res.getCode().startsWith("ERR"))
                     notifications.add(res.toStringConditionally());
 
             returnSchema.put(NOTIFICATIONS_KEY, notifications);

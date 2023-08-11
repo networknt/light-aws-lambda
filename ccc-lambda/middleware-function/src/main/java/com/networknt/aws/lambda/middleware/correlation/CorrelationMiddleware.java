@@ -4,11 +4,11 @@ import com.fasterxml.jackson.core.JsonProcessingException;
 import com.networknt.aws.lambda.middleware.LambdaMiddleware;
 import com.networknt.aws.lambda.middleware.chain.ChainLinkCallback;
 import com.networknt.aws.lambda.middleware.LightLambdaExchange;
-import com.networknt.aws.lambda.status.LambdaStatus;
 import com.networknt.aws.lambda.utility.AwsAppConfigUtil;
 import com.networknt.aws.lambda.utility.HeaderKey;
 import com.networknt.aws.lambda.utility.LoggerKey;
 import com.networknt.config.Config;
+import com.networknt.status.Status;
 import org.apache.commons.codec.binary.Base64;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -30,10 +30,10 @@ public class CorrelationMiddleware extends LambdaMiddleware {
     }
 
     @Override
-    protected LambdaStatus executeMiddleware(final LightLambdaExchange exchange) throws InterruptedException {
+    protected Status executeMiddleware(final LightLambdaExchange exchange) throws InterruptedException {
 
         if (!CONFIG.isEnabled())
-            return LambdaStatus.disabledMiddlewareReturn();
+            return LambdaMiddleware.disabledMiddlewareStatus();
 
         if (LOG.isDebugEnabled())
             LOG.debug("CorrelationHandler.handleRequest starts.");
@@ -60,7 +60,7 @@ public class CorrelationMiddleware extends LambdaMiddleware {
         if (LOG.isDebugEnabled())
             LOG.debug("CorrelationHandler.handleRequest ends.");
 
-        return LambdaStatus.successMiddlewareReturn();
+        return LambdaMiddleware.successMiddlewareStatus();
     }
 
     @Override

@@ -5,9 +5,9 @@ import com.fasterxml.jackson.core.JsonProcessingException;
 import com.networknt.aws.lambda.middleware.LambdaMiddleware;
 import com.networknt.aws.lambda.middleware.chain.ChainLinkCallback;
 import com.networknt.aws.lambda.middleware.LightLambdaExchange;
-import com.networknt.aws.lambda.status.LambdaStatus;
 import com.networknt.aws.lambda.utility.AwsAppConfigUtil;
 import com.networknt.config.Config;
+import com.networknt.status.Status;
 import com.networknt.utility.Constants;
 import com.networknt.utility.StringUtils;
 import org.jose4j.jwt.JwtClaims;
@@ -35,7 +35,7 @@ public class SecurityMiddleware extends LambdaMiddleware {
     }
 
     @Override
-    protected LambdaStatus executeMiddleware(final LightLambdaExchange exchange) throws InterruptedException {
+    protected Status executeMiddleware(final LightLambdaExchange exchange) throws InterruptedException {
         try {
             LOG.debug(OBJECT_MAPPER.writerWithDefaultPrettyPrinter().writeValueAsString(exchange.getRequest()));
         } catch (JsonProcessingException e) {
@@ -147,25 +147,25 @@ public class SecurityMiddleware extends LambdaMiddleware {
             LOG.error("ERR10000 InvalidJwtException:", e);
             exchange.addRequestAttachment(SECURITY_ATTACHMENT_KEY, new AuthPolicy(principalId, getDenyOnePolicy(region, accountId, apiId, stage, AuthPolicy.HttpMethod.valueOf(httpMethod), "*"), ctx));
 
-            return new LambdaStatus(LambdaStatus.Status.EXECUTION_FAILED, "ERR10000");
+            return new Status("ERR10000");
 
         } catch (ExpiredTokenException e) {
             LOG.error("ERR10001 ExpiredTokenException", e);
             exchange.addRequestAttachment(SECURITY_ATTACHMENT_KEY, new AuthPolicy(principalId, getDenyOnePolicy(region, accountId, apiId, stage, AuthPolicy.HttpMethod.valueOf(httpMethod), "*"), ctx));
 
-            return new LambdaStatus(LambdaStatus.Status.EXECUTION_FAILED, "ERR10001");
+            return new Status("ERR10001");
 
         } catch (MalformedClaimException e) {
             LOG.error("ERR10000 MalformedClaimException", e);
             exchange.addRequestAttachment(SECURITY_ATTACHMENT_KEY, new AuthPolicy(principalId, getDenyOnePolicy(region, accountId, apiId, stage, AuthPolicy.HttpMethod.valueOf(httpMethod), "*"), ctx));
 
-            return new LambdaStatus(LambdaStatus.Status.EXECUTION_FAILED, "ERR10000");
+            return new Status("ERR10000");
         }
 
         LOG.debug("Allow " + arn);
         exchange.addRequestAttachment(SECURITY_ATTACHMENT_KEY, new AuthPolicy(principalId, getAllowOnePolicy(region, accountId, apiId, stage, AuthPolicy.HttpMethod.valueOf(httpMethod), "*"), ctx));
 
-        return LambdaStatus.successMiddlewareReturn();
+        return LambdaMiddleware.successMiddlewareStatus();
     }
 
     @Override

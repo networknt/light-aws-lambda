@@ -1,7 +1,7 @@
 package com.networknt.aws.lambda.middleware;
 
 import com.networknt.aws.lambda.middleware.chain.ChainLinkCallback;
-import com.networknt.aws.lambda.status.LambdaStatus;
+import com.networknt.status.Status;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -16,7 +16,7 @@ public class TestAsynchronousMiddleware extends LambdaMiddleware {
     }
 
     @Override
-    protected LambdaStatus executeMiddleware(final LightLambdaExchange exchange) throws InterruptedException {
+    protected Status executeMiddleware(final LightLambdaExchange exchange) throws InterruptedException {
         LOG.info("I am executing asynchronously");
 
         int randomSlept = ThreadLocalRandom.current().nextInt(5, 15);
@@ -31,7 +31,7 @@ public class TestAsynchronousMiddleware extends LambdaMiddleware {
         }
 
         LOG.info("I am done executing asynchronously, doing callback");
-        return LambdaStatus.successMiddlewareReturn();
+        return LambdaMiddleware.successMiddlewareStatus();
     }
 
     @Override

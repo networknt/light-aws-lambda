@@ -5,11 +5,11 @@ import com.fasterxml.jackson.core.type.TypeReference;
 import com.networknt.aws.lambda.middleware.LambdaMiddleware;
 import com.networknt.aws.lambda.middleware.chain.ChainLinkCallback;
 import com.networknt.aws.lambda.middleware.LightLambdaExchange;
-import com.networknt.aws.lambda.status.LambdaStatus;
 import com.networknt.aws.lambda.utility.AwsAppConfigUtil;
 import com.networknt.aws.lambda.utility.HeaderKey;
 import com.networknt.aws.lambda.utility.HeaderValue;
 import com.networknt.config.Config;
+import com.networknt.status.Status;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -30,10 +30,10 @@ public class RequestBodyTransformerMiddleware extends LambdaMiddleware {
     }
 
     @Override
-    protected LambdaStatus executeMiddleware(final LightLambdaExchange exchange) throws InterruptedException {
+    protected Status executeMiddleware(final LightLambdaExchange exchange) throws InterruptedException {
 
         if (!CONFIG.isEnabled())
-            return LambdaStatus.disabledMiddlewareReturn();
+            return LambdaMiddleware.disabledMiddlewareStatus();
 
         if (exchange.getRequest().getBody() != null) {
             var body = exchange.getRequest().getBody();
@@ -48,12 +48,12 @@ public class RequestBodyTransformerMiddleware extends LambdaMiddleware {
                     var serializedBody = LambdaMiddleware.OBJECT_MAPPER.writeValueAsString(deserializedBody);
                     exchange.getRequest().setBody(serializedBody);
                     exchange.addRequestAttachment(REQUEST_BODY_ATTACHMENT_KEY, serializedBody);
-                    return LambdaStatus.successMiddlewareReturn();
+                    return LambdaMiddleware.successMiddlewareStatus();
 
                 } catch (JsonProcessingException e) {
                     LOG.error("Body transformation failed with exception: {}", e.getMessage());
                     exchange.addRequestAttachment(REQUEST_BODY_ATTACHMENT_KEY, body);
-                    return new LambdaStatus(LambdaStatus.Status.EXECUTION_FAILED, LAMBDA_BODY_TRANSFORMATION_EXCEPTION);
+                    return new Status(LAMBDA_BODY_TRANSFORMATION_EXCEPTION);
                 }
 
             } else {
@@ -63,7 +63,7 @@ public class RequestBodyTransformerMiddleware extends LambdaMiddleware {
         }
 
         exchange.addRequestAttachment(REQUEST_BODY_ATTACHMENT_KEY, null);
-        return LambdaStatus.successMiddlewareReturn();
+        return LambdaMiddleware.successMiddlewareStatus();
     }
 
     @Override

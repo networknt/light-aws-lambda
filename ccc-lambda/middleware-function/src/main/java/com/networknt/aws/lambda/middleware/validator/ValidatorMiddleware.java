@@ -4,10 +4,10 @@ import com.fasterxml.jackson.core.JsonProcessingException;
 import com.networknt.aws.lambda.middleware.LightLambdaExchange;
 import com.networknt.aws.lambda.middleware.LambdaMiddleware;
 import com.networknt.aws.lambda.middleware.chain.ChainLinkCallback;
-import com.networknt.aws.lambda.status.LambdaStatus;
 import com.networknt.aws.lambda.utility.AwsAppConfigUtil;
 import com.networknt.config.Config;
 import com.networknt.openapi.OpenApiOperation;
+import com.networknt.status.Status;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -24,10 +24,10 @@ public class ValidatorMiddleware extends LambdaMiddleware {
     }
 
     @Override
-    protected LambdaStatus executeMiddleware(final LightLambdaExchange exchange) throws InterruptedException {
+    protected Status executeMiddleware(final LightLambdaExchange exchange) throws InterruptedException {
 
         if (!CONFIG.isEnabled())
-            return LambdaStatus.disabledMiddlewareReturn();
+            return LambdaMiddleware.disabledMiddlewareStatus();
 
         LOG.debug("ValidatorHandler.handleRequest starts.");
 
@@ -35,7 +35,7 @@ public class ValidatorMiddleware extends LambdaMiddleware {
         // if request path is in the skipPathPrefixes in the config, call the next handler directly to skip the validation.
         if (CONFIG.getSkipPathPrefixes() != null && CONFIG.getSkipPathPrefixes().stream().anyMatch(reqPath::startsWith)) {
             LOG.debug("ValidatorHandler.handleRequest ends with skipped path '{}'", reqPath);
-            return LambdaStatus.successMiddlewareReturn();
+            return LambdaMiddleware.successMiddlewareStatus();
         }
 
         //final NormalisedPath requestPath = new ApiNormalisedPath(exchange.getRequestURI(), OpenApiHandler.getBasePath(exchange.getRequest().getPath()));
@@ -67,11 +67,11 @@ public class ValidatorMiddleware extends LambdaMiddleware {
             valid = validateRequest(exchange, openApiOperation);
 
         if (!valid)
-            return new LambdaStatus(LambdaStatus.Status.EXECUTION_FAILED, "");
+            return new Status("");
 
         if (LOG.isDebugEnabled()) LOG.debug("ValidatorHandler.handleRequest ends.");
 
-        return LambdaStatus.successMiddlewareReturn();
+        return LambdaMiddleware.successMiddlewareStatus();
     }
 
     private boolean validateResponse(final LightLambdaExchange exchange, OpenApiOperation openApiOperation) {

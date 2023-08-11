@@ -6,7 +6,7 @@ import com.amazonaws.services.lambda.runtime.events.APIGatewayProxyResponseEvent
 import com.networknt.aws.lambda.exception.ExceptionHandler;
 import com.networknt.aws.lambda.middleware.chain.ChainDirection;
 import com.networknt.aws.lambda.middleware.chain.PooledChainLinkExecutor;
-import com.networknt.aws.lambda.status.LambdaStatus;
+import com.networknt.status.Status;
 
 import java.util.HashMap;
 import java.util.List;
@@ -164,7 +164,7 @@ public final class LightLambdaExchange {
 
             for (var res : this.requestExecutor.getChainLinkReturns()) {
 
-                if (!res.getStatus().equals(LambdaStatus.Status.EXECUTION_SUCCESS)) {
+                if (res.getCode().startsWith("ERR")) {
                     this.raiseRequestFailureFlag();
                     break;
                 }
@@ -183,7 +183,7 @@ public final class LightLambdaExchange {
 
             for (var res : this.responseExecutor.getChainLinkReturns()) {
 
-                if (!res.getStatus().equals(LambdaStatus.Status.EXECUTION_SUCCESS)) {
+                if (res.getCode().startsWith("ERR")) {
                     this.raiseResponseFailureFlag();
                     break;
                 }

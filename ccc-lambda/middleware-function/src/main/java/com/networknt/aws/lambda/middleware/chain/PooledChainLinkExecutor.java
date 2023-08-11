@@ -2,8 +2,8 @@ package com.networknt.aws.lambda.middleware.chain;
 
 import com.networknt.aws.lambda.middleware.LambdaMiddleware;
 import com.networknt.aws.lambda.middleware.LightLambdaExchange;
-import com.networknt.aws.lambda.status.LambdaStatus;
 import com.networknt.config.Config;
+import com.networknt.status.Status;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.slf4j.MDC;
@@ -182,10 +182,10 @@ public class PooledChainLinkExecutor extends ThreadPoolExecutor {
 
     private final ChainLinkCallback chainLinkCallback = new ChainLinkCallback() {
         @Override
-        public void callback(final LightLambdaExchange eventWrapper, LambdaStatus middlewareReturn) {
-            PooledChainLinkExecutor.this.chain.addChainableResult(middlewareReturn);
+        public void callback(final LightLambdaExchange eventWrapper, Status status) {
+            PooledChainLinkExecutor.this.chain.addChainableResult(status);
 
-            if (middlewareReturn.getStatus() == LambdaStatus.Status.EXECUTION_FAILED) {
+            if (status.getCode().startsWith("ERR")) {
                 abortExecution();
             }
 
@@ -197,11 +197,11 @@ public class PooledChainLinkExecutor extends ThreadPoolExecutor {
             abortExecution();
 
             if (throwable instanceof InterruptedException)
-                PooledChainLinkExecutor.this.chain.addChainableResult(new LambdaStatus(LambdaStatus.Status.EXECUTION_INTERRUPTED, MIDDLEWARE_THREAD_INTERRUPT));
+                PooledChainLinkExecutor.this.chain.addChainableResult(new Status(MIDDLEWARE_THREAD_INTERRUPT));
 
             else {
                 LOG.error("Chain failed with exception: {}", throwable.getMessage(), throwable);
-                PooledChainLinkExecutor.this.chain.addChainableResult(new LambdaStatus(LambdaStatus.Status.EXECUTION_FAILED, MIDDLEWARE_UNHANDLED_EXCEPTION));
+                PooledChainLinkExecutor.this.chain.addChainableResult(new Status(MIDDLEWARE_UNHANDLED_EXCEPTION));
             }
 
         }
@@ -217,7 +217,7 @@ public class PooledChainLinkExecutor extends ThreadPoolExecutor {
         return chain;
     }
 
-    public LinkedList<LambdaStatus> getChainLinkReturns() {
+    public LinkedList<Status> getChainLinkReturns() {
         return chain.getChainResults();
     }
 }

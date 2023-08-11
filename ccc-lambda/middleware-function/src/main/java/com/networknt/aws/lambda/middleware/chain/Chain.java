@@ -1,7 +1,7 @@
 package com.networknt.aws.lambda.middleware.chain;
 
 import com.networknt.aws.lambda.middleware.LambdaMiddleware;
-import com.networknt.aws.lambda.status.LambdaStatus;
+import com.networknt.status.Status;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -12,7 +12,7 @@ public class Chain {
     private static final Logger LOG = LoggerFactory.getLogger(Chain.class);
     private final LinkedList<LambdaMiddleware> chain = new LinkedList<>();
     private final LinkedList<ArrayList<LambdaMiddleware>> groupedChain = new LinkedList<>();
-    private final LinkedList<LambdaStatus> chainResults = new LinkedList<>();
+    private final LinkedList<Status> chainResults = new LinkedList<>();
     private boolean isFinalized;
 
     public Chain() {
@@ -27,7 +27,7 @@ public class Chain {
         else LOG.error("Attempting to add chain link after chain has been finalized!");
     }
 
-    protected void addChainableResult(LambdaStatus result) {
+    protected void addChainableResult(Status result) {
 
         if (this.isFinalized)
             this.chainResults.add(result);
@@ -88,7 +88,7 @@ public class Chain {
         return chain;
     }
 
-    public LinkedList<LambdaStatus> getChainResults() {
+    public LinkedList<Status> getChainResults() {
         return chainResults;
     }
 }

@@ -5,7 +5,7 @@ import com.fasterxml.jackson.core.type.TypeReference;
 import com.networknt.aws.lambda.middleware.LambdaMiddleware;
 import com.networknt.aws.lambda.middleware.chain.ChainLinkCallback;
 import com.networknt.aws.lambda.middleware.LightLambdaExchange;
-import com.networknt.aws.lambda.middleware.status.LambdaStatus;
+import com.networknt.aws.lambda.status.LambdaStatus;
 import com.networknt.aws.lambda.utility.AwsAppConfigUtil;
 import com.networknt.aws.lambda.utility.HeaderKey;
 import com.networknt.aws.lambda.utility.HeaderValue;
@@ -22,7 +22,7 @@ public class RequestBodyTransformerMiddleware extends LambdaMiddleware {
     private static final Logger LOG = LoggerFactory.getLogger(RequestBodyTransformerMiddleware.class);
     private static final String LAMBDA_BODY_TRANSFORMATION_EXCEPTION = "ERR14002";
 
-    private static final String CONFIG_NAME = "body";
+    private static final String CONFIG_NAME = "lambda-body";
     private static BodyConfig CONFIG = (BodyConfig) Config.getInstance().getJsonObjectConfig(CONFIG_NAME, BodyConfig.class);
 
     public RequestBodyTransformerMiddleware(ChainLinkCallback middlewareCallback, final LightLambdaExchange eventWrapper) {

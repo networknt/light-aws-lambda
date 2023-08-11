@@ -4,7 +4,7 @@ import com.fasterxml.jackson.databind.DeserializationFeature;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.networknt.aws.lambda.middleware.chain.ChainLinkCallback;
 import com.networknt.aws.lambda.middleware.chain.Chainable;
-import com.networknt.aws.lambda.middleware.status.LambdaStatus;
+import com.networknt.aws.lambda.status.LambdaStatus;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 

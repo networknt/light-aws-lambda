@@ -1,4 +1,4 @@
-package com.networknt.aws.lambda.middleware.status;
+package com.networknt.aws.lambda.status;
 
 import com.fasterxml.jackson.core.JsonProcessingException;
 import com.networknt.config.Config;

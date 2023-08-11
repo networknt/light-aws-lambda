@@ -1,3 +1,0 @@
-enabled: ${header.enabled:true}
-requestHeader: ${header.requestHeader:}
-responseHeader: ${header.responseHeader:}

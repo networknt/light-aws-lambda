@@ -5,7 +5,7 @@ import com.fasterxml.jackson.core.JsonProcessingException;
 import com.networknt.aws.lambda.middleware.LambdaMiddleware;
 import com.networknt.aws.lambda.middleware.chain.ChainLinkCallback;
 import com.networknt.aws.lambda.middleware.LightLambdaExchange;
-import com.networknt.aws.lambda.middleware.status.LambdaStatus;
+import com.networknt.aws.lambda.status.LambdaStatus;
 import com.networknt.aws.lambda.utility.AwsAppConfigUtil;
 import com.networknt.config.Config;
 import com.networknt.utility.Constants;
@@ -25,15 +25,13 @@ import static com.networknt.aws.lambda.middleware.security.AuthPolicy.PolicyDocu
 import static com.networknt.aws.lambda.middleware.security.AuthPolicy.PolicyDocument.getDenyOnePolicy;
 
 public class SecurityMiddleware extends LambdaMiddleware {
-
     private static final Logger LOG = LoggerFactory.getLogger(SecurityMiddleware.class);
-    private static final String CONFIG_NAME = "security";
-
+    private static final String CONFIG_NAME = "lambda-security";
     private static SecurityConfig CONFIG = (SecurityConfig) Config.getInstance().getJsonObjectConfig(CONFIG_NAME, SecurityConfig.class);
     private static final LightLambdaExchange.Attachable<SecurityMiddleware> SECURITY_ATTACHMENT_KEY = LightLambdaExchange.Attachable.createMiddlewareAttachable(SecurityMiddleware.class);
 
     public SecurityMiddleware(ChainLinkCallback middlewareCallback, final LightLambdaExchange eventWrapper) {
-        super(false, true, false, middlewareCallback, eventWrapper);
+        super(false, false, false, middlewareCallback, eventWrapper);
     }
 
     @Override

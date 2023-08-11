@@ -1,4 +1,4 @@
-package com.networknt.aws.lambda.middleware.status;
+package com.networknt.aws.lambda.status;
 
 import java.util.Map;
 

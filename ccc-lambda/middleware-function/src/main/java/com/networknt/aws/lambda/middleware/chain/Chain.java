@@ -1,7 +1,7 @@
 package com.networknt.aws.lambda.middleware.chain;
 
 import com.networknt.aws.lambda.middleware.LambdaMiddleware;
-import com.networknt.aws.lambda.middleware.status.LambdaStatus;
+import com.networknt.aws.lambda.status.LambdaStatus;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 

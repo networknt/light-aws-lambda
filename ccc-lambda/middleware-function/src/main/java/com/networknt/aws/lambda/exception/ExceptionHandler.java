@@ -2,7 +2,7 @@ package com.networknt.aws.lambda.exception;
 import com.amazonaws.services.lambda.runtime.events.APIGatewayProxyResponseEvent;
 import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.databind.ObjectMapper;
-import com.networknt.aws.lambda.middleware.status.LambdaStatus;
+import com.networknt.aws.lambda.status.LambdaStatus;
 import com.networknt.aws.lambda.utility.HeaderKey;
 import com.networknt.aws.lambda.utility.HeaderValue;
 import com.networknt.config.Config;
@@ -17,7 +17,7 @@ public class ExceptionHandler {
     private static final String DATA_KEY = "data";
     private static final String NOTIFICATIONS_KEY = "notifications";
 
-    private static final String CONFIG_NAME = "exception";
+    private static final String CONFIG_NAME = "lambda-exception";
     private static final ExceptionConfig CONFIG = (ExceptionConfig) Config.getInstance().getJsonObjectConfig(CONFIG_NAME, ExceptionConfig.class);
     private static final ObjectMapper OBJECT_MAPPER = new ObjectMapper();
 

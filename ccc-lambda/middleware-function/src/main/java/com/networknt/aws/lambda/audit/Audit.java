@@ -11,7 +11,7 @@ public class Audit implements Runnable {
     private static final ObjectMapper OBJECT_MAPPER = new ObjectMapper();
 
     private static final Logger LOG = LoggerFactory.getLogger(Audit.class);
-    private static final String CONFIG_NAME = "audit";
+    private static final String CONFIG_NAME = "lambda-audit";
     private static final AuditConfig CONFIG = (AuditConfig) Config.getInstance().getJsonObjectConfig(CONFIG_NAME, AuditConfig.class);
     private final LightLambdaExchange eventWrapper;
 

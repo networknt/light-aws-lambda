@@ -2,14 +2,18 @@
 # ----------< Lambda Proxy Config >----------
 lambda-proxy.region: ca-central-1
 lambda-proxy.metricsInjection: false
+
 lambda-proxy.functions:
   /v1/pets : functionVal
+
 lambda-proxy.requestChain:
     - "com.networknt.aws.lambda.middleware.security.SecurityMiddleware"
     - "com.networknt.aws.lambda.middleware.header.HeaderMiddleware"
     - "com.networknt.aws.lambda.middleware.traceability.TraceabilityMiddleware"
     - "com.networknt.aws.lambda.middleware.correlation.CorrelationMiddleware"
     - "com.networknt.aws.lambda.middleware.body.RequestBodyTransformerMiddleware"
+lambda-proxy.responseChain:
+    - ""
 lambda-proxy.lambdaAppId: arn:aws:lambda:ca-central-1:442513687360:function:eadp-light-lambda-test
 # -------------------------------------------
 
@@ -21,12 +25,12 @@ pooled-chain-executor.maxChainLength: 20
 # -------------------------------------------
 
 # --------< Lambda Security Config >---------
-security.ignoreJwtExpiry: true
-security.logJwtToken: true
+lambda-security.ignoreJwtExpiry: true
+lambda-security.logJwtToken: true
 # -------------------------------------------
 
 # ----------< Lambda Header Config >---------
-header.requestHeader:
+lambda-header.requestHeader:
   - headerKey: x-traceability-id
     changeDescriptor:
       changeType: APPEND

@@ -1,7 +1,7 @@
 package com.networknt.aws.lambda.middleware.chain;
 
 import com.networknt.aws.lambda.middleware.LightLambdaExchange;
-import com.networknt.aws.lambda.middleware.status.LambdaStatus;
+import com.networknt.aws.lambda.status.LambdaStatus;
 
 public interface ChainLinkCallback {
     void callback(final LightLambdaExchange lambdaEventWrapper, LambdaStatus status);

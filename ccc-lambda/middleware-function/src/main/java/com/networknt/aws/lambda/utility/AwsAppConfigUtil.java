@@ -46,7 +46,9 @@ public class AwsAppConfigUtil {
 //                return configResponse.configuration().asUtf8String();
 //
 //            }
-            URL url = new URL("http://localhost:2772");
+            // https://docs.aws.amazon.com/appconfig/latest/userguide/appconfig-integration-lambda-extensions.html
+            // localhost:2772 is the url of the AppConfig extension layer when used in lambda
+            URL url = new URL("http://localhost:2772/applications/" + applicationId + "/environments/" + env + "/configurations/" + profile);
             HttpURLConnection con = (HttpURLConnection) url.openConnection();
             con.setRequestMethod("GET");
             int status = con.getResponseCode();

@@ -4,7 +4,7 @@ import com.fasterxml.jackson.core.JsonProcessingException;
 import com.networknt.aws.lambda.middleware.LambdaMiddleware;
 import com.networknt.aws.lambda.middleware.chain.ChainLinkCallback;
 import com.networknt.aws.lambda.middleware.LightLambdaExchange;
-import com.networknt.aws.lambda.middleware.status.LambdaStatus;
+import com.networknt.aws.lambda.status.LambdaStatus;
 import com.networknt.aws.lambda.utility.AwsAppConfigUtil;
 import com.networknt.config.Config;
 import org.slf4j.Logger;
@@ -15,7 +15,7 @@ import java.util.Map;
 
 public class HeaderMiddleware extends LambdaMiddleware {
 
-    public static final String CONFIG_NAME = "header";
+    public static final String CONFIG_NAME = "lambda-header";
     private static final String UNKNOWN_HEADER_OPERATION = "ERR14004";
     private static final String HEADER_MISSING_FOR_OPERATION = "ERR14005";
     private static HeaderConfig CONFIG = (HeaderConfig) Config.getInstance().getJsonObjectConfig(CONFIG_NAME, HeaderConfig.class);

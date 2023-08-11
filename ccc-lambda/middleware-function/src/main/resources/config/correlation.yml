@@ -1,2 +1,0 @@
-enabled: ${correlation.enabled:true}
-autogenCorrelationID: ${correlation.autogenCorrelationID:true}

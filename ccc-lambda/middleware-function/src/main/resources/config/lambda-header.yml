@@ -1,0 +1,3 @@
+enabled: ${lambda-header.enabled:true}
+requestHeader: ${lambda-header.requestHeader:}
+responseHeader: ${lambda-header.responseHeader:}

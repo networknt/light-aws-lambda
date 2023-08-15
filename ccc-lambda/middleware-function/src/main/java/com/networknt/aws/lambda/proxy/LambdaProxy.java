@@ -15,7 +15,6 @@ import org.slf4j.LoggerFactory;
 import software.amazon.awssdk.core.SdkBytes;
 import software.amazon.awssdk.regions.Region;
 import software.amazon.awssdk.services.lambda.LambdaClient;
-import software.amazon.awssdk.services.lambda.LambdaClientBuilder;
 import software.amazon.awssdk.services.lambda.model.InvokeRequest;
 import software.amazon.awssdk.services.lambda.model.LambdaException;
 
@@ -60,27 +59,34 @@ public class LambdaProxy implements RequestHandler<APIGatewayProxyRequestEvent, 
         exchange.executeRequestChain();
         exchange.finalizeRequest();
 
-        /* invoke lambda function */
-        var path = exchange.getRequest().getPath();
-        var method = exchange.getRequest().getHttpMethod().toLowerCase();
+        if (!exchange.hasFailedState()) {
+            /* invoke lambda function */
+            var path = exchange.getRequest().getPath();
+            var method = exchange.getRequest().getHttpMethod().toLowerCase();
+            LOG.debug("Request path: {} -- Request method: {}", path, method);
 
-        final var functionName = CONFIG.getFunctions().get(path + "@" + method);
-        LOG.debug("FunctionName: {}", functionName);
+            final var functionName = CONFIG.getFunctions().get(path + "@" + method);
+            LOG.debug("Found function name: {}", functionName);
 
-        final var res = this.invokeFunction(client, functionName, exchange);
-        LOG.debug("res: {}", res);
+            final var res = this.invokeFunction(client, functionName, exchange);
+            LOG.debug("Response Raw: {}", res);
+            final var responseEvent = JsonMapper.fromJson(res, APIGatewayProxyResponseEvent.class);
 
-        final var responseEvent = JsonMapper.fromJson(res, APIGatewayProxyResponseEvent.class);
+            LOG.debug("Res Body: {}", responseEvent.getBody());
+            LOG.debug("Res Headers: {}", responseEvent.getHeaders());
 
-        exchange.setResponse(responseEvent);
+            exchange.setResponse(responseEvent);
 
-        /* exec response chain */
-        exchange.loadResponseChain(CONFIG.getResponseChain());
-        exchange.executeResponseChain();
-        exchange.finalizeResponse();
+            /* exec response chain */
+            exchange.loadResponseChain(CONFIG.getResponseChain());
+            exchange.executeResponseChain();
+            exchange.finalizeResponse();
+        }
 
         LOG.debug("Lambda CCC --end");
         return exchange.getResponse();
+
+
     }
 
     private String invokeFunction(final LambdaClient client, String functionName, final LightLambdaExchange eventWrapper) {

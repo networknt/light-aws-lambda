@@ -12,8 +12,6 @@ lambda-proxy.requestChain:
     - "com.networknt.aws.lambda.middleware.traceability.TraceabilityMiddleware"
     - "com.networknt.aws.lambda.middleware.correlation.CorrelationMiddleware"
     - "com.networknt.aws.lambda.middleware.body.RequestBodyTransformerMiddleware"
-lambda-proxy.responseChain:
-    - ""
 lambda-proxy.lambdaAppId: arn:aws:lambda:ca-central-1:442513687360:function:eadp-light-lambda-test
 # -------------------------------------------
 

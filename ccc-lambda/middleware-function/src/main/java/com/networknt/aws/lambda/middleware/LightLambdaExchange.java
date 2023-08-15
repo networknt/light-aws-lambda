@@ -152,6 +152,10 @@ public final class LightLambdaExchange {
             this.state |= FLAG_REQUEST_HAS_FAILURE;
     }
 
+    public boolean hasFailedState() {
+        return stateHasAnyFlags(FLAG_REQUEST_HAS_FAILURE | FLAG_RESPONSE_HAS_FAILURE);
+    }
+
     private void raiseResponseFailureFlag() {
         if (stateHasAllFlagsClear(FLAG_RESPONSE_HAS_FAILURE))
             this.state |= FLAG_RESPONSE_HAS_FAILURE;

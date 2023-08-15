@@ -37,6 +37,8 @@ public final class LightLambdaExchange {
 
     public LightLambdaExchange(Context context, String appId, String env) {
         this.context = context;
+
+        // TODO - add some kind of check to middleware to see if the configured handlers can be used in request and/or response chains.
         this.requestExecutor = new PooledChainLinkExecutor(this, ChainDirection.REQUEST, appId, env);
         this.responseExecutor = new PooledChainLinkExecutor(this, ChainDirection.RESPONSE, appId, env);
     }
@@ -167,6 +169,7 @@ public final class LightLambdaExchange {
 
             for (var res : this.requestExecutor.getChainLinkReturns()) {
 
+                // TODO - change this to something more reliable than a string check
                 if (res.getCode().startsWith("ERR")) {
                     this.raiseRequestFailureFlag();
                     break;
@@ -186,6 +189,7 @@ public final class LightLambdaExchange {
 
             for (var res : this.responseExecutor.getChainLinkReturns()) {
 
+                // TODO - change this to something more reliable than a string check
                 if (res.getCode().startsWith("ERR")) {
                     this.raiseResponseFailureFlag();
                     break;

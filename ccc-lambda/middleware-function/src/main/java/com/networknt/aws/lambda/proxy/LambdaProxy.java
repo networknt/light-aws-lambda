@@ -83,6 +83,13 @@ public class LambdaProxy implements RequestHandler<APIGatewayProxyRequestEvent, 
             exchange.finalizeResponse();
         }
 
+        // TODO - integrate this in lambda exchange
+        if (!exchange.hasFailedState()) {
+            exchange.getResponse().setStatusCode(200);
+        } else {
+            exchange.getResponse().setStatusCode(500);
+        }
+
         LOG.debug("Lambda CCC --end");
         return exchange.getResponse();
 

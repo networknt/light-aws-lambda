@@ -190,6 +190,7 @@ public class PooledChainLinkExecutor extends ThreadPoolExecutor {
         public void callback(final LightLambdaExchange eventWrapper, Status status) {
             PooledChainLinkExecutor.this.chain.addChainableResult(status);
 
+            // TODO - change this to something more reliable than a string check
             if (status.getCode().startsWith("ERR")) {
                 abortExecution();
             }

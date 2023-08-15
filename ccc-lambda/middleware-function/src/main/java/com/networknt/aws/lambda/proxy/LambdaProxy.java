@@ -40,10 +40,11 @@ public class LambdaProxy implements RequestHandler<APIGatewayProxyRequestEvent, 
     private static final ObjectMapper OBJECT_MAPPER = new ObjectMapper();
 
     public LambdaProxy() {
-        LambdaClientBuilder builder = LambdaClient.builder().region(Region.of(CONFIG.getRegion()));
-        if (!StringUtils.isEmpty(CONFIG.getEndpointOverride())) {
+        var builder = LambdaClient.builder().region(Region.of(CONFIG.getRegion()));
+
+        if (!StringUtils.isEmpty(CONFIG.getEndpointOverride()))
             builder.endpointOverride(URI.create(CONFIG.getEndpointOverride()));
-        }
+
         client = builder.build();
     }
 
@@ -54,27 +55,29 @@ public class LambdaProxy implements RequestHandler<APIGatewayProxyRequestEvent, 
         final var exchange = new LightLambdaExchange(context, CONFIG.getLambdaAppId(), CONFIG.getEnv());
         exchange.setRequest(apiGatewayProxyRequestEvent);
 
-
         /* exec request chain */
         exchange.loadRequestChain(CONFIG.getRequestChain());
         exchange.executeRequestChain();
         exchange.finalizeRequest();
 
         /* invoke lambda function */
-        //final var res = this.invokeFunction(client, CONFIG.getFunctions().get("TODO"), exchange);
-        //final var responseEvent = JsonMapper.fromJson(res, APIGatewayProxyResponseEvent.class);
+        var path = exchange.getRequest().getPath();
+        var method = exchange.getRequest().getHttpMethod().toLowerCase();
 
-        // TODO - for testing we just reflect the incoming event as the response
-        APIGatewayProxyResponseEvent responseEvent = new APIGatewayProxyResponseEvent();
-        responseEvent.setBody(exchange.getRequest().getBody());
-        responseEvent.setHeaders(exchange.getRequest().getHeaders());
+        final var functionName = CONFIG.getFunctions().get(path + "@" + method);
+        LOG.debug("FunctionName: {}", functionName);
+
+        final var res = this.invokeFunction(client, functionName, exchange);
+        LOG.debug("res: {}", res);
+
+        final var responseEvent = JsonMapper.fromJson(res, APIGatewayProxyResponseEvent.class);
+
         exchange.setResponse(responseEvent);
 
         /* exec response chain */
         exchange.loadResponseChain(CONFIG.getResponseChain());
         exchange.executeResponseChain();
         exchange.finalizeResponse();
-
 
         LOG.debug("Lambda CCC --end");
         return exchange.getResponse();

@@ -4,7 +4,6 @@ import java.util.List;
 import java.util.Map;
 
 public class LambdaProxyConfig {
-
     private String region;
     private String endpointOverride;
     private String logType;
@@ -13,7 +12,6 @@ public class LambdaProxyConfig {
     private Map<String, String> functions;
     private boolean metricsInjection;
     private String metricsName;
-
     private List<String> requestChain;
     private List<String> responseChain;
 

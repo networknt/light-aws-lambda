@@ -29,7 +29,7 @@ public class PooledChainLinkExecutor extends ThreadPoolExecutor {
     private final String applicationId;
     private final String env;
     private final ChainDirection chainDirection;
-    private final Chain chain = new Chain();
+    private final Chain chain;
     final Object lock = new Object();
 
     public PooledChainLinkExecutor(final LightLambdaExchange lambdaEventWrapper, ChainDirection chainDirection, String applicationId, String env) {
@@ -38,6 +38,7 @@ public class PooledChainLinkExecutor extends ThreadPoolExecutor {
         this.chainDirection = chainDirection;
         this.env = env;
         this.applicationId = applicationId;
+        this.chain = new Chain(CONFIG.isForceSynchronousExecution());
     }
 
     /**
@@ -48,10 +49,12 @@ public class PooledChainLinkExecutor extends ThreadPoolExecutor {
      */
     public PooledChainLinkExecutor add(String className) {
         try {
+
             if (Class.forName(className).getSuperclass().equals(LambdaMiddleware.class))
                 return this.add((Class<? extends LambdaMiddleware>) Class.forName(className));
 
             else throw new RuntimeException(className + " is not a member of LambdaMiddleware...");
+
         } catch (ClassNotFoundException e) {
             throw new RuntimeException(e);
         }
@@ -74,7 +77,7 @@ public class PooledChainLinkExecutor extends ThreadPoolExecutor {
             newClazz.setChainDirection(this.chainDirection);
 
             // TODO - Connection keeps timing out in AWS Lambda -- fix before uncomment
-            newClazz.getAppConfigProfileConfigurations(this.applicationId, this.env);
+            //newClazz.getAppConfigProfileConfigurations(this.applicationId, this.env);
 
             this.chain.addChainable(newClazz);
 
@@ -177,10 +180,12 @@ public class PooledChainLinkExecutor extends ThreadPoolExecutor {
             LOG.debug("Creating thread for link '{}[{}]'.", chainLink.getClass().getName(), linkNumber++);
             chainLinkWorkerGroup.add(new ChainLinkWorker(chainLink, new ChainLinkWorker.AuditThreadContext(MDC.getCopyOfContextMap())));
         }
+
         return chainLinkWorkerGroup;
     }
 
     private final ChainLinkCallback chainLinkCallback = new ChainLinkCallback() {
+
         @Override
         public void callback(final LightLambdaExchange eventWrapper, Status status) {
             PooledChainLinkExecutor.this.chain.addChainableResult(status);

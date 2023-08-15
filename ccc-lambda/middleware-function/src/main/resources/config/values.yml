@@ -4,7 +4,7 @@ lambda-proxy.region: ca-central-1
 lambda-proxy.metricsInjection: false
 
 lambda-proxy.functions:
-  /v1/pets : functionVal
+  /v1/pets@post: arn:aws:lambda:ca-central-1:442513687360:function:eadp-test-destination
 
 lambda-proxy.requestChain:
     - "com.networknt.aws.lambda.middleware.security.SecurityMiddleware"

@@ -1,11 +1,9 @@
 package com.networknt.aws.lambda.middleware.chain;
 
 public abstract class Chainable {
-
     protected final boolean audited;
     protected final boolean asynchronous;
     protected final boolean continueOnFailure;
-
     protected final ChainLinkCallback middlewareCallback;
     private ChainDirection chainDirection;
 

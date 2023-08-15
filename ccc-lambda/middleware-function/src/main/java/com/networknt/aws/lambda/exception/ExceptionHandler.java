@@ -22,9 +22,11 @@ public class ExceptionHandler {
     private static final ObjectMapper OBJECT_MAPPER = new ObjectMapper();
 
     public static APIGatewayProxyResponseEvent handle(List<Status> middlewareResults) {
+
         if (CONFIG.isEnabled()) {
             var responseEvent = new APIGatewayProxyResponseEvent();
-            Map<String, String> headers = new HashMap<>();
+            var headers = new HashMap<String, String>();
+
             headers.put(HeaderKey.CONTENT_TYPE, HeaderValue.APPLICATION_JSON);
             responseEvent.setHeaders(headers);
 

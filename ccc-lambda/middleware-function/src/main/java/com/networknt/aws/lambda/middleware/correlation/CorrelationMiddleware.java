@@ -42,11 +42,9 @@ public class CorrelationMiddleware extends LambdaMiddleware {
         var cid = exchange.getRequest().getHeaders().get(HeaderKey.CORRELATION);
 
         if (cid == null && CONFIG.isAutogenCorrelationID()) {
-
             cid = this.getUUID();
             exchange.getRequest().getHeaders().put(HeaderKey.CORRELATION, cid);
             exchange.addRequestAttachment(CORRELATION_ATTACHMENT_KEY, cid);
-
             var tid = exchange.getRequest().getHeaders().get(HeaderKey.TRACEABILITY);
 
             if (tid != null && LOG.isInfoEnabled())

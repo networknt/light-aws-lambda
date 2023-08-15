@@ -20,7 +20,7 @@ public class Main {
         String testInvoke = "{\n" +
                 "  \"body\": \"{\\\"foo\\\": \\\"bar\\\"}\",\n" +
                 "  \"resource\": \"/{proxy+}\",\n" +
-                "  \"path\": \"/path/to/resource\",\n" +
+                "  \"path\": \"/v1/pets\",\n" +
                 "  \"httpMethod\": \"POST\",\n" +
                 "  \"isBase64Encoded\": true,\n" +
                 "  \"queryStringParameters\": {\n" +

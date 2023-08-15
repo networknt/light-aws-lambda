@@ -24,7 +24,6 @@ public class ChainLinkWorker extends Thread {
 
     public static class AuditThreadContext {
         final Map<String, String> MDCContext;
-
         public AuditThreadContext(Map<String, String> context) {
             this.MDCContext = context;
         }

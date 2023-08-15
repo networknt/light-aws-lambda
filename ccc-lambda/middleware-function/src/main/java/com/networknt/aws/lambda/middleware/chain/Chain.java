@@ -13,10 +13,12 @@ public class Chain {
     private final LinkedList<LambdaMiddleware> chain = new LinkedList<>();
     private final LinkedList<ArrayList<LambdaMiddleware>> groupedChain = new LinkedList<>();
     private final LinkedList<Status> chainResults = new LinkedList<>();
+    private final boolean forceSynchronousExecution;
     private boolean isFinalized;
 
-    public Chain() {
+    public Chain(boolean forceSynchronousExecution) {
         this.isFinalized = false;
+        this.forceSynchronousExecution = forceSynchronousExecution;
     }
 
     protected void addChainable(LambdaMiddleware chainable) {
@@ -55,19 +57,21 @@ public class Chain {
         var group = new ArrayList<LambdaMiddleware>();
         for (var chainable : this.chain) {
 
-            if (this.isMiddlewareAsynchronous(chainable)) {
+            if (this.forceSynchronousExecution) {
+                this.cutGroup(group, chainable);
+                group = new ArrayList<>();
+
+            } else if (this.isMiddlewareAsynchronous(chainable)) {
                 group.add(chainable);
 
             } else if (!this.isMiddlewareAsynchronous(chainable) && !group.isEmpty()) {
                 this.groupedChain.add(group);
                 group = new ArrayList<>();
-                group.add(chainable);
-                this.groupedChain.add(group);
+                this.cutGroup(group, chainable);
                 group = new ArrayList<>();
 
             } else if (!this.isMiddlewareAsynchronous(chainable) && group.isEmpty()) {
-                group.add(chainable);
-                this.groupedChain.add(group);
+                this.cutGroup(group, chainable);
                 group = new ArrayList<>();
             }
         }
@@ -77,6 +81,11 @@ public class Chain {
         }
 
         this.isFinalized = true;
+    }
+
+    private void cutGroup(ArrayList<LambdaMiddleware> group, LambdaMiddleware chainable) {
+        group.add(chainable);
+        this.groupedChain.add(group);
     }
 
     private boolean isMiddlewareAsynchronous(LambdaMiddleware chainable) {

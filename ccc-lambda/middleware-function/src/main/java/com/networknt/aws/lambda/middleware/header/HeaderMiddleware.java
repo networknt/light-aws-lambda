@@ -47,9 +47,12 @@ public class HeaderMiddleware extends LambdaMiddleware {
     @Override
     public void getAppConfigProfileConfigurations(String applicationId, String env) {
         var configResponse = AwsAppConfigUtil.getConfiguration(applicationId, env, CONFIG_NAME);
+
         if (configResponse != null) {
+
             try {
                 CONFIG = OBJECT_MAPPER.readValue(configResponse, HeaderConfig.class);
+
             } catch (JsonProcessingException e) {
                 throw new RuntimeException(e);
             }
@@ -57,7 +60,6 @@ public class HeaderMiddleware extends LambdaMiddleware {
     }
 
     private Status handleRequestHeaders(LightLambdaExchange exchange) {
-
         var headers = exchange.getRequest().getHeaders();
         var transforms = CONFIG.getRequestHeader();
 

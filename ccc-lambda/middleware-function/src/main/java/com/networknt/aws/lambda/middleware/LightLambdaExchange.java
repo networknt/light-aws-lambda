@@ -153,7 +153,6 @@ public final class LightLambdaExchange {
     }
 
     private void raiseResponseFailureFlag() {
-
         if (stateHasAllFlagsClear(FLAG_RESPONSE_HAS_FAILURE))
             this.state |= FLAG_RESPONSE_HAS_FAILURE;
     }
@@ -188,7 +187,6 @@ public final class LightLambdaExchange {
                     break;
                 }
             }
-
             this.state |= FLAG_RESPONSE_DONE;
             this.state &= ~FLAG_RESPONSE_CHAIN_READY;
             this.state &= ~FLAG_STARTING_REQUEST_READY;

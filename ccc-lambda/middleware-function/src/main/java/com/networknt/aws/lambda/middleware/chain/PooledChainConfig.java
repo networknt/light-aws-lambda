@@ -5,6 +5,7 @@ public class PooledChainConfig {
     private int corePoolSize;
     private int maxChainSize;
     private long keepAliveTime;
+    private boolean forceSynchronousExecution;
 
     public int getCorePoolSize() {
         return corePoolSize;
@@ -20,5 +21,9 @@ public class PooledChainConfig {
 
     public int getMaxChainSize() {
         return maxChainSize;
+    }
+
+    public boolean isForceSynchronousExecution() {
+        return forceSynchronousExecution;
     }
 }

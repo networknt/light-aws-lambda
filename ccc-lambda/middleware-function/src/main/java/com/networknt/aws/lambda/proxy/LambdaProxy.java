@@ -54,10 +54,14 @@ public class LambdaProxy implements RequestHandler<APIGatewayProxyRequestEvent, 
         final var exchange = new LightLambdaExchange(context, CONFIG.getLambdaAppId(), CONFIG.getEnv());
         exchange.setRequest(apiGatewayProxyRequestEvent);
 
+        LOG.debug("exchange state: {}", exchange);
+
         /* exec request chain */
         exchange.loadRequestChain(CONFIG.getRequestChain());
         exchange.executeRequestChain();
         exchange.finalizeRequest();
+
+        LOG.debug("exchange state: {}", exchange);
 
         if (!exchange.hasFailedState()) {
             /* invoke lambda function */
@@ -77,18 +81,22 @@ public class LambdaProxy implements RequestHandler<APIGatewayProxyRequestEvent, 
 
             exchange.setResponse(responseEvent);
 
+            LOG.debug("exchange state: {}", exchange);
+
             /* exec response chain */
             exchange.loadResponseChain(CONFIG.getResponseChain());
             exchange.executeResponseChain();
             exchange.finalizeResponse();
+
+            LOG.debug("exchange state: {}", exchange);
         }
 
-        // TODO - integrate this in lambda exchange
-        if (!exchange.hasFailedState()) {
-            exchange.getResponse().setStatusCode(200);
-        } else {
-            exchange.getResponse().setStatusCode(500);
-        }
+//        // TODO - integrate this in lambda exchange
+//        if (!exchange.hasFailedState()) {
+//            exchange.getResponse().setStatusCode(200);
+//        } else {
+//            exchange.getResponse().setStatusCode(500);
+//        }
 
         LOG.debug("Lambda CCC --end");
         return exchange.getResponse();

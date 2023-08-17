@@ -7,7 +7,6 @@ lambda-proxy.functions:
   /v1/pets@post: arn:aws:lambda:ca-central-1:442513687360:function:eadp-test-destination
 
 lambda-proxy.requestChain:
-    - "com.networknt.aws.lambda.middleware.security.SecurityMiddleware"
     - "com.networknt.aws.lambda.middleware.header.HeaderMiddleware"
     - "com.networknt.aws.lambda.middleware.traceability.TraceabilityMiddleware"
     - "com.networknt.aws.lambda.middleware.correlation.CorrelationMiddleware"

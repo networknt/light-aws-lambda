@@ -6,7 +6,6 @@ import com.amazonaws.services.lambda.runtime.events.APIGatewayProxyResponseEvent
 import com.networknt.aws.lambda.exception.ExceptionHandler;
 import com.networknt.aws.lambda.middleware.chain.ChainDirection;
 import com.networknt.aws.lambda.middleware.chain.PooledChainLinkExecutor;
-import com.networknt.status.Status;
 
 import java.util.HashMap;
 import java.util.List;
@@ -34,6 +33,7 @@ public final class LightLambdaExchange {
     private static final int FLAG_RESPONSE_DONE = 1 << 7;
     private static final int FLAG_RESPONSE_HAS_FAILURE = 1 << 8;
     private int state = INITIAL_STATE;
+    private int statusCode = 200;
 
     public LightLambdaExchange(Context context, String appId, String env) {
         this.context = context;
@@ -92,6 +92,7 @@ public final class LightLambdaExchange {
             return;
 
         this.response = response;
+        this.statusCode = response.getStatusCode();
         this.state |= FLAG_STARTING_RESPONSE_READY;
     }
 
@@ -172,6 +173,7 @@ public final class LightLambdaExchange {
                 // TODO - change this to something more reliable than a string check
                 if (res.getCode().startsWith("ERR")) {
                     this.raiseRequestFailureFlag();
+                    this.statusCode = res.getStatusCode();
                     break;
                 }
             }
@@ -192,6 +194,7 @@ public final class LightLambdaExchange {
                 // TODO - change this to something more reliable than a string check
                 if (res.getCode().startsWith("ERR")) {
                     this.raiseResponseFailureFlag();
+                    this.statusCode = res.getStatusCode();
                     break;
                 }
             }
@@ -233,4 +236,21 @@ public final class LightLambdaExchange {
     private boolean stateHasAllFlagsClear(int flags) {
         return (this.state & flags) == 0;
     }
+
+    @Override
+    public String toString() {
+        return "LightLambdaExchange{" +
+                "request=" + request +
+                ", response=" + response +
+                ", context=" + context +
+                ", requestAttachments=" + requestAttachments +
+                ", responseAttachments=" + responseAttachments +
+                ", requestExecutor=" + requestExecutor +
+                ", responseExecutor=" + responseExecutor +
+                ", state=" + state +
+                ", statusCode=" + statusCode +
+                '}';
+    }
+
+
 }

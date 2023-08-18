@@ -75,11 +75,6 @@
         </dependency>
         <dependency>
             <groupId>software.amazon.awssdk</groupId>
-            <artifactId>appconfigdata</artifactId>
-            <version>${version.appconfigdata-aws}</version>
-        </dependency>
-        <dependency>
-            <groupId>software.amazon.awssdk</groupId>
             <artifactId>secretsmanager</artifactId>
             <version>${version.secretsmanager-aws}</version>
         </dependency>

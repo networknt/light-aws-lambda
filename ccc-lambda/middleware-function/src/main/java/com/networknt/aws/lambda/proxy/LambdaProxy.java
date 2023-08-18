@@ -7,6 +7,7 @@ import com.amazonaws.services.lambda.runtime.RequestHandler;
 import com.amazonaws.services.lambda.runtime.events.APIGatewayProxyRequestEvent;
 import com.amazonaws.services.lambda.runtime.events.APIGatewayProxyResponseEvent;
 import com.networknt.aws.lambda.middleware.LightLambdaExchange;
+import com.networknt.aws.lambda.utility.S3CredentialUtil;
 import com.networknt.config.Config;
 import com.networknt.config.JsonMapper;
 import com.networknt.utility.StringUtils;
@@ -56,6 +57,11 @@ public class LambdaProxy implements RequestHandler<APIGatewayProxyRequestEvent, 
 
         LOG.debug("exchange state: {}", exchange);
 
+        // TODO - Test getting JWK + cached tokens from AWS S3 credential manager
+        String secretName = "eadp-test-destination-jwk";
+        String jwk = S3CredentialUtil.getLambdaCachedJWK(secretName);
+        LOG.debug("jwk: {}", jwk);
+
         /* exec request chain */
         exchange.loadRequestChain(CONFIG.getRequestChain());
         exchange.executeRequestChain();
@@ -90,13 +96,6 @@ public class LambdaProxy implements RequestHandler<APIGatewayProxyRequestEvent, 
 
             LOG.debug("exchange state: {}", exchange);
         }
-
-//        // TODO - integrate this in lambda exchange
-//        if (!exchange.hasFailedState()) {
-//            exchange.getResponse().setStatusCode(200);
-//        } else {
-//            exchange.getResponse().setStatusCode(500);
-//        }
 
         LOG.debug("Lambda CCC --end");
         return exchange.getResponse();

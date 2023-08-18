@@ -5,6 +5,7 @@ import com.fasterxml.jackson.core.JsonProcessingException;
 import com.networknt.aws.lambda.middleware.LambdaMiddleware;
 import com.networknt.aws.lambda.middleware.chain.ChainLinkCallback;
 import com.networknt.aws.lambda.middleware.LightLambdaExchange;
+import com.networknt.aws.lambda.proxy.LambdaProxy;
 import com.networknt.aws.lambda.utility.AwsAppConfigUtil;
 import com.networknt.aws.lambda.utility.S3CredentialUtil;
 import com.networknt.config.Config;
@@ -45,10 +46,6 @@ public class SecurityMiddleware extends LambdaMiddleware {
         }
 
         APIGatewayProxyRequestEvent.ProxyRequestContext proxyContext = exchange.getRequest().getRequestContext();
-
-        // TODO - Test getting JWK + cached tokens from AWS S3 credential manager
-        String secretName = "eadp-test-destination-jwk";
-        String jwk = S3CredentialUtil.getCachedJWK(secretName);
 
         String region = System.getenv("AWS_REGION");  // use the env to get the region for REQUEST authorizer.
         String accountId = proxyContext.getAccountId();

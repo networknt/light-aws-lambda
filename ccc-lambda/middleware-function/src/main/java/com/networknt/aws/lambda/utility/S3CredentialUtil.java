@@ -17,6 +17,12 @@ import java.net.URL;
 
 public class S3CredentialUtil {
 
+    public enum SecretType {
+        JWK,
+        JWT,
+        OTHER
+    }
+
     private static final Logger LOG = LoggerFactory.getLogger(S3CredentialUtil.class);
 
     private static SecretsManagerClient SECRET_MANAGER_CLIENT;
@@ -72,12 +78,20 @@ public class S3CredentialUtil {
 
     }
 
-    // TODO - remove the logging statements once testing is done.
-    public static String getLambdaCachedJWK(String secretName) {
+    public static String getLambdaCachedJWK(String applicationId, SecretType type) {
+        switch (type) {
+            case JWK:
+                return getLambdaS3Secret(applicationId + "-jwk");
+            case JWT:
+                return getLambdaS3Secret(applicationId + "-jwt");
+            case OTHER:
+            default:
+                return getLambdaS3Secret(applicationId);
+        }
+    }
 
-        LOG.debug("Getting secretName: {}", secretName);
-
-        URL url = null;
+    public static String getLambdaS3Secret(String secretName) {
+        URL url;
         try {
             url = new URL("http://localhost:2773/secretsmanager/get?secretId=" + secretName);
         } catch (MalformedURLException e) {
@@ -85,9 +99,7 @@ public class S3CredentialUtil {
             return null;
         }
 
-        LOG.debug("Using URL: {}", url);
-
-        HttpURLConnection con = null;
+        HttpURLConnection con;
         try {
             con = (HttpURLConnection) url.openConnection();
         } catch (IOException e) {
@@ -95,7 +107,6 @@ public class S3CredentialUtil {
             return null;
         }
 
-        LOG.debug("AWS_SESSION_TOKEN: {}", System.getenv("AWS_SESSION_TOKEN"));
         con.setRequestProperty("X-Aws-Parameters-Secrets-Token", System.getenv("AWS_SESSION_TOKEN"));
         try {
             con.setRequestMethod("GET");
@@ -104,7 +115,7 @@ public class S3CredentialUtil {
             return null;
         }
 
-        int statusCode = 0;
+        int statusCode;
         try {
             statusCode = con.getResponseCode();
         } catch (IOException e) {
@@ -112,26 +123,27 @@ public class S3CredentialUtil {
             return null;
         }
 
-        LOG.debug("StatusCode: {}", statusCode);
+        if (statusCode >= 200 && statusCode < 300) {
+            InputStream content;
 
-        InputStream content = null;
-        try {
-            content = (InputStream) con.getContent();
-        } catch (IOException e) {
-            LOG.error("Error getting response content: {}", e.getMessage(), e);
-            return null;
-        }
+            try {
+                content = (InputStream) con.getContent();
+            } catch (IOException e) {
+                LOG.error("Error getting response content: {}", e.getMessage(), e);
+                return null;
+            }
 
-        String fullContent = null;
-        try {
-            fullContent = IOUtils.toString(content);
-        } catch (IOException e) {
-            LOG.error("Failed to parse content stream: {}", e.getMessage(), e);
-            return null;
-        }
+            String fullContent;
+            try {
+                fullContent = IOUtils.toString(content);
+            } catch (IOException e) {
+                LOG.error("Failed to parse content stream: {}", e.getMessage(), e);
+                return null;
+            }
 
-        LOG.debug("Content: {}", fullContent);
-        return fullContent;
+            return fullContent;
+
+        } else return null;
     }
 
 

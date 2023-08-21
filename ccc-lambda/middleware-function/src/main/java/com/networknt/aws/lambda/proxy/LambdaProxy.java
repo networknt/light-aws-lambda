@@ -59,7 +59,7 @@ public class LambdaProxy implements RequestHandler<APIGatewayProxyRequestEvent, 
 
         // TODO - Test getting JWK + cached tokens from AWS S3 credential manager
         String secretName = "eadp-test-destination-jwk";
-        String jwk = S3CredentialUtil.getLambdaCachedJWK(secretName);
+        String jwk = S3CredentialUtil.getLambdaCachedJWK(secretName, S3CredentialUtil.SecretType.JWK);
         LOG.debug("jwk: {}", jwk);
 
         /* exec request chain */

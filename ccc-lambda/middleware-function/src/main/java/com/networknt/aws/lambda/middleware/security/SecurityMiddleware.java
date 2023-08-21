@@ -5,9 +5,6 @@ import com.fasterxml.jackson.core.JsonProcessingException;
 import com.networknt.aws.lambda.middleware.LambdaMiddleware;
 import com.networknt.aws.lambda.middleware.chain.ChainLinkCallback;
 import com.networknt.aws.lambda.middleware.LightLambdaExchange;
-import com.networknt.aws.lambda.proxy.LambdaProxy;
-import com.networknt.aws.lambda.utility.AwsAppConfigUtil;
-import com.networknt.aws.lambda.utility.S3CredentialUtil;
 import com.networknt.config.Config;
 import com.networknt.status.Status;
 import com.networknt.utility.Constants;
@@ -17,7 +14,6 @@ import org.jose4j.jwt.MalformedClaimException;
 import org.jose4j.jwt.consumer.InvalidJwtException;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
-import software.amazon.awssdk.regions.Region;
 
 import java.util.Arrays;
 import java.util.HashMap;
@@ -173,16 +169,5 @@ public class SecurityMiddleware extends LambdaMiddleware {
 
     @Override
     public void getAppConfigProfileConfigurations(String applicationId, String env) {
-
-        LOG.debug("Grabbing config for SecurityMiddleware instance...");
-
-        String configResponse = AwsAppConfigUtil.getConfiguration(applicationId, env, CONFIG_NAME);
-        if (configResponse != null) {
-            try {
-                CONFIG = OBJECT_MAPPER.readValue(configResponse, SecurityConfig.class);
-            } catch (JsonProcessingException e) {
-                throw new RuntimeException(e);
-            }
-        }
     }
 }

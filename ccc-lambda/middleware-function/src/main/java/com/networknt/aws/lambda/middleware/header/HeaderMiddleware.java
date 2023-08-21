@@ -1,10 +1,8 @@
 package com.networknt.aws.lambda.middleware.header;
 
-import com.fasterxml.jackson.core.JsonProcessingException;
 import com.networknt.aws.lambda.middleware.LambdaMiddleware;
 import com.networknt.aws.lambda.middleware.chain.ChainLinkCallback;
 import com.networknt.aws.lambda.middleware.LightLambdaExchange;
-import com.networknt.aws.lambda.utility.AwsAppConfigUtil;
 import com.networknt.config.Config;
 import com.networknt.status.Status;
 import org.slf4j.Logger;
@@ -46,17 +44,6 @@ public class HeaderMiddleware extends LambdaMiddleware {
 
     @Override
     public void getAppConfigProfileConfigurations(String applicationId, String env) {
-        var configResponse = AwsAppConfigUtil.getConfiguration(applicationId, env, CONFIG_NAME);
-
-        if (configResponse != null) {
-
-            try {
-                CONFIG = OBJECT_MAPPER.readValue(configResponse, HeaderConfig.class);
-
-            } catch (JsonProcessingException e) {
-                throw new RuntimeException(e);
-            }
-        }
     }
 
     private Status handleRequestHeaders(LightLambdaExchange exchange) {

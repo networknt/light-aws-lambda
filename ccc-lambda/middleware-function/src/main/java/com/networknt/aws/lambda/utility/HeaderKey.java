@@ -12,5 +12,9 @@ public class HeaderKey {
     /* common header keys */
     public static final String CONTENT_TYPE = "Content-Type";
 
+    /* Amazon header keys */
+    public static final String PARAMETER_SECRET_TOKEN = "X-Aws-Parameters-Secrets-Token";
+    public static final String AMZ_TARGET = "X-Amz-Target";
+
 
 }

@@ -37,8 +37,6 @@ public class LambdaProxy implements RequestHandler<APIGatewayProxyRequestEvent, 
 
     private static LambdaClient client;
 
-    private static final ObjectMapper OBJECT_MAPPER = new ObjectMapper();
-
     public LambdaProxy() {
         var builder = LambdaClient.builder().region(Region.of(CONFIG.getRegion()));
 
@@ -52,27 +50,10 @@ public class LambdaProxy implements RequestHandler<APIGatewayProxyRequestEvent, 
     public APIGatewayProxyResponseEvent handleRequest(final APIGatewayProxyRequestEvent apiGatewayProxyRequestEvent, final Context context) {
         LOG.debug("Lambda CCC --start");
 
-        final var exchange = new LightLambdaExchange(context, CONFIG.getLambdaAppId(), CONFIG.getEnv());
+        final var exchange = new LightLambdaExchange(context);
         exchange.setRequest(apiGatewayProxyRequestEvent);
 
         LOG.debug("exchange state: {}", exchange);
-
-//        // TODO - Test getting JWK + cached tokens from AWS S3 credential manager
-//        String secretName = "eadp-test-destination";
-//        String jwk = S3CredentialUtil.getLambdaCachedSecret(secretName, S3CredentialUtil.SecretType.JWK);
-//        LOG.debug("jwk: {}", jwk);
-//
-//        // TODO - Test creating secrets stored in AWS S3 credential manager
-//        String secretName2 = "eadp-test-destination";
-//        String secret = "eyJraWQiOiIxMDAiLCJhbGciOiJSUzI1NiJ9" +
-//                "." +
-//                "eyJpc3MiOiJ1cm46Y29tOm5ldHdvcmtudDpvYXV0aDI6djEiLCJhdWQiOiJ1cm46Y29tLm5ldHdvcmtudCIsImV4cCI6MTc5MDAzNTcwOSwianRpIjoiSTJnSmdBSHN6NzJEV2JWdUFMdUU2QSIsImlhdCI6MTQ3NDY3NTcwOSwibmJmIjoxNDc0Njc1NTg5LCJ2ZXJzaW9uIjoiMS4wIiwidXNlcl9pZCI6InN0ZXZlIiwidXNlcl90eXBlIjoiRU1QTE9ZRUUiLCJjbGllbnRfaWQiOiJmN2Q0MjM0OC1jNjQ3LTRlZmItYTUyZC00YzU3ODc0MjFlNzIiLCJzY29wZSI6WyJ3cml0ZTpwZXRzIiwicmVhZDpwZXRzIl19" +
-//                "." +
-//                "mue6eh70kGS3Nt2BCYz7ViqwO7lh_4JSFwcHYdJMY6VfgKTHhsIGKq2uEDt3zwT56JFAePwAxENMGUTGvgceVneQzyfQsJeVGbqw55E9IfM_uSM-YcHwTfR7eSLExN4pbqzVDI353sSOvXxA98ZtJlUZKgXNE1Ngun3XFORCRIB_eH8B0FY_nT_D1Dq2WJrR-re-fbR6_va95vwoUdCofLRa4IpDfXXx19ZlAtfiVO44nw6CS8O87eGfAm7rCMZIzkWlCOFWjNHnCeRsh7CVdEH34LF-B48beiG5lM7h4N12-EME8_VDefgMjZ8eqs1ICvJMxdIut58oYbdnkwTjkA";
-//
-//        var postResult = S3CredentialUtil.postLambdaCachedSecret(secretName2, secret, S3CredentialUtil.SecretType.JWT);
-
-        //LOG.debug("Create secret successful? --> '{}'", postResult);
 
         /* exec request chain */
         exchange.loadRequestChain(CONFIG.getRequestChain());
@@ -87,12 +68,12 @@ public class LambdaProxy implements RequestHandler<APIGatewayProxyRequestEvent, 
             var method = exchange.getRequest().getHttpMethod().toLowerCase();
             LOG.debug("Request path: {} -- Request method: {}", path, method);
 
-            final var functionName = CONFIG.getFunctions().get(path + "@" + method);
+            var functionName = CONFIG.getFunctions().get(path + "@" + method);
             LOG.debug("Found function name: {}", functionName);
 
-            final var res = this.invokeFunction(client, functionName, exchange);
+            var res = this.invokeFunction(client, functionName, exchange);
             LOG.debug("Response Raw: {}", res);
-            final var responseEvent = JsonMapper.fromJson(res, APIGatewayProxyResponseEvent.class);
+            var responseEvent = JsonMapper.fromJson(res, APIGatewayProxyResponseEvent.class);
 
             LOG.debug("Res Body: {}", responseEvent.getBody());
             LOG.debug("Res Headers: {}", responseEvent.getHeaders());
@@ -119,7 +100,7 @@ public class LambdaProxy implements RequestHandler<APIGatewayProxyRequestEvent, 
 
         String serializedEvent = null;
         try {
-            serializedEvent = OBJECT_MAPPER.writeValueAsString(eventWrapper.getRequest());
+            serializedEvent = Config.getInstance().getMapper().writeValueAsString(eventWrapper.getRequest());
         } catch (JsonProcessingException e) {
             throw new RuntimeException(e);
         }

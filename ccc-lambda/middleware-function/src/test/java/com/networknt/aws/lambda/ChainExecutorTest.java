@@ -167,13 +167,13 @@ public class ChainExecutorTest {
                 .build();
         APIGatewayProxyRequestEvent requestEvent = invocation.getEvent();
         Context lambdaContext = new LambdaContext(invocation.getRequestId());
-        this.eventWrapper = new LightLambdaExchange(lambdaContext,"APPLICATION_ID", "ENV");
+        this.eventWrapper = new LightLambdaExchange(lambdaContext);
         this.eventWrapper.setRequest(requestEvent);
     }
 
     @Test
     void groupingAllSynchronousTest() {
-        final PooledChainLinkExecutor allSynchronousExample = new PooledChainLinkExecutor(this.eventWrapper, ChainDirection.REQUEST, "APPLICATION_ID", "ENV")
+        final PooledChainLinkExecutor allSynchronousExample = new PooledChainLinkExecutor(this.eventWrapper, ChainDirection.REQUEST)
                 .add(TestSynchronousMiddleware.class)
                 .add(TestSynchronousMiddleware.class)
                 .add(TestSynchronousMiddleware.class)
@@ -190,7 +190,7 @@ public class ChainExecutorTest {
 
     @Test
     void groupingAllAsynchronousTest() {
-        final PooledChainLinkExecutor allAsynchronousExample = new PooledChainLinkExecutor(this.eventWrapper, ChainDirection.REQUEST, "APPLICATION_ID", "ENV")
+        final PooledChainLinkExecutor allAsynchronousExample = new PooledChainLinkExecutor(this.eventWrapper, ChainDirection.REQUEST)
                 .add(TestAsynchronousMiddleware.class)
                 .add(TestAsynchronousMiddleware.class)
                 .add(TestAsynchronousMiddleware.class)
@@ -208,7 +208,7 @@ public class ChainExecutorTest {
 
     @Test
     void groupingMixedTest1() {
-        final PooledChainLinkExecutor mixed = new PooledChainLinkExecutor(this.eventWrapper, ChainDirection.REQUEST, "APPLICATION_ID", "ENV")
+        final PooledChainLinkExecutor mixed = new PooledChainLinkExecutor(this.eventWrapper, ChainDirection.REQUEST)
                 .add(TestAsynchronousMiddleware.class)     //
                 .add(TestAsynchronousMiddleware.class)     // -- group 1
 
@@ -231,7 +231,7 @@ public class ChainExecutorTest {
 
     @Test
     void groupingMixedTest2() {
-        final PooledChainLinkExecutor mixed = new PooledChainLinkExecutor(this.eventWrapper, ChainDirection.REQUEST, "APPLICATION_ID", "ENV")
+        final PooledChainLinkExecutor mixed = new PooledChainLinkExecutor(this.eventWrapper, ChainDirection.REQUEST)
                 .add(TestAsynchronousMiddleware.class) //
                 .add(TestAsynchronousMiddleware.class) //
                 .add(TestAsynchronousMiddleware.class) //
@@ -251,7 +251,7 @@ public class ChainExecutorTest {
 
     @Test
     void middlewareResponseTest() {
-        final PooledChainLinkExecutor allSynchronousExample = new PooledChainLinkExecutor(this.eventWrapper, ChainDirection.REQUEST, "APPLICATION_ID", "ENV")
+        final PooledChainLinkExecutor allSynchronousExample = new PooledChainLinkExecutor(this.eventWrapper, ChainDirection.REQUEST)
                 .add(TestAsynchronousMiddleware.class) //
                 .add(TestAsynchronousMiddleware.class) //
                 .add(TestAsynchronousMiddleware.class) //
@@ -273,7 +273,7 @@ public class ChainExecutorTest {
 
     @Test
     void middlewareSynchronousFailureTest() {
-        final PooledChainLinkExecutor syncFail = new PooledChainLinkExecutor(this.eventWrapper, ChainDirection.REQUEST, "APPLICATION_ID", "ENV")
+        final PooledChainLinkExecutor syncFail = new PooledChainLinkExecutor(this.eventWrapper, ChainDirection.REQUEST)
                 .add(TestSynchronousMiddleware.class)
                 .add(TestSynchronousFailedResponseMiddleware.class) // fail should happen here
                 .add(TestAsynchronousMiddleware.class)
@@ -289,7 +289,7 @@ public class ChainExecutorTest {
 
     @Test
     void middlewareAsynchronousFailureTest() {
-        final PooledChainLinkExecutor asyncFail = new PooledChainLinkExecutor(this.eventWrapper, ChainDirection.REQUEST, "APPLICATION_ID", "ENV")
+        final PooledChainLinkExecutor asyncFail = new PooledChainLinkExecutor(this.eventWrapper, ChainDirection.REQUEST)
                 .add(TestAsynchronousMiddleware.class)
                 .add(TestAsynchronousMiddleware.class)
                 .add(TestAsynchronousMiddleware.class)
@@ -309,7 +309,7 @@ public class ChainExecutorTest {
 
     @Test
     void middlewareAsynchronousFailureTest2() {
-        final PooledChainLinkExecutor asyncFail = new PooledChainLinkExecutor(this.eventWrapper, ChainDirection.REQUEST, "APPLICATION_ID", "ENV")
+        final PooledChainLinkExecutor asyncFail = new PooledChainLinkExecutor(this.eventWrapper, ChainDirection.REQUEST)
                 .add(TestAsynchronousMiddleware.class)
                 .add(TestAsynchronousMiddleware.class)
                 .add(TestAsynchronousMiddleware.class)
@@ -330,7 +330,7 @@ public class ChainExecutorTest {
 
     @Test
     void middlewareAsynchronousExceptionTest() {
-        final PooledChainLinkExecutor asyncException = new PooledChainLinkExecutor(this.eventWrapper, ChainDirection.REQUEST, "APPLICATION_ID", "ENV")
+        final PooledChainLinkExecutor asyncException = new PooledChainLinkExecutor(this.eventWrapper, ChainDirection.REQUEST)
                 .add(TestAsynchronousMiddleware.class) // 1 - success
                 .add(TestAsynchronousMiddleware.class) // 2 - success
                 .add(TestAsynchronousMiddleware.class) // 3 - success

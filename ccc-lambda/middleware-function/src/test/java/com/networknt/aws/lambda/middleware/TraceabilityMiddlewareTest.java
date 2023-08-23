@@ -164,7 +164,7 @@ public class TraceabilityMiddlewareTest {
                 .build();
         APIGatewayProxyRequestEvent requestEvent = invocation.getEvent();
         Context lambdaContext = new LambdaContext(invocation.getRequestId());
-        this.exchange = new LightLambdaExchange(lambdaContext, "APPLICATION_ID", "ENV");
+        this.exchange = new LightLambdaExchange(lambdaContext);
         this.exchange.setRequest(requestEvent);
     }
 

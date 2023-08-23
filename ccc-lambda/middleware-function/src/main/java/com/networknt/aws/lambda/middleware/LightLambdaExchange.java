@@ -35,12 +35,12 @@ public final class LightLambdaExchange {
     private int state = INITIAL_STATE;
     private int statusCode = 200;
 
-    public LightLambdaExchange(Context context, String appId, String env) {
+    public LightLambdaExchange(Context context) {
         this.context = context;
 
         // TODO - add some kind of check to middleware to see if the configured handlers can be used in request and/or response chains.
-        this.requestExecutor = new PooledChainLinkExecutor(this, ChainDirection.REQUEST, appId, env);
-        this.responseExecutor = new PooledChainLinkExecutor(this, ChainDirection.RESPONSE, appId, env);
+        this.requestExecutor = new PooledChainLinkExecutor(this, ChainDirection.REQUEST);
+        this.responseExecutor = new PooledChainLinkExecutor(this, ChainDirection.RESPONSE);
     }
 
     public void loadRequestChain(List<String> requestChain) {

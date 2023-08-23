@@ -26,18 +26,14 @@ public class PooledChainLinkExecutor extends ThreadPoolExecutor {
     private static final String MIDDLEWARE_UNHANDLED_EXCEPTION = "ERR14004";
     private static final PooledChainConfig CONFIG = (PooledChainConfig) Config.getInstance().getJsonObjectConfig(CONFIG_NAME, PooledChainConfig.class);
     private final LightLambdaExchange lambdaEventWrapper;
-    private final String applicationId;
-    private final String env;
     private final ChainDirection chainDirection;
     private final Chain chain;
     final Object lock = new Object();
 
-    public PooledChainLinkExecutor(final LightLambdaExchange lambdaEventWrapper, ChainDirection chainDirection, String applicationId, String env) {
+    public PooledChainLinkExecutor(final LightLambdaExchange lambdaEventWrapper, ChainDirection chainDirection) {
         super(CONFIG.getCorePoolSize(), CONFIG.getMaxPoolSize(), CONFIG.getKeepAliveTime(), TimeUnit.MILLISECONDS, new LinkedBlockingQueue<>());
         this.lambdaEventWrapper = lambdaEventWrapper;
         this.chainDirection = chainDirection;
-        this.env = env;
-        this.applicationId = applicationId;
         this.chain = new Chain(CONFIG.isForceSynchronousExecution());
     }
 
@@ -47,6 +43,7 @@ public class PooledChainLinkExecutor extends ThreadPoolExecutor {
      * @param className - class name in string format
      * @return - this
      */
+    @SuppressWarnings("unchecked")
     public PooledChainLinkExecutor add(String className) {
         try {
 
@@ -75,14 +72,8 @@ public class PooledChainLinkExecutor extends ThreadPoolExecutor {
         try {
             var newClazz = middleware.getConstructor(ChainLinkCallback.class, LightLambdaExchange.class).newInstance(this.chainLinkCallback, this.lambdaEventWrapper);
             newClazz.setChainDirection(this.chainDirection);
-
-            // TODO - Connection keeps timing out in AWS Lambda -- fix before uncomment
-            //newClazz.getAppConfigProfileConfigurations(this.applicationId, this.env);
-
             this.chain.addChainable(newClazz);
-
             int linkNumber = this.chain.getChainSize();
-
             LOG.debug("Created new middleware instance: {}[{}]", middleware.getName(), linkNumber);
 
         } catch (InstantiationException | IllegalAccessException | InvocationTargetException | NoSuchMethodException e) {
@@ -200,7 +191,7 @@ public class PooledChainLinkExecutor extends ThreadPoolExecutor {
         /* handles any generic throwable that occurred during middleware execution. */
         @Override
         public void exceptionCallback(final LightLambdaExchange eventWrapper, Throwable throwable) {
-            abortExecution();
+            PooledChainLinkExecutor.this.abortExecution();
 
             if (throwable instanceof InterruptedException)
                 PooledChainLinkExecutor.this.chain.addChainableResult(new Status(MIDDLEWARE_THREAD_INTERRUPT));

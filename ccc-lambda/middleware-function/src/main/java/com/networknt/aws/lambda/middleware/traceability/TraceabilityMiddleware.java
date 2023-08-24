@@ -15,10 +15,8 @@ import org.slf4j.MDC;
 public class TraceabilityMiddleware extends LambdaMiddleware {
 
     private static final Logger LOG = LoggerFactory.getLogger(TraceabilityMiddleware.class);
-
     private static final String CONFIG_NAME = "lambda-traceability";
-    private static TraceabilityConfig CONFIG = (TraceabilityConfig) Config.getInstance().getJsonObjectConfig(CONFIG_NAME, TraceabilityConfig.class);
-
+    private static final TraceabilityConfig CONFIG = (TraceabilityConfig) Config.getInstance().getJsonObjectConfig(CONFIG_NAME, TraceabilityConfig.class);
     private static final LightLambdaExchange.Attachable<TraceabilityMiddleware> TRACEABILITY_ATTACHMENT_KEY = LightLambdaExchange.Attachable.createMiddlewareAttachable(TraceabilityMiddleware.class);
 
     public TraceabilityMiddleware(ChainLinkCallback middlewareCallback, final LightLambdaExchange eventWrapper) {

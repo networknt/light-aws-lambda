@@ -1,6 +1,6 @@
 enabled: ${lambda-validator.enabled:true}
 logError: ${lambda-validator.logError:false}
 validateResponse: ${lambda-validator.validateResponse:false}
-validateRequest: ${lambda-validator.validateRequest:true}
+validateRequest: ${lambda-validator.validateRequest:false}
 handleNullableField: ${lambda-validator.handleNullableField:true}
 skipPathPrefixes: ${lambda-validator.skipPathPrefixes:}

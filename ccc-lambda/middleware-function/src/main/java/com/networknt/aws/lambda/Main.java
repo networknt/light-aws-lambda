@@ -10,7 +10,6 @@ import com.networknt.aws.lambda.proxy.LambdaProxy;
 
 
 public class Main {
-
     private static final ObjectMapper OBJECT_MAPPER = new ObjectMapper()
             .disable(DeserializationFeature.FAIL_ON_UNKNOWN_PROPERTIES);
 
@@ -18,7 +17,7 @@ public class Main {
 
 
         String testInvoke = "{\n" +
-                "  \"body\": \"{\\\"foo\\\": \\\"bar\\\"}\",\n" +
+                "  \"body\": \"{\\\"id\\\": 33, \\\"name\\\": \\\"doggie\\\"}\",\n" +
                 "  \"resource\": \"/{proxy+}\",\n" +
                 "  \"path\": \"/v1/pets\",\n" +
                 "  \"httpMethod\": \"POST\",\n" +

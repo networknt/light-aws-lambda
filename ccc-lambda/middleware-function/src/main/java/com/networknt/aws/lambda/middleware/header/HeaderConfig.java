@@ -4,11 +4,16 @@ import java.util.List;
 
 public class HeaderConfig {
     private boolean enabled;
+    private boolean failOnMissingHeader;
     private List<HeaderChange> requestHeader;
     private List<HeaderChange> responseHeader;
 
     public boolean isEnabled() {
         return enabled;
+    }
+
+    public boolean isFailOnMissingHeader() {
+        return failOnMissingHeader;
     }
 
     public List<HeaderChange> getRequestHeader() {

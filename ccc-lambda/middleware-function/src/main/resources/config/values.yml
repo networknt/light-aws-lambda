@@ -7,12 +7,17 @@ lambda-proxy.functions:
   /v1/pets@post: arn:aws:lambda:ca-central-1:442513687360:function:eadp-test-destination
 
 lambda-proxy.requestChain:
-    - "com.networknt.aws.lambda.middleware.header.HeaderMiddleware"
-    - "com.networknt.aws.lambda.middleware.traceability.TraceabilityMiddleware"
-    - "com.networknt.aws.lambda.middleware.correlation.CorrelationMiddleware"
-    - "com.networknt.aws.lambda.middleware.body.RequestBodyTransformerMiddleware"
+  - "com.networknt.aws.lambda.middleware.validator.ValidatorMiddleware"
+  - "com.networknt.aws.lambda.middleware.header.HeaderMiddleware"
+  - "com.networknt.aws.lambda.middleware.traceability.TraceabilityMiddleware"
+  - "com.networknt.aws.lambda.middleware.correlation.CorrelationMiddleware"
+  - "com.networknt.aws.lambda.middleware.body.RequestBodyTransformerMiddleware"
 
 lambda-proxy.lambdaAppId: arn:aws:lambda:ca-central-1:442513687360:function:eadp-light-lambda-test
+# -------------------------------------------
+
+# --------< Lambda Validator Config >--------
+lambda-validator.validateRequest: true
 # -------------------------------------------
 
 # --< Lambda Pooled Chain Executor Config >--
@@ -28,6 +33,7 @@ lambda-security.logJwtToken: true
 # -------------------------------------------
 
 # ----------< Lambda Header Config >---------
+lambda-header.failOnMissingHeader: false
 lambda-header.requestHeader:
   - headerKey: x-traceability-id
     changeDescriptor:

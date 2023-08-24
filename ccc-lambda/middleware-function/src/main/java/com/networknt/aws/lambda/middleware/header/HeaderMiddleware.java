@@ -16,7 +16,7 @@ public class HeaderMiddleware extends LambdaMiddleware {
     public static final String CONFIG_NAME = "lambda-header";
     private static final String UNKNOWN_HEADER_OPERATION = "ERR14004";
     private static final String HEADER_MISSING_FOR_OPERATION = "ERR14005";
-    private static HeaderConfig CONFIG = (HeaderConfig) Config.getInstance().getJsonObjectConfig(CONFIG_NAME, HeaderConfig.class);
+    private static final HeaderConfig CONFIG = (HeaderConfig) Config.getInstance().getJsonObjectConfig(CONFIG_NAME, HeaderConfig.class);
     private static final Logger LOG = LoggerFactory.getLogger(HeaderMiddleware.class);
 
     public HeaderMiddleware(ChainLinkCallback middlewareCallback, final LightLambdaExchange eventWrapper) {
@@ -75,8 +75,11 @@ public class HeaderMiddleware extends LambdaMiddleware {
             switch (headerChange.getChangeDescriptor().getChangeType()) {
 
                 case REPLACE: {
-                    if (headers.get(headerChange.getHeaderKey()) == null)
+                    if (headers.get(headerChange.getHeaderKey()) == null && CONFIG.isFailOnMissingHeader())
                         return new Status(HEADER_MISSING_FOR_OPERATION);
+
+                    else if (headers.get(headerChange.getHeaderKey()) == null)
+                        return LambdaMiddleware.successMiddlewareStatus();
                 }
 
                 case ADD: {
@@ -91,8 +94,13 @@ public class HeaderMiddleware extends LambdaMiddleware {
 
                 case APPEND: {
                     var appendedHeader = headers.get(headerChange.getHeaderKey());
-                    if (appendedHeader == null)
+
+                    if (appendedHeader == null && CONFIG.isFailOnMissingHeader())
                         return new Status(HEADER_MISSING_FOR_OPERATION);
+
+                    else if (appendedHeader == null)
+                        return LambdaMiddleware.successMiddlewareStatus();
+
                     appendedHeader = appendedHeader + headerChange.getChangeDescriptor().getValue();
                     headers.put(headerChange.getHeaderKey(), appendedHeader);
                     break;
@@ -100,8 +108,13 @@ public class HeaderMiddleware extends LambdaMiddleware {
 
                 case PREPEND: {
                     var prependedHeader = headers.get(headerChange.getHeaderKey());
-                    if (prependedHeader == null)
+
+                    if (prependedHeader == null && CONFIG.isFailOnMissingHeader())
                         return new Status(HEADER_MISSING_FOR_OPERATION);
+
+                    else if (prependedHeader == null)
+                        return LambdaMiddleware.successMiddlewareStatus();
+
                     prependedHeader = headerChange.getChangeDescriptor().getValue() + prependedHeader;
                     headers.put(headerChange.getHeaderKey(), prependedHeader);
                     break;

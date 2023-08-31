@@ -80,6 +80,7 @@ public class ValidatorMiddleware extends LambdaMiddleware {
 
                 try {
                     in.close();
+
                 } catch (IOException e) {
                     LOG.error("Failed to close stream on openapi.yaml.");
                     throw new RuntimeException(e);

@@ -145,7 +145,7 @@ public class Main {
                 "}";
 
         APIGatewayProxyRequestEvent apiGatewayProxyRequestEvent = OBJECT_MAPPER.readValue(testInvoke, APIGatewayProxyRequestEvent.class);
-        InvocationResponse invocation = InvocationResponse.builder()
+        var invocation = InvocationResponse.builder()
                 .requestId("12345")
                 .event(apiGatewayProxyRequestEvent)
                 .build();

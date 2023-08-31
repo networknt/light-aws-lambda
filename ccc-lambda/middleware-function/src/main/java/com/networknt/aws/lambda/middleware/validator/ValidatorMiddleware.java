@@ -22,13 +22,10 @@ public class ValidatorMiddleware extends LambdaMiddleware {
     private static final Logger LOG = LoggerFactory.getLogger(ValidatorMiddleware.class);
     private static final String CONFIG_NAME = "lambda-validator";
     private static final String OPENAPI_NAME = "openapi.yaml";
-    private static final String MISSING_EVENT_BODY = "ERR14007";
-    private static final String EVENT_BODY_FAILED_VALIDATION = "ERR14008";
-    private static final String VALIDATOR_FAILED_TO_LOAD_OPENAPI = "ERR14009";
+    private static final String CONTENT_TYPE_MISMATCH = "ERR10015";
+    private static OpenApiValidator OPENAPI_VALIDATOR;
 
     private static final ValidatorConfig CONFIG = (ValidatorConfig) Config.getInstance().getJsonObjectConfig(CONFIG_NAME, ValidatorConfig.class);
-
-    OpenApiValidator openApiValidator;
 
     public ValidatorMiddleware(ChainLinkCallback middlewareCallback, LightLambdaExchange eventWrapper) {
         super(false, true, false, middlewareCallback, eventWrapper);
@@ -42,55 +39,68 @@ public class ValidatorMiddleware extends LambdaMiddleware {
 
         LOG.debug("ValidatorHandler.executeMiddleware starts.");
 
-        if (this.getChainDirection().equals(ChainDirection.REQUEST)
-                && this.isApplicationJsonContentType(exchange.getRequest().getHeaders())
-                && CONFIG.isValidateRequest()) {
-
-            InputStream in  = this.getClass().getClassLoader().getResourceAsStream(OPENAPI_NAME);
-
-            if (in != null) {
-                openApiValidator = new OpenApiValidator(in);
-
-            } else return new Status(VALIDATOR_FAILED_TO_LOAD_OPENAPI);
-
-            try {
-                in.close();
-            } catch (IOException e) {
-                LOG.error("Failed to close stream on openapi.yaml.");
-                throw new RuntimeException(e);
-            }
+        if (this.shouldValidateRequestBody(exchange)) {
 
             if (exchange.getRequest().getBody() != null) {
                 var requestEntity = new RequestEntity();
                 requestEntity.setRequestBody(exchange.getRequest().getBody());
                 requestEntity.setHeaderParameters(exchange.getRequest().getHeaders());
                 requestEntity.setContentType(HeaderValue.APPLICATION_JSON);
-                var status = openApiValidator.validateRequestPath(exchange.getRequest().getPath(), exchange.getRequest().getHttpMethod(), requestEntity);
+                var status = ValidatorMiddleware.getValidatorInstance().validateRequestPath(exchange.getRequest().getPath(), exchange.getRequest().getHttpMethod(), requestEntity);
 
                 if (status != null)
-                    return new Status(EVENT_BODY_FAILED_VALIDATION);
+                    return new Status(status.getCode());
 
                 else return LambdaMiddleware.successMiddlewareStatus();
 
-            } else return new Status(MISSING_EVENT_BODY);
+            } else return new Status(CONTENT_TYPE_MISMATCH);
 
-        } else if (this.getChainDirection().equals(ChainDirection.RESPONSE)
-                && this.isApplicationJsonContentType(exchange.getResponse().getHeaders())
-                && CONFIG.isValidateResponse()) {
-
-            openApiValidator = new OpenApiValidator("config/" + OPENAPI_NAME);
+        } else if (this.shouldValidateResponseBody(exchange)) {
 
             if (exchange.getResponse().getBody() != null) {
 
                 // TODO - response body validation
                 return LambdaMiddleware.successMiddlewareStatus();
 
-            } else return new Status(MISSING_EVENT_BODY);
+            } else return new Status(CONTENT_TYPE_MISMATCH);
         }
 
         LOG.debug("ValidatorHandler.executeMiddleware ends.");
 
         return LambdaMiddleware.successMiddlewareStatus();
+    }
+
+    private static OpenApiValidator getValidatorInstance() {
+        if (OPENAPI_VALIDATOR == null) {
+            // TODO - maybe load other than resources within the jar.
+            InputStream in  = ValidatorMiddleware.class.getClassLoader().getResourceAsStream(OPENAPI_NAME);
+
+            if (in != null) {
+                OPENAPI_VALIDATOR = new OpenApiValidator(in);
+
+                try {
+                    in.close();
+                } catch (IOException e) {
+                    LOG.error("Failed to close stream on openapi.yaml.");
+                    throw new RuntimeException(e);
+                }
+
+            } else OPENAPI_VALIDATOR = new OpenApiValidator();
+
+        }
+        return OPENAPI_VALIDATOR;
+    }
+
+    private boolean shouldValidateRequestBody(final LightLambdaExchange exchange) {
+        return this.getChainDirection().equals(ChainDirection.REQUEST)
+                && this.isApplicationJsonContentType(exchange.getRequest().getHeaders())
+                && CONFIG.isValidateRequest();
+    }
+
+    private boolean shouldValidateResponseBody(final LightLambdaExchange exchange) {
+        return this.getChainDirection().equals(ChainDirection.RESPONSE)
+                && this.isApplicationJsonContentType(exchange.getResponse().getHeaders())
+                && CONFIG.isValidateResponse();
     }
 
     private boolean isApplicationJsonContentType(Map<String, String> headers) {

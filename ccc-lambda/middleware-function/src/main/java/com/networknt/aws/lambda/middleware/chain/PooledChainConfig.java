@@ -6,6 +6,7 @@ public class PooledChainConfig {
     private int maxChainSize;
     private long keepAliveTime;
     private boolean forceSynchronousExecution;
+    private boolean exitOnMiddlewareInstanceCreationFailure;
 
     public int getCorePoolSize() {
         return corePoolSize;
@@ -25,5 +26,9 @@ public class PooledChainConfig {
 
     public boolean isForceSynchronousExecution() {
         return forceSynchronousExecution;
+    }
+
+    public boolean isExitOnMiddlewareInstanceCreationFailure() {
+        return exitOnMiddlewareInstanceCreationFailure;
     }
 }

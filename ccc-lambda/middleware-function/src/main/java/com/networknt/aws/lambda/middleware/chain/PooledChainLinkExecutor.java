@@ -19,11 +19,10 @@ import java.util.concurrent.ExecutionException;
 import java.util.concurrent.Future;
 
 public class PooledChainLinkExecutor extends ThreadPoolExecutor {
-
     private final Logger LOG = LoggerFactory.getLogger(PooledChainLinkExecutor.class);
     private static final String CONFIG_NAME = "pooled-chain-executor";
     private static final String MIDDLEWARE_THREAD_INTERRUPT = "ERR14003";
-    private static final String MIDDLEWARE_UNHANDLED_EXCEPTION = "ERR14004";
+    private static final String MIDDLEWARE_UNHANDLED_EXCEPTION = "ERR14000";
     private static final PooledChainConfig CONFIG = (PooledChainConfig) Config.getInstance().getJsonObjectConfig(CONFIG_NAME, PooledChainConfig.class);
     private final LightLambdaExchange lambdaEventWrapper;
     private final ChainDirection chainDirection;
@@ -53,7 +52,12 @@ public class PooledChainLinkExecutor extends ThreadPoolExecutor {
             else throw new RuntimeException(className + " is not a member of LambdaMiddleware...");
 
         } catch (ClassNotFoundException e) {
-            throw new RuntimeException(e);
+            LOG.error("Failed to find class with the name: {}", className);
+
+            if (CONFIG.isExitOnMiddlewareInstanceCreationFailure())
+                throw new RuntimeException(e);
+
+            else return this;
         }
     }
 
@@ -78,6 +82,11 @@ public class PooledChainLinkExecutor extends ThreadPoolExecutor {
 
         } catch (InstantiationException | IllegalAccessException | InvocationTargetException | NoSuchMethodException e) {
             LOG.error("failed to create class instance: {}", e.getMessage());
+
+            if (CONFIG.isExitOnMiddlewareInstanceCreationFailure())
+                throw new RuntimeException(e);
+
+            else return this;
         }
 
         return this;
@@ -149,7 +158,7 @@ public class PooledChainLinkExecutor extends ThreadPoolExecutor {
 
             synchronized (lock) {
 
-                if (!this.isShutdown() && !this.isTerminating())
+                if (!this.isShutdown() && !this.isTerminating() && !this.isTerminated())
                     chainLinkWorkerFutures.add(this.submit(chainLinkWorker));
             }
         }
@@ -193,11 +202,12 @@ public class PooledChainLinkExecutor extends ThreadPoolExecutor {
         public void exceptionCallback(final LightLambdaExchange eventWrapper, Throwable throwable) {
             PooledChainLinkExecutor.this.abortExecution();
 
-            if (throwable instanceof InterruptedException)
+            if (throwable instanceof InterruptedException) {
+                LOG.error("Interrupted thread and cancelled middleware execution", throwable);
                 PooledChainLinkExecutor.this.chain.addChainableResult(new Status(MIDDLEWARE_THREAD_INTERRUPT));
 
-            else {
-                LOG.error("Chain failed with exception: {}", throwable.getMessage(), throwable);
+            } else {
+                LOG.error("Middleware returned with unhandled exception.", throwable);
                 PooledChainLinkExecutor.this.chain.addChainableResult(new Status(MIDDLEWARE_UNHANDLED_EXCEPTION));
             }
 

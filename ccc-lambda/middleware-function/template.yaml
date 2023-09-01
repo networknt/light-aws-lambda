@@ -63,6 +63,15 @@ Resources:
               - lambda:InvokeAsync
             Resource: !Sub 'arn:aws:lambda:${AWS::Region}:${AWS::AccountId}:function:${ParamServiceId}-function'
           - !Ref SecretsManagerReadWrite
+          - Effect: Deny
+            Action:
+              - lambda:InvokeFunction
+              - lambda:InvokeAsync
+            Resource: !Sub 'arn:aws:lambda:${AWS::Region}:${AWS::AccountId}:function:${ParamServiceId}-function'
+            Condition:
+              StringNotEquals:
+                aws:SourceVpce:
+                  !Ref ParamVpceId
 
   APIEndpoint:
     Type: AWS::Serverless::Api

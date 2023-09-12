@@ -4,10 +4,10 @@ import com.amazonaws.util.IOUtils;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import software.amazon.awssdk.regions.Region;
-import software.amazon.awssdk.services.secretsmanager.SecretsManagerClient;
-import software.amazon.awssdk.services.secretsmanager.model.CreateSecretRequest;
-import software.amazon.awssdk.services.secretsmanager.model.GetSecretValueRequest;
-import software.amazon.awssdk.services.secretsmanager.model.GetSecretValueResponse;
+//import software.amazon.awssdk.services.secretsmanager.SecretsManagerClient;
+//import software.amazon.awssdk.services.secretsmanager.model.CreateSecretRequest;
+//import software.amazon.awssdk.services.secretsmanager.model.GetSecretValueRequest;
+//import software.amazon.awssdk.services.secretsmanager.model.GetSecretValueResponse;
 
 import java.io.IOException;
 import java.io.InputStream;
@@ -26,70 +26,70 @@ public class S3CredentialUtil {
 
     private static final Logger LOG = LoggerFactory.getLogger(S3CredentialUtil.class);
 
-    private static SecretsManagerClient SECRET_MANAGER_CLIENT;
+    //private static SecretsManagerClient SECRET_MANAGER_CLIENT;
 
-    private static SecretsManagerClient getInstance() {
+//    private static SecretsManagerClient getInstance() {
+//
+//        if (SECRET_MANAGER_CLIENT == null) {
+//            SECRET_MANAGER_CLIENT = SecretsManagerClient.builder().region(Region.of(System.getenv("AWS_REGION"))).build();
+//        }
+//
+//        return SECRET_MANAGER_CLIENT;
+//    }
+//
+//    public static boolean postCachedSecret(String secretName, String secret) {
+//        final var request = CreateSecretRequest.builder()
+//                .name(secretName)
+//                .secretString(secret)
+//                .build();
+//        final var client = getInstance();
+//        final var response = client.createSecret(request);
+//        return response.sdkHttpResponse().isSuccessful();
+//    }
+//
+//    public static String getCachedSecret(String secretName) {
+//        final var client = getInstance();
+//        final var tokenValueRequest = GetSecretValueRequest.builder().secretId(secretName).build();
+//
+//        GetSecretValueResponse res;
+//        try {
+//            res = client.getSecretValue(tokenValueRequest);
+//        } catch (Exception e) {
+//            LOG.error("Error getting secret: {}", e.getMessage(), e);
+//            return null;
+//        }
+//
+//        if (res != null)
+//            return res.secretString();
+//
+//        else return null;
+//
+//
+//    }
 
-        if (SECRET_MANAGER_CLIENT == null) {
-            SECRET_MANAGER_CLIENT = SecretsManagerClient.builder().region(Region.of(System.getenv("AWS_REGION"))).build();
-        }
-
-        return SECRET_MANAGER_CLIENT;
-    }
-
-    public static boolean postCachedSecret(String secretName, String secret) {
-        final var request = CreateSecretRequest.builder()
-                .name(secretName)
-                .secretString(secret)
-                .build();
-        final var client = getInstance();
-        final var response = client.createSecret(request);
-        return response.sdkHttpResponse().isSuccessful();
-    }
-
-    public static String getCachedSecret(String secretName) {
-        final var client = getInstance();
-        final var tokenValueRequest = GetSecretValueRequest.builder().secretId(secretName).build();
-
-        GetSecretValueResponse res;
-        try {
-            res = client.getSecretValue(tokenValueRequest);
-        } catch (Exception e) {
-            LOG.error("Error getting secret: {}", e.getMessage(), e);
-            return null;
-        }
-
-        if (res != null)
-            return res.secretString();
-
-        else return null;
-
-
-    }
-
-    public static String getLambdaCachedSecret(String applicationId, SecretType type) {
-        switch (type) {
-            case JWK:
-                return getCachedSecret(applicationId + "-jwk");
-            case JWT:
-                return getCachedSecret(applicationId + "-jwt");
-            case OTHER:
-            default:
-                return getCachedSecret(applicationId);
-        }
-    }
-
-    public static boolean postLambdaCachedSecret(String applicationId, String secret, SecretType type) {
-        switch (type) {
-            case JWK:
-                return postCachedSecret(applicationId + "-jwk", secret);
-            case JWT:
-                return postCachedSecret(applicationId + "-jwt", secret);
-            case OTHER:
-            default:
-                return postCachedSecret(applicationId, secret);
-        }
-    }
+//    public static String getLambdaCachedSecret(String applicationId, SecretType type) {
+//        switch (type) {
+//            case JWK:
+//                return getCachedSecret(applicationId + "-jwk");
+//            case JWT:
+//                return getCachedSecret(applicationId + "-jwt");
+//            case OTHER:
+//            default:
+//                return getCachedSecret(applicationId);
+//        }
+//    }
+//
+//    public static boolean postLambdaCachedSecret(String applicationId, String secret, SecretType type) {
+//        switch (type) {
+//            case JWK:
+//                return postCachedSecret(applicationId + "-jwk", secret);
+//            case JWT:
+//                return postCachedSecret(applicationId + "-jwt", secret);
+//            case OTHER:
+//            default:
+//                return postCachedSecret(applicationId, secret);
+//        }
+//    }
 
     // TODO - test speed using ARN layer vs SDK
     public static boolean postLambdaS3Secret(String secretName, String secret) {

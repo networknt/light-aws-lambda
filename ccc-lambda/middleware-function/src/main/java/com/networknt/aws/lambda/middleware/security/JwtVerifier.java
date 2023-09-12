@@ -1,6 +1,7 @@
 package com.networknt.aws.lambda.middleware.security;
 
-import com.networknt.aws.lambda.Configuration;
+import com.networknt.exception.ExpiredTokenException;
+import com.networknt.http.client.ClientConfig;
 import com.networknt.utility.FingerPrintUtil;
 import org.jose4j.jwk.JsonWebKey;
 import org.jose4j.jwk.JsonWebKeySet;
@@ -22,7 +23,7 @@ import java.security.cert.X509Certificate;
 import java.util.*;
 import java.util.function.BiFunction;
 
-public class JwtVerifier {
+public class JwtVerifier extends TokenVerifier {
     private static final Logger logger = LoggerFactory.getLogger(JwtVerifier.class);
     private static Map<String, JwtClaims> cache;
     private static Map<String, X509Certificate> certMap;
@@ -35,28 +36,26 @@ public class JwtVerifier {
     public static final String JWT_CLOCK_SKEW_IN_SECONDS = "clockSkewInSeconds";
     public static final String ENABLE_VERIFY_JWT = "enableVerifyJwt";
     private static final String ENABLE_JWT_CACHE = "enableJwtCache";
+    private static final String ENABLE_RELAXED_KEY_VALIDATION = "enableRelaxedKeyValidation";
     private static final int CACHE_EXPIRED_IN_MINUTES = 15;
 
     public static final String JWT_KEY_RESOLVER = "keyResolver";
     public static final String JWT_KEY_RESOLVER_X509CERT = "X509Certificate";
     public static final String JWT_KEY_RESOLVER_JWKS = "JsonWebKeySet";
-
-    private String stage;
-    Map<String, Map<String, Object>> config = Configuration.getInstance().getConfig();
-    Map<String, Object> stageConfig;
+    SecurityConfig config;
     Map<String, Object> jwtConfig;
     int secondsOfAllowedClockSkew;
-    Boolean enableJwtCache;
+    static Map<String, List<JsonWebKey>> jwksMap;
 
-    public JwtVerifier(String stage) {
-        this.stage = stage;
-        stageConfig = config.get(stage);
-        logger.debug("stage = " + stage + " stageConfig = " + stageConfig);
-        jwtConfig = (Map<String, Object>)stageConfig.get(JWT_CONFIG);
+
+    public JwtVerifier(SecurityConfig config) {
+        logger.debug("config = " + config);
+        this.config = config;
+        this.jwtConfig = config.getJwt();
         logger.debug("jwtConfig = " + jwtConfig);
         this.secondsOfAllowedClockSkew = (Integer)jwtConfig.get(JWT_CLOCK_SKEW_IN_SECONDS);
-        this.enableJwtCache = (Boolean)stageConfig.get(ENABLE_JWT_CACHE);
-        if(Boolean.TRUE.equals(enableJwtCache)) {
+
+        if(Boolean.TRUE.equals(config.isEnableJwtCache())) {
             cache = new LinkedHashMap<>() {
                 @Override
                 protected boolean removeEldestEntry(final Map.Entry eldest) {
@@ -121,6 +120,23 @@ public class JwtVerifier {
     }
 
     /**
+     * This method is to keep backward compatible for those call without VerificationKeyResolver. The single
+     * auth server is used in this case.
+     *
+     * @param jwt          JWT token
+     * @param ignoreExpiry indicate if the expiry will be ignored
+     * @param pathPrefix   pathPrefix used to cache the jwt token
+     * @param requestPath  request path
+     * @param jwkServiceIds A list of serviceIds from the UnifiedSecurityHandler
+     * @return JwtClaims
+     * @throws InvalidJwtException   throw when the token is invalid
+     * @throws com.networknt.exception.ExpiredTokenException throw when the token is expired
+     */
+    public JwtClaims verifyJwt(String jwt, boolean ignoreExpiry, String pathPrefix, String requestPath, List<String> jwkServiceIds) throws InvalidJwtException, ExpiredTokenException {
+        return verifyJwt(jwt, ignoreExpiry, pathPrefix, requestPath, jwkServiceIds, this::getKeyResolver);
+    }
+
+    /**
      * This method is to keep backward compatible for those call without VerificationKeyResolver.
      * @param jwt JWT token
      * @param ignoreExpiry indicate if the expiry will be ignored
@@ -128,7 +144,7 @@ public class JwtVerifier {
      * @throws InvalidJwtException throw when the token is invalid
      */
     public JwtClaims verifyJwt(String jwt, boolean ignoreExpiry) throws InvalidJwtException, ExpiredTokenException {
-        return verifyJwt(jwt, ignoreExpiry, this::getKeyResolver);
+        return verifyJwt(jwt, ignoreExpiry, null, null, null, this::getKeyResolver);
     }
 
     /**
@@ -139,97 +155,72 @@ public class JwtVerifier {
      * @return JwtClaims
      * @throws InvalidJwtException throw when the token is invalid
      */
-    public JwtClaims verifyJwt(String jwt, boolean ignoreExpiry, BiFunction<String, Boolean, VerificationKeyResolver> getKeyResolver) throws InvalidJwtException, ExpiredTokenException {
-        JwtClaims claims = cache.get(jwt);
-        if(claims != null) {
-            logger.debug("There is a cache claims for the JWT");
-            if(!ignoreExpiry) {
-                try {
-                    // if using our own client module, the jwt token should be renewed automatically
-                    // and it will never expired here. However, we need to handle other clients.
-                    if ((NumericDate.now().getValue() - secondsOfAllowedClockSkew) >= claims.getExpirationTime().getValue())
-                    {
-                        logger.info("Cached jwt token is expired!");
-                        throw new ExpiredTokenException("Token is expired");
-                    }
-                } catch (MalformedClaimException e) {
-                    // This is cached token and it is impossible to have this exception
-                    logger.error("MalformedClaimException:", e);
-                }
+    public JwtClaims verifyJwt(String jwt, boolean ignoreExpiry, String pathPrefix, String requestPath, List<String> jwkServiceIds, BiFunction<String, Boolean, VerificationKeyResolver> getKeyResolver) throws InvalidJwtException, ExpiredTokenException {
+        JwtClaims claims;
+        if (Boolean.TRUE.equals(config.isEnableJwtCache())) {
+            if(pathPrefix != null) {
+                claims = cache.get(pathPrefix + ":" + jwt);
+            } else {
+                claims = cache.get(jwt);
             }
-            // this claims object is signature verified already
-            return claims;
+            if (claims != null) {
+                checkExpiry(ignoreExpiry, claims, secondsOfAllowedClockSkew, null);
+                // this claims object is signature verified already
+                return claims;
+            }
         }
-        JwtConsumer consumer = new JwtConsumerBuilder()
+
+        JwtConsumer consumer;
+        JwtConsumerBuilder pKeyBuilder = new JwtConsumerBuilder()
                 .setSkipAllValidators()
                 .setDisableRequireSignature()
-                .setSkipSignatureVerification()
-                .build();
+                .setSkipSignatureVerification();
+
+        if (config.isEnableRelaxedKeyValidation()) {
+            pKeyBuilder.setRelaxVerificationKeyValidation();
+        }
+
+        consumer = pKeyBuilder.build();
 
         JwtContext jwtContext = consumer.process(jwt);
         claims = jwtContext.getJwtClaims();
         JsonWebStructure structure = jwtContext.getJoseObjects().get(0);
         // need this kid to load public key certificate for signature verification
         String kid = structure.getKeyIdHeaderValue();
-        logger.debug("get the kid = " + kid);
+
         // so we do expiration check here manually as we have the claim already for kid
         // if ignoreExpiry is false, verify expiration of the token
-        if(!ignoreExpiry) {
-            try {
-                if ((NumericDate.now().getValue() - secondsOfAllowedClockSkew) >= claims.getExpirationTime().getValue())
-                {
-                    logger.info("jwt token is expired!");
-                    throw new ExpiredTokenException("Token is expired");
-                }
-            } catch (MalformedClaimException e) {
-                logger.error("MalformedClaimException:", e);
-                throw new InvalidJwtException("MalformedClaimException", new ErrorCodeValidator.Error(ErrorCodes.MALFORMED_CLAIM, "Invalid ExpirationTime Format"), e, jwtContext);
-            }
-        }
+        checkExpiry(ignoreExpiry, claims, secondsOfAllowedClockSkew, jwtContext);
 
-        consumer = new JwtConsumerBuilder()
+        // validate the audience against the configured audience.
+        // validateAudience(claims, requestPath, jwkServiceIds, jwtContext);
+
+        JwtConsumerBuilder jwtBuilder = new JwtConsumerBuilder()
                 .setRequireExpirationTime()
                 .setAllowedClockSkewInSeconds(315360000) // use seconds of 10 years to skip expiration validation as we need skip it in some cases.
                 .setSkipDefaultAudienceValidation()
-                .setVerificationKeyResolver(getKeyResolver.apply(kid, true))
-                .build();
+                .setVerificationKeyResolver(getKeyResolver.apply(kid, true));
+
+        if (config.isEnableRelaxedKeyValidation()) {
+            jwtBuilder.setRelaxVerificationKeyValidation();
+        }
+
+        consumer = jwtBuilder.build();
 
         // Validate the JWT and process it to the Claims
         jwtContext = consumer.process(jwt);
         claims = jwtContext.getJwtClaims();
-        logger.debug("processed jwt with the claims " + claims);
-        cache.put(jwt, claims);
-        return claims;
-    }
-
-    /**
-     * Get VerificationKeyResolver based on the configuration settings
-     * @return VerificationKeyResolver
-     */
-    private VerificationKeyResolver getKeyResolver(String kid, boolean isToken) {
-        VerificationKeyResolver verificationKeyResolver = null;
-        String keyResolver = (String)jwtConfig.get(JWT_KEY_RESOLVER);
-        logger.debug("keyResolver = " + keyResolver);
-        switch (keyResolver) {
-            default:
-            case JWT_KEY_RESOLVER_X509CERT:
-                // get the public key certificate from the cache that is loaded from security.yml if it is not there,
-                // go to OAuth2 server /oauth2/key endpoint to get the public key certificate with kid as parameter.
-                X509Certificate certificate = certMap == null ? null : certMap.get(kid);
-                X509VerificationKeyResolver x509VerificationKeyResolver = new X509VerificationKeyResolver(certificate);
-                x509VerificationKeyResolver.setTryAllOnNoThumbHeader(true);
-                verificationKeyResolver = x509VerificationKeyResolver;
-                break;
-
-            case JWT_KEY_RESOLVER_JWKS:
-                if(jwkList == null) {
-                    String jwkName = (String)jwtConfig.get(JWT_JWK);
-                    jwkList = getJsonWebKeySetForToken(jwkName);
-                }
-                verificationKeyResolver = new JwksVerificationKeyResolver(jwkList);
-                break;
+        if (Boolean.TRUE.equals(config.isEnableJwtCache())) {
+            if(pathPrefix != null) {
+                cache.put(pathPrefix + ":" + jwt, claims);
+            } else {
+                cache.put(jwt, claims);
+            }
+            if(cache.size() > config.getJwtCacheFullSize()) {
+                logger.warn("JWT cache exceeds the size limit " + config.getJwtCacheFullSize());
+            }
         }
-        return verificationKeyResolver;
+        return claims;
     }
 
     /**
@@ -248,6 +239,68 @@ public class JwtVerifier {
         } catch (Exception e) {
             logger.error("Exception: ", e);
             return null;
+        }
+    }
+
+    /**
+     * Checks expiry of a jwt token from the claim.
+     *
+     * @param ignoreExpiry     - flag set if we want to ignore expired tokens or not.
+     * @param claim            - jwt claims
+     * @param allowedClockSkew - seconds of allowed skew in token expiry
+     * @param context          - jwt context
+     * @throws com.networknt.exception.ExpiredTokenException - thrown when token is expired
+     * @throws InvalidJwtException   - thrown when the token is malformed/invalid
+     */
+    private static void checkExpiry(boolean ignoreExpiry, JwtClaims claim, int allowedClockSkew, JwtContext context) throws com.networknt.exception.ExpiredTokenException, InvalidJwtException {
+        if (!ignoreExpiry) {
+            try {
+                // if using our own client module, the jwt token should be renewed automatically
+                // and it will never expire here. However, we need to handle other clients.
+                if ((NumericDate.now().getValue() - allowedClockSkew) >= claim.getExpirationTime().getValue()) {
+                    logger.info("Cached jwt token is expired!");
+                    throw new com.networknt.exception.ExpiredTokenException("Token is expired");
+                }
+            } catch (MalformedClaimException e) {
+                // This is cached token and it is impossible to have this exception
+                logger.error("MalformedClaimException:", e);
+                throw new InvalidJwtException("MalformedClaimException", new ErrorCodeValidator.Error(ErrorCodes.MALFORMED_CLAIM, "Invalid ExpirationTime Format"), e, context);
+            }
+        }
+    }
+
+    /**
+     * Get VerificationKeyResolver based on the kid and isToken indicator. For the implementation, we check
+     * the jwk first and 509Certificate if the jwk cannot find the kid. Basically, we want to iterate all
+     * the resolvers and find the right one with the kid.
+     *
+     * @param kid key id from the JWT token
+     * @return VerificationKeyResolver
+     */
+    private VerificationKeyResolver getKeyResolver(String kid, boolean isToken) {
+        // jwk is always used here.
+        ClientConfig clientConfig = ClientConfig.get();
+        List<JsonWebKey> jwkList = jwksMap.get(kid);
+        if (jwkList == null) {
+            jwkList = getJsonWebKeySetForToken(kid);
+            if (jwkList == null || jwkList.isEmpty()) {
+                throw new RuntimeException("no JWK for kid: " + kid);
+            }
+            cacheJwkList(jwkList, null);
+        }
+        logger.debug("Got Json web key set from local cache");
+        return new JwksVerificationKeyResolver(jwkList);
+    }
+
+    private void cacheJwkList(List<JsonWebKey> jwkList, String serviceId) {
+        for (JsonWebKey jwk : jwkList) {
+            if(serviceId != null) {
+                if(logger.isTraceEnabled()) logger.trace("cache the jwkList with serviceId {} kid {} and key {}", serviceId, jwk.getKeyId(), serviceId + ":" + jwk.getKeyId());
+                jwksMap.put(serviceId + ":" + jwk.getKeyId(), jwkList);
+            } else {
+                if(logger.isTraceEnabled()) logger.trace("cache the jwkList with kid and only kid as key", jwk.getKeyId());
+                jwksMap.put(jwk.getKeyId(), jwkList);
+            }
         }
     }
 

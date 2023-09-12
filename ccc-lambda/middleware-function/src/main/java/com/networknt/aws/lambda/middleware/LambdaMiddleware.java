@@ -11,8 +11,8 @@ import org.slf4j.LoggerFactory;
 public abstract class LambdaMiddleware extends Chainable implements Runnable {
     private static final Logger LOG = LoggerFactory.getLogger(LambdaMiddleware.class);
     private final LightLambdaExchange exchange;
-    private static final String DISABLED_MIDDLEWARE_RETURN = "ERR14001";
-    private static final String SUCCESS_MIDDLEWARE_RETURN = "SUC14200";
+    public static final String DISABLED_MIDDLEWARE_RETURN = "ERR14001";
+    public static final String SUCCESS_MIDDLEWARE_RETURN = "SUC14200";
     protected static final ObjectMapper OBJECT_MAPPER = new ObjectMapper().disable(DeserializationFeature.FAIL_ON_UNKNOWN_PROPERTIES);
 
     public LambdaMiddleware(boolean audited, boolean asynchronous, boolean continueOnFailure, ChainLinkCallback middlewareCallback, final LightLambdaExchange exchange) {

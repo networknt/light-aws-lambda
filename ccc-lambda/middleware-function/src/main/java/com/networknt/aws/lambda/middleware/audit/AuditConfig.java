@@ -1,4 +1,4 @@
-package com.networknt.aws.lambda.audit;
+package com.networknt.aws.lambda.middleware.audit;
 
 public class AuditConfig {
     private boolean enabled;

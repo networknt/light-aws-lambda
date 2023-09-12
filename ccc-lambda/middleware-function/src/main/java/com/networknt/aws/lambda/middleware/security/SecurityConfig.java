@@ -28,6 +28,7 @@ public class SecurityConfig {
     // User for test only. should be always be false on official environment.
     boolean enableMockJwt;
 
+    boolean enableRelaxedKeyValidation;
     // For test only, should be always be true on official environment.
     boolean ignoreJwtExpiry;
 
@@ -108,6 +109,10 @@ public class SecurityConfig {
 
     public boolean isBootstrapFromKeyService() {
         return bootstrapFromKeyService;
+    }
+
+    public boolean isEnableRelaxedKeyValidation() {
+        return enableRelaxedKeyValidation;
     }
 
     public List<String> getSkipPathPrefixes() {

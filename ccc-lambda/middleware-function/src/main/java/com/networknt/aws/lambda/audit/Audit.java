@@ -2,10 +2,15 @@ package com.networknt.aws.lambda.audit;
 
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.networknt.aws.lambda.middleware.LightLambdaExchange;
+import com.networknt.aws.lambda.middleware.audit.AuditConfig;
 import com.networknt.config.Config;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
+/**
+ * This has been moved to middleware-audit module. It should be removed soon.
+ */
+@Deprecated
 public class Audit implements Runnable {
 
     private static final ObjectMapper OBJECT_MAPPER = new ObjectMapper();

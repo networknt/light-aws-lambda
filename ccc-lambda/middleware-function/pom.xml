@@ -12,8 +12,8 @@
         <maven.compiler.source>${java.version}</maven.compiler.source>
         <maven.compiler.target>${java.version}</maven.compiler.target>
         <project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
-        <version.light-4j>2.1.26</version.light-4j>
-        <version.http-client>1.0.0</version.http-client>
+        <version.light-4j>2.1.27-SNAPSHOT</version.light-4j>
+        <version.http-client>1.0.1</version.http-client>
         <version.jackson>2.15.2</version.jackson>
         <version.slf4j>2.0.7</version.slf4j>
         <version.encoder>1.2.3</version.encoder>
@@ -73,31 +73,40 @@
             <version>${version.light-4j}</version>
         </dependency>
         <dependency>
+            <groupId>com.networknt</groupId>
+            <artifactId>http-client</artifactId>
+            <version>${version.http-client}</version>
+        </dependency>
+        <dependency>
             <groupId>com.amazonaws</groupId>
             <artifactId>aws-lambda-java-core</artifactId>
             <version>${version.lambda-core}</version>
         </dependency>
+        <!--
         <dependency>
             <groupId>software.amazon.awssdk</groupId>
             <artifactId>secretsmanager</artifactId>
             <version>${version.secretsmanager-aws}</version>
         </dependency>
+        -->
         <dependency>
             <groupId>com.amazonaws</groupId>
             <artifactId>aws-lambda-java-events</artifactId>
             <version>${version.lambda-events}</version>
         </dependency>
-<!--        <dependency>-->
+
+        <!--        <dependency>-->
 <!--            <groupId>com.amazonaws</groupId>-->
 <!--            <artifactId>aws-java-sdk-lambda</artifactId>-->
 <!--            <version>${version.lambda-lambdasdk}</version>-->
 <!--        </dependency>-->
-
         <dependency>
             <groupId>software.amazon.awssdk</groupId>
             <artifactId>lambda</artifactId>
             <version>${version.lambda-awssdk}</version>
+            <scope>provided</scope>
         </dependency>
+
 <!--        <dependency>-->
 <!--            <groupId>com.amazonaws</groupId>-->
 <!--            <artifactId>aws-java-sdk-iam</artifactId>-->

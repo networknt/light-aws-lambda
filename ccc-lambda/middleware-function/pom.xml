@@ -13,6 +13,7 @@
         <maven.compiler.target>${java.version}</maven.compiler.target>
         <project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
         <version.light-4j>2.1.27-SNAPSHOT</version.light-4j>
+        <version.light-4j-other>2.1.26</version.light-4j-other>
         <version.http-client>1.0.1</version.http-client>
         <version.jackson>2.15.2</version.jackson>
         <version.slf4j>2.0.7</version.slf4j>
@@ -35,7 +36,7 @@
         <dependency>
             <groupId>com.networknt</groupId>
             <artifactId>custom-runtime</artifactId>
-            <version>${version.light-4j}</version>
+            <version>${version.light-4j-other}</version>
         </dependency>
         <dependency>
             <groupId>com.networknt</groupId>
@@ -50,7 +51,7 @@
         <dependency>
             <groupId>com.networknt</groupId>
             <artifactId>env-config</artifactId>
-            <version>${version.light-4j}</version>
+            <version>${version.light-4j-other}</version>
         </dependency>
         <dependency>
             <groupId>com.mservicetech</groupId>
@@ -60,7 +61,7 @@
         <dependency>
             <groupId>com.networknt</groupId>
             <artifactId>slf4j-logback</artifactId>
-            <version>${version.light-4j}</version>
+            <version>${version.light-4j-other}</version>
         </dependency>
         <dependency>
             <groupId>com.networknt</groupId>
@@ -70,7 +71,7 @@
         <dependency>
             <groupId>com.networknt</groupId>
             <artifactId>request-handler</artifactId>
-            <version>${version.light-4j}</version>
+            <version>${version.light-4j-other}</version>
         </dependency>
         <dependency>
             <groupId>com.networknt</groupId>
@@ -82,20 +83,22 @@
             <artifactId>aws-lambda-java-core</artifactId>
             <version>${version.lambda-core}</version>
         </dependency>
-        <!--
-        <dependency>
+<!--<dependency>
             <groupId>software.amazon.awssdk</groupId>
             <artifactId>secretsmanager</artifactId>
             <version>${version.secretsmanager-aws}</version>
+        </dependency>-->
+        <dependency>
+            <groupId>com.amazonaws</groupId>
+            <artifactId>aws-java-sdk-dynamodb</artifactId>
+            <version>1.12.556</version>
         </dependency>
-        -->
         <dependency>
             <groupId>com.amazonaws</groupId>
             <artifactId>aws-lambda-java-events</artifactId>
             <version>${version.lambda-events}</version>
         </dependency>
-
-        <!--        <dependency>-->
+<!--        <dependency>-->
 <!--            <groupId>com.amazonaws</groupId>-->
 <!--            <artifactId>aws-java-sdk-lambda</artifactId>-->
 <!--            <version>${version.lambda-lambdasdk}</version>-->
@@ -104,7 +107,6 @@
             <groupId>software.amazon.awssdk</groupId>
             <artifactId>lambda</artifactId>
             <version>${version.lambda-awssdk}</version>
-            <scope>provided</scope>
         </dependency>
 
 <!--        <dependency>-->
@@ -137,7 +139,6 @@
             <artifactId>encoder</artifactId>
             <version>${version.encoder}</version>
         </dependency>
-
         <dependency>
             <groupId>org.junit.jupiter</groupId>
             <artifactId>junit-jupiter-api</artifactId>

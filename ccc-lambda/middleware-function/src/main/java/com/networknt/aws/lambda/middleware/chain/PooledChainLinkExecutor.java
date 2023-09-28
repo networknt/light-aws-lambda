@@ -74,8 +74,16 @@ public class PooledChainLinkExecutor extends ThreadPoolExecutor {
         }
 
         try {
-            var newClazz = middleware.getConstructor(ChainLinkCallback.class, LightLambdaExchange.class).newInstance(this.chainLinkCallback, this.lambdaEventWrapper);
+            var newClazz = middleware.getConstructor(ChainLinkCallback.class, LightLambdaExchange.class)
+                    .newInstance(this.chainLinkCallback, this.lambdaEventWrapper);
+
             newClazz.setChainDirection(this.chainDirection);
+
+            //
+            // TODO - assemble dynamo Db batch command to get all config attributes (instead of many smaller requests)
+            //
+            //newClazz.getAppConfigProfileConfigurations();
+
             this.chain.addChainable(newClazz);
             int linkNumber = this.chain.getChainSize();
             LOG.debug("Created new middleware instance: {}[{}]", middleware.getName(), linkNumber);

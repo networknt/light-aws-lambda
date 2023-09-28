@@ -32,7 +32,6 @@ public class LambdaProxy implements RequestHandler<APIGatewayProxyRequestEvent, 
     private static final Logger LOG = LoggerFactory.getLogger(LambdaProxy.class);
     private static final String CONFIG_NAME = "lambda-proxy";
     private static final LambdaProxyConfig CONFIG = (LambdaProxyConfig) Config.getInstance().getJsonObjectConfig(CONFIG_NAME, LambdaProxyConfig.class);
-
     private static LambdaClient client;
 
     public LambdaProxy() {

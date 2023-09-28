@@ -112,8 +112,10 @@ public class JwtVerifyMiddleware extends LambdaMiddleware {
                     auditInfo.put(Constants.ISSUER_CLAIMS, issuer);
                     Map<String, String> headers = exchange.getRequest().getHeaders();
                     String callerId = headers.get(Constants.CALLER_ID_STRING);
+
                     if (callerId != null)
                         auditInfo.put(Constants.CALLER_ID_STRING, callerId);
+
                     exchange.addRequestAttachment(AUDIT_ATTACHMENT_KEY, auditInfo);
 
                     if (config.isEnableVerifyScope()) {
@@ -122,16 +124,25 @@ public class JwtVerifyMiddleware extends LambdaMiddleware {
 
                         /* get openapi operation */
                         OpenApiOperation openApiOperation = (OpenApiOperation) auditInfo.get(Constants.OPENAPI_OPERATION_STRING);
+
                         // here we assume that the OpenApiMiddleware has been executed before this middleware and the openApiOperation is set in the auditInfo.
                         Operation operation = openApiOperation.getOperation();
+
                         if(operation == null) {
+
                             if(config.isSkipVerifyScopeWithoutSpec()) {
-                                if (LOG.isDebugEnabled()) LOG.debug("JwtVerifyHandler.handleRequest ends without verifying scope due to spec.");
+
+                                if (LOG.isDebugEnabled())
+                                    LOG.debug("JwtVerifyHandler.handleRequest ends without verifying scope due to spec.");
+
                                 return LambdaMiddleware.successMiddlewareStatus();
                             } else {
                                 // this will return an error message to the client.
                             }
-                            if (LOG.isDebugEnabled()) LOG.debug("JwtVerifyHandler.handleRequest ends with an error.");
+
+                            if (LOG.isDebugEnabled())
+                                LOG.debug("JwtVerifyHandler.handleRequest ends with an error.");
+
                             return new Status(STATUS_OPENAPI_OPERATION_MISSED);
                         }
 
@@ -150,6 +161,7 @@ public class JwtVerifyMiddleware extends LambdaMiddleware {
                             return status;
                         }
                     }
+
                     // pass through claims through request headers after verification is done.
                     if(config.getPassThroughClaims() != null && config.getPassThroughClaims().size() > 0) {
                         for(Map.Entry<String, String> entry: config.getPassThroughClaims().entrySet()) {
@@ -160,23 +172,33 @@ public class JwtVerifyMiddleware extends LambdaMiddleware {
                             headers.put(header, value.toString());
                         }
                     }
+
                     if (LOG.isTraceEnabled())
                         LOG.trace("complete JWT verification for request path = " + exchange.getRequest().getPath());
 
                     if (LOG.isDebugEnabled())
                         LOG.debug("JwtVerifyHandler.handleRequest ends.");
+
                     return LambdaMiddleware.successMiddlewareStatus();
+
                 } catch (InvalidJwtException e) {
+
                     // only log it and unauthorized is returned.
                     LOG.error("InvalidJwtException: ", e);
+
                     if (LOG.isDebugEnabled())
                         LOG.debug("JwtVerifyHandler.handleRequest ends with an error.");
+
                     return new Status(STATUS_INVALID_AUTH_TOKEN);
+
                 } catch (ExpiredTokenException e) {
                     LOG.error("ExpiredTokenException", e);
+
                     if (LOG.isDebugEnabled())
                         LOG.debug("JwtVerifyHandler.handleRequest ends with an error.");
+
                     return new Status(STATUS_AUTH_TOKEN_EXPIRED);
+
                 } catch (MalformedClaimException e) {
                         LOG.error("MalformedClaimException", e);
                         if (LOG.isDebugEnabled())

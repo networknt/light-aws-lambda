@@ -4,6 +4,7 @@ import java.util.List;
 import java.util.Map;
 
 public class SecurityConfig {
+
     public static final String CONFIG_NAME = "lambda-security";
 
     public static final String CLOCK_SKEW_IN_SECONDS = "clockSkewInSeconds";

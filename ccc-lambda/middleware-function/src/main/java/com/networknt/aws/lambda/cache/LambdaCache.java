@@ -3,8 +3,8 @@ package com.networknt.aws.lambda.cache;
 import com.amazonaws.http.SdkHttpMetadata;
 import com.amazonaws.services.dynamodbv2.AmazonDynamoDB;
 import com.amazonaws.services.dynamodbv2.AmazonDynamoDBClientBuilder;
-import com.amazonaws.services.dynamodbv2.model.AttributeValue;
-import com.amazonaws.services.dynamodbv2.model.GetItemRequest;
+import com.amazonaws.services.dynamodbv2.document.Table;
+import com.amazonaws.services.dynamodbv2.model.*;
 import com.fasterxml.jackson.core.JsonProcessingException;
 import com.networknt.aws.lambda.utility.LambdaEnvVariables;
 import org.jose4j.jwk.JsonWebKey;
@@ -12,11 +12,14 @@ import org.jose4j.jwt.JwtClaims;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
+import java.util.ArrayList;
+import java.util.List;
 import java.util.Map;
 
 public class LambdaCache {
     private static final Logger LOG = LoggerFactory.getLogger(LambdaCache.class);
     private static LambdaCache _internal;
+    private static final int TABLE_LIST_LIMIT = 400;
     public static LambdaCache getInstance() {
 
         if (_internal == null) {
@@ -237,6 +240,54 @@ public class LambdaCache {
         else return null;
     }
 
+    private Map<String, AttributeValue> getBatchFromCache(String dynamoDbTableName, List<String> attributeKeys) {
+         var projectionExpression = new StringBuilder();
+         int x = 0;
+         for (var attributeKey : attributeKeys) {
+             projectionExpression.append(attributeKey);
+             if (x != attributeKeys.size()) {
+                 projectionExpression.append(", ");
+             }
+             x++;
+         }
+         return this.getFromCache(dynamoDbTableName, projectionExpression.toString());
+    }
+
+
+    /**
+     * Creates dynamo db table. We check if the table exists before creating one.
+     *
+     * @param dynamoDbTableName - name of the table
+     * @return - return true when a table was created. Returns false when there is a failure or the table already exists.
+     */
+    private boolean createCacheTable(String dynamoDbTableName) {
+
+        final String dynamoDbTableKey = "Id";
+        final String dynamoDbTableKeyType = "N";
+
+        if (this.doesTableExist(dynamoDbTableName)) {
+            LOG.debug("Table already exists... returning...");
+            return false;
+        }
+
+        var attributeDefinitions = new ArrayList<AttributeDefinition>();
+        attributeDefinitions.add(new AttributeDefinition().withAttributeName(dynamoDbTableKey).withAttributeType(dynamoDbTableKeyType));
+
+        var keySchema = new ArrayList<KeySchemaElement>();
+        keySchema.add(new KeySchemaElement().withAttributeName(dynamoDbTableKey).withKeyType(KeyType.HASH));
+
+        var createTableRequest = new CreateTableRequest()
+                .withTableName(dynamoDbTableName)
+                .withKeySchema(keySchema)
+                .withAttributeDefinitions(attributeDefinitions)
+                .withProvisionedThroughput(new ProvisionedThroughput()
+                        .withReadCapacityUnits(5L)
+                        .withWriteCapacityUnits(6L));
+
+        var res = this.amazonDynamoDB.createTable(createTableRequest);
+        return this.isSuccessResponse(res.getSdkHttpMetadata());
+    }
+
     /**
      * Checks to see if response code is withing range of 200 - 299.
      *
@@ -246,6 +297,19 @@ public class LambdaCache {
     private boolean isSuccessResponse(SdkHttpMetadata res) {
         return res.getHttpStatusCode() >= 200 && res.getHttpStatusCode() < 300;
     }
+
+    /**
+     * Checks to see if the table exists.
+     *
+     * @param dynamoDbTableName - name of the table
+     * @return - returns true if the table exists
+     */
+    private boolean doesTableExist(String dynamoDbTableName) {
+        var tables = this.amazonDynamoDB.listTables(TABLE_LIST_LIMIT);
+        return tables.getTableNames().contains(dynamoDbTableName);
+    }
+
+
 
 
 }

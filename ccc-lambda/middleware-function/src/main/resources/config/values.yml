@@ -31,7 +31,7 @@ pooled-chain-executor.maxChainLength: 20
 # --------< Lambda Security Config >---------
 lambda-security.ignoreJwtExpiry: true
 lambda-security.logJwtToken: true
-lambda-security.enableJwtCache: false
+lambda-security.enableJwtCache: true
 # -------------------------------------------
 
 # ----------< Lambda Header Config >---------

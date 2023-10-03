@@ -27,7 +27,7 @@ import java.util.function.BiFunction;
 
 public class JwtVerifier extends TokenVerifier {
     private static final Logger logger = LoggerFactory.getLogger(JwtVerifier.class);
-    //private static Map<String, JwtClaims> cache;
+    private static Map<String, JwtClaims> cache;
     private static Map<String, X509Certificate> certMap;
     private static List<JsonWebKey> jwkList;
     private static List<String> fingerPrints;
@@ -57,15 +57,15 @@ public class JwtVerifier extends TokenVerifier {
         logger.debug("jwtConfig = " + jwtConfig);
         this.secondsOfAllowedClockSkew = (Integer)jwtConfig.get(JWT_CLOCK_SKEW_IN_SECONDS);
 
-//        if(Boolean.TRUE.equals(config.isEnableJwtCache())) {
-//            cache = new LinkedHashMap<>() {
-//                @Override
-//                protected boolean removeEldestEntry(final Map.Entry eldest) {
-//                    return size() > 1000;
-//                }
-//            };
-//            logger.debug("jwt cache is enabled.");
-//        }
+        if(Boolean.TRUE.equals(config.isEnableJwtCache())) {
+            cache = new LinkedHashMap<>() {
+                @Override
+                protected boolean removeEldestEntry(final Map.Entry eldest) {
+                    return size() > 1000;
+                }
+            };
+            logger.debug("jwt cache is enabled.");
+        }
         switch ((String) jwtConfig.getOrDefault(JWT_KEY_RESOLVER, JWT_KEY_RESOLVER_X509CERT)) {
             case JWT_KEY_RESOLVER_JWKS:
                 logger.debug("JWK resolver is enabled");
@@ -95,6 +95,8 @@ public class JwtVerifier extends TokenVerifier {
                 logger.info("{} not found or not recognized in jwt config. Use {} as default {}",
                         JWT_KEY_RESOLVER, JWT_KEY_RESOLVER_X509CERT, JWT_KEY_RESOLVER);
         }
+
+        jwksMap = new HashMap<>();
 
     }
 
@@ -161,17 +163,17 @@ public class JwtVerifier extends TokenVerifier {
         JwtClaims claims;
         if (Boolean.TRUE.equals(config.isEnableJwtCache())) {
 
-//            if(pathPrefix != null) {
-//                claims = cache.get(pathPrefix + ":" + jwt);
-//            } else {
-//                claims = cache.get(jwt);
-//            }
-
-            if (pathPrefix != null) {
-                claims = LambdaCache.getInstance().getJwtFromCache(pathPrefix + ":" + "TABLE_NAME", jwt).getJwtClaims();
+            if(pathPrefix != null) {
+                claims = cache.get(pathPrefix + ":" + jwt);
             } else {
-                claims = LambdaCache.getInstance().getJwtFromCache("TABLE_NAME", jwt).getJwtClaims();
+                claims = cache.get(jwt);
             }
+
+//            if (pathPrefix != null) {
+//                claims = LambdaCache.getInstance().getJwtFromCache(pathPrefix + ":" + "TABLE_NAME", jwt).getJwtClaims();
+//            } else {
+//                claims = LambdaCache.getInstance().getJwtFromCache("TABLE_NAME", jwt).getJwtClaims();
+//            }
 
             if (claims != null) {
                 checkExpiry(ignoreExpiry, claims, secondsOfAllowedClockSkew, null);
@@ -221,21 +223,21 @@ public class JwtVerifier extends TokenVerifier {
         jwtContext = consumer.process(jwt);
         claims = jwtContext.getJwtClaims();
         if (Boolean.TRUE.equals(config.isEnableJwtCache())) {
-//            if(pathPrefix != null) {
-//                cache.put(pathPrefix + ":" + jwt, claims);
-//            } else {
-//                cache.put(jwt, claims);
-//            }
-//
-//            if(cache.size() > config.getJwtCacheFullSize()) {
-//                logger.warn("JWT cache exceeds the size limit " + config.getJwtCacheFullSize());
-//            }
-
-            if (pathPrefix != null) {
-                LambdaCache.getInstance().pushJwtToCache(pathPrefix + ":" + "TABLE_NAME", jwt, claims);
+            if(pathPrefix != null) {
+                cache.put(pathPrefix + ":" + jwt, claims);
             } else {
-                LambdaCache.getInstance().pushJwtToCache("TABLE_NAME", jwt, claims);
+                cache.put(jwt, claims);
             }
+
+            if(cache.size() > config.getJwtCacheFullSize()) {
+                logger.warn("JWT cache exceeds the size limit " + config.getJwtCacheFullSize());
+            }
+
+//            if (pathPrefix != null) {
+//                LambdaCache.getInstance().pushJwtToCache(pathPrefix + ":" + "TABLE_NAME", jwt, claims);
+//            } else {
+//                LambdaCache.getInstance().pushJwtToCache("TABLE_NAME", jwt, claims);
+//            }
         }
         return claims;
     }

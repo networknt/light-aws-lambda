@@ -3,7 +3,6 @@ package com.networknt.aws.lambda.cache;
 import com.amazonaws.http.SdkHttpMetadata;
 import com.amazonaws.services.dynamodbv2.AmazonDynamoDB;
 import com.amazonaws.services.dynamodbv2.AmazonDynamoDBClientBuilder;
-import com.amazonaws.services.dynamodbv2.document.Table;
 import com.amazonaws.services.dynamodbv2.model.*;
 import com.fasterxml.jackson.core.JsonProcessingException;
 import com.networknt.aws.lambda.utility.LambdaEnvVariables;

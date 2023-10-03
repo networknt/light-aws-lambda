@@ -24,3 +24,11 @@ logClientUserScope: ${lambda-security.logClientUserScope:false}
 # Enable JWT token cache to speed up verification. This will only verify expired time
 # and skip the signature verification as it takes more CPU power and long time.
 enableJwtCache: ${lambda-security.enableJwtCache:true}
+
+jwt:
+  certificate: ${security.certificate:100=primary.crt&101=secondary.crt}
+  #    '100': primary.crt
+  #    '101': secondary.crt
+  clockSkewInSeconds: ${security.clockSkewInSeconds:60}
+  # Key distribution server standard: JsonWebKeySet for other OAuth 2.0 provider| X509Certificate for light-oauth2
+  keyResolver: ${security.keyResolver:JsonWebKeySet}

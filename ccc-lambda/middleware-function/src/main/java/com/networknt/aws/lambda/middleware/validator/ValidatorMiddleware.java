@@ -21,7 +21,7 @@ public class ValidatorMiddleware extends LambdaMiddleware {
 
     private static final Logger LOG = LoggerFactory.getLogger(ValidatorMiddleware.class);
     private static final String CONFIG_NAME = "lambda-validator";
-    private static final String OPENAPI_NAME = "openapi.yaml";
+    private static final String OPENAPI_NAME = "lambda-openapi.yaml";
     private static final String CONTENT_TYPE_MISMATCH = "ERR10015";
     private static OpenApiValidator OPENAPI_VALIDATOR;
 
@@ -73,7 +73,7 @@ public class ValidatorMiddleware extends LambdaMiddleware {
     private static OpenApiValidator getValidatorInstance() {
         if (OPENAPI_VALIDATOR == null) {
             // TODO - maybe load other than resources within the jar.
-            InputStream in  = ValidatorMiddleware.class.getClassLoader().getResourceAsStream(OPENAPI_NAME);
+            InputStream in  = Config.getInstance().getInputStreamFromFile(OPENAPI_NAME);
 
             if (in != null) {
                 OPENAPI_VALIDATOR = new OpenApiValidator(in);

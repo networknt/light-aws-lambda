@@ -7,6 +7,7 @@ lambda-proxy.functions:
   /v1/pets@post: arn:aws:lambda:ca-central-1:442513687360:function:eadp-test-destination
 
 lambda-proxy.requestChain:
+  - "com.networknt.aws.lambda.middleware.specification.OpenApiMiddleware"
   - "com.networknt.aws.lambda.middleware.security.JwtVerifyMiddleware"
   - "com.networknt.aws.lambda.middleware.validator.ValidatorMiddleware"
   - "com.networknt.aws.lambda.middleware.header.HeaderMiddleware"
@@ -55,5 +56,9 @@ lambda-header.requestHeader:
       value: ""
 # -------------------------------------------
 
+client.tokenKeyServerUrl: https://sunlifeapi.oktapreview.com
+client.tokenKeyUri: /oauth2/aus66u5cybTrCsbZs1d6/v1/keys
+client.tokenKeyEnableHttp2: false
+client.tokenKeyAudience: dev.canada.referenceapi.sunlifeapis.oktapreview.com
 
 

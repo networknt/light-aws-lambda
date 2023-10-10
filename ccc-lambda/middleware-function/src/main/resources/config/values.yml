@@ -56,9 +56,9 @@ lambda-header.requestHeader:
       value: ""
 # -------------------------------------------
 
-client.tokenKeyServerUrl: https://sunlifeapi.oktapreview.com
+client.tokenKeyServerUrl: https://networknt.oktapreview.com
 client.tokenKeyUri: /oauth2/aus66u5cybTrCsbZs1d6/v1/keys
 client.tokenKeyEnableHttp2: false
-client.tokenKeyAudience: dev.canada.referenceapi.sunlifeapis.oktapreview.com
+client.tokenKeyAudience: dev.canada.referenceapi.networknt.oktapreview.com
 
 

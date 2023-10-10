@@ -14,6 +14,7 @@ public class LambdaProxyConfig {
     private String metricsName;
     private List<String> requestChain;
     private List<String> responseChain;
+    private boolean enableDynamoDbCache;
 
     public List<String> getRequestChain() {
         return requestChain;
@@ -53,5 +54,9 @@ public class LambdaProxyConfig {
 
     public String getEnv() {
         return env;
+    }
+
+    public boolean isEnableDynamoDbCache() {
+        return enableDynamoDbCache;
     }
 }

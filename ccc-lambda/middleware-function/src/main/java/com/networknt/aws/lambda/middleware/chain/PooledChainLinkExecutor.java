@@ -82,7 +82,7 @@ public class PooledChainLinkExecutor extends ThreadPoolExecutor {
             //
             // TODO - assemble dynamo Db batch command to get all config attributes (instead of many smaller requests)
             //
-            //newClazz.getAppConfigProfileConfigurations();
+            newClazz.getCachedConfigurations();
 
             this.chain.addChainable(newClazz);
             int linkNumber = this.chain.getChainSize();

@@ -22,7 +22,7 @@ public abstract class LambdaMiddleware extends Chainable implements Runnable {
 
     protected abstract Status executeMiddleware(final LightLambdaExchange exchange) throws InterruptedException;
 
-    public abstract void getAppConfigProfileConfigurations(String applicationId, String env);
+    public abstract void getCachedConfigurations();
 
     @Override
     public void run() {

@@ -49,7 +49,7 @@ public class Chain {
         return this.chain.size();
     }
 
-    public void setupGroupedChain() {
+    protected void setupGroupedChain() {
 
         if (this.isFinalized)
             return;

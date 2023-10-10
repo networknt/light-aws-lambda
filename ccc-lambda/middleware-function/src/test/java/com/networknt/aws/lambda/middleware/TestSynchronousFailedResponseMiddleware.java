@@ -18,9 +18,9 @@ public class TestSynchronousFailedResponseMiddleware extends LambdaMiddleware {
         return new Status("ERR14004");
     }
 
+
     @Override
-    public void getAppConfigProfileConfigurations(String applicationId, String env) {
+    public void getCachedConfigurations() {
 
     }
-
 }

@@ -1,8 +1,13 @@
 package com.networknt.aws.lambda.middleware.header;
 
+import com.networknt.aws.lambda.cache.CachedConfig;
+import com.networknt.aws.lambda.cache.LambdaCache;
 import com.networknt.aws.lambda.middleware.LambdaMiddleware;
 import com.networknt.aws.lambda.middleware.chain.ChainLinkCallback;
 import com.networknt.aws.lambda.middleware.LightLambdaExchange;
+import com.networknt.aws.lambda.middleware.validator.ValidatorConfig;
+import com.networknt.aws.lambda.middleware.validator.ValidatorMiddleware;
+import com.networknt.aws.lambda.proxy.LambdaProxy;
 import com.networknt.config.Config;
 import com.networknt.status.Status;
 import org.slf4j.Logger;
@@ -16,7 +21,7 @@ public class HeaderMiddleware extends LambdaMiddleware {
     public static final String CONFIG_NAME = "lambda-header";
     private static final String UNKNOWN_HEADER_OPERATION = "ERR14004";
     private static final String HEADER_MISSING_FOR_OPERATION = "ERR14005";
-    private static final HeaderConfig CONFIG = (HeaderConfig) Config.getInstance().getJsonObjectConfig(CONFIG_NAME, HeaderConfig.class);
+    private static HeaderConfig CONFIG = (HeaderConfig) Config.getInstance().getJsonObjectConfig(CONFIG_NAME, HeaderConfig.class);
     private static final Logger LOG = LoggerFactory.getLogger(HeaderMiddleware.class);
 
     public HeaderMiddleware(ChainLinkCallback middlewareCallback, final LightLambdaExchange eventWrapper) {
@@ -42,9 +47,6 @@ public class HeaderMiddleware extends LambdaMiddleware {
         }
     }
 
-    @Override
-    public void getAppConfigProfileConfigurations(String applicationId, String env) {
-    }
 
     private Status handleRequestHeaders(LightLambdaExchange exchange) {
         var headers = exchange.getRequest().getHeaders();
@@ -126,5 +128,10 @@ public class HeaderMiddleware extends LambdaMiddleware {
         }
 
         return LambdaMiddleware.successMiddlewareStatus();
+    }
+
+
+    @Override
+    public void getCachedConfigurations() {
     }
 }

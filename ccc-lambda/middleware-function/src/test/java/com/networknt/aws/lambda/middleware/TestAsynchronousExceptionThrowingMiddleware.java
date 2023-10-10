@@ -33,9 +33,9 @@ public class TestAsynchronousExceptionThrowingMiddleware extends LambdaMiddlewar
         throw new RuntimeException("I am throwing an exception asynchronously");
     }
 
+
     @Override
-    public void getAppConfigProfileConfigurations(String applicationId, String env) {
+    public void getCachedConfigurations() {
 
     }
-
 }

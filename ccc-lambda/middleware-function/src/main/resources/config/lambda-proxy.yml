@@ -7,3 +7,4 @@ metricsName: ${lambda-proxy.metricsName:}
 lambdaAppId: ${lambda-proxy.lambdaAppId:}
 requestChain: ${lambda-proxy.requestChain:}
 responseChain: ${lambda-proxy.responseChain:}
+enableDynamoDbCache: ${lambda-proxy.enableDynamoDbCache:false}

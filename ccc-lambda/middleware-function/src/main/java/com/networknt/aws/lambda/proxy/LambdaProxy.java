@@ -5,7 +5,9 @@ import com.amazonaws.services.lambda.runtime.Context;
 import com.amazonaws.services.lambda.runtime.RequestHandler;
 import com.amazonaws.services.lambda.runtime.events.APIGatewayProxyRequestEvent;
 import com.amazonaws.services.lambda.runtime.events.APIGatewayProxyResponseEvent;
+import com.networknt.aws.lambda.cache.LambdaCache;
 import com.networknt.aws.lambda.middleware.LightLambdaExchange;
+import com.networknt.aws.lambda.utility.LambdaEnvVariables;
 import com.networknt.config.Config;
 import com.networknt.config.JsonMapper;
 import com.networknt.utility.StringUtils;
@@ -33,6 +35,7 @@ public class LambdaProxy implements RequestHandler<APIGatewayProxyRequestEvent, 
     private static final String CONFIG_NAME = "lambda-proxy";
     private static final LambdaProxyConfig CONFIG = (LambdaProxyConfig) Config.getInstance().getJsonObjectConfig(CONFIG_NAME, LambdaProxyConfig.class);
     private static LambdaClient client;
+    private static String dynamoDbTableName;
 
     public LambdaProxy() {
         var builder = LambdaClient.builder().region(Region.of(CONFIG.getRegion()));
@@ -47,6 +50,26 @@ public class LambdaProxy implements RequestHandler<APIGatewayProxyRequestEvent, 
     public APIGatewayProxyResponseEvent handleRequest(final APIGatewayProxyRequestEvent apiGatewayProxyRequestEvent, final Context context) {
         LOG.debug("Lambda CCC --start");
 
+        // TODO - remove this. This is here just so I can test table creation...
+        if (System.getenv(LambdaEnvVariables.CLEAR_AWS_DYNAMO_DB_TABLES).equals("true")) {
+            try {
+                LambdaCache.getInstance().deleteTable(getLambdaProxyCacheDynamoDbTableName());
+            } catch (InterruptedException e) {
+                throw new RuntimeException("Failed to delete table: " + getLambdaProxyCacheDynamoDbTableName(), e);
+            }
+        }
+
+        if (CONFIG.isEnableDynamoDbCache() && !LambdaCache.getInstance().doesTableExist(getLambdaProxyCacheDynamoDbTableName())) {
+            LOG.debug("Creating new table '{}'", getLambdaProxyCacheDynamoDbTableName());
+            try {
+                LambdaCache.getInstance().initCacheTable();
+            } catch (JsonProcessingException e) {
+                throw new RuntimeException(e);
+            }
+        }
+
+
+
         final var exchange = new LightLambdaExchange(context);
         exchange.setRequest(apiGatewayProxyRequestEvent);
 
@@ -60,6 +83,7 @@ public class LambdaProxy implements RequestHandler<APIGatewayProxyRequestEvent, 
         LOG.debug("exchange state: {}", exchange);
 
         if (!exchange.hasFailedState()) {
+
             /* invoke lambda function */
             var path = exchange.getRequest().getPath();
             var method = exchange.getRequest().getHttpMethod().toLowerCase();
@@ -123,5 +147,12 @@ public class LambdaProxy implements RequestHandler<APIGatewayProxyRequestEvent, 
             LOG.error("LambdaException", e);
         }
         return response;
+    }
+
+    public static String getLambdaProxyCacheDynamoDbTableName() {
+        if (dynamoDbTableName == null) {
+            dynamoDbTableName = LambdaCache.getDynamoDbTableName(CONFIG.getLambdaAppId());
+        }
+        return dynamoDbTableName;
     }
 }

@@ -1,8 +1,12 @@
 package com.networknt.aws.lambda.middleware.correlation;
 
+import com.networknt.aws.lambda.cache.CachedConfig;
+import com.networknt.aws.lambda.cache.LambdaCache;
 import com.networknt.aws.lambda.middleware.LambdaMiddleware;
 import com.networknt.aws.lambda.middleware.chain.ChainLinkCallback;
 import com.networknt.aws.lambda.middleware.LightLambdaExchange;
+import com.networknt.aws.lambda.middleware.header.HeaderConfig;
+import com.networknt.aws.lambda.proxy.LambdaProxy;
 import com.networknt.aws.lambda.utility.HeaderKey;
 import com.networknt.aws.lambda.utility.LoggerKey;
 import com.networknt.config.Config;
@@ -60,7 +64,7 @@ public class CorrelationMiddleware extends LambdaMiddleware {
     }
 
     @Override
-    public void getAppConfigProfileConfigurations(String applicationId, String env) {
+    public void getCachedConfigurations() {
     }
 
     private String getUUID() {

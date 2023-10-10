@@ -66,7 +66,7 @@ public class RequestBodyTransformerMiddleware extends LambdaMiddleware {
     }
 
     @Override
-    public void getAppConfigProfileConfigurations(String applicationId, String env) {
+    public void getCachedConfigurations() {
     }
 
 }

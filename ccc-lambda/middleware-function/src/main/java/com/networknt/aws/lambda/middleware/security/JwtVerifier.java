@@ -55,16 +55,16 @@ public class JwtVerifier extends TokenVerifier {
         this.jwtConfig = config.getJwt();
         logger.debug("jwtConfig = " + jwtConfig);
         this.secondsOfAllowedClockSkew = (Integer)jwtConfig.get(JWT_CLOCK_SKEW_IN_SECONDS);
-//
-//        if(Boolean.TRUE.equals(config.isEnableJwtCache())) {
-//            cache = new LinkedHashMap<>() {
-//                @Override
-//                protected boolean removeEldestEntry(final Map.Entry eldest) {
-//                    return size() > 1000;
-//                }
-//            };
-//            logger.debug("jwt cache is enabled.");
-//        }
+
+        if(Boolean.TRUE.equals(config.isEnableJwtCache())) {
+            cache = new LinkedHashMap<>() {
+                @Override
+                protected boolean removeEldestEntry(final Map.Entry eldest) {
+                    return size() > 1000;
+                }
+            };
+            logger.debug("jwt cache is enabled.");
+        }
 
         //jwksMap = getJsonWebKeyMap();
 
@@ -293,6 +293,7 @@ public class JwtVerifier extends TokenVerifier {
                     throw new RuntimeException("cannot get JWK from OAuth server");
                 }
 
+                logger.debug("setting jwk list: {}", jwkList);
                 LambdaCache.getInstance().setJwkList(LambdaProxy.CONFIG.getLambdaAppId(), jwkList);
 //                for (JsonWebKey jwk : jwkList) {
 //                    jwksMap.put(jwk.getKeyId(), jwkList);
@@ -377,6 +378,7 @@ public class JwtVerifier extends TokenVerifier {
     private VerificationKeyResolver getKeyResolver(String kid, boolean isToken) {
         // jwk is always used here.
         //List<JsonWebKey> jwkList = jwksMap.get(kid);
+        logger.debug("getKeyResolver: kid --> {}", kid);
         List<JsonWebKey> jwkList = LambdaCache.getInstance().getJwkList(LambdaProxy.CONFIG.getLambdaAppId());
         if (jwkList == null) {
             jwkList = getJsonWebKeySetForToken(kid);
@@ -390,6 +392,9 @@ public class JwtVerifier extends TokenVerifier {
     }
 
     private void cacheJwkList(List<JsonWebKey> jwkList, String serviceId) {
+
+        logger.debug("cacheJwkList: {}", jwkList);
+
         LambdaCache.getInstance().setJwkList(LambdaProxy.CONFIG.getLambdaAppId(), jwkList);
 //        for (JsonWebKey jwk : jwkList) {
 //            if(serviceId != null) {

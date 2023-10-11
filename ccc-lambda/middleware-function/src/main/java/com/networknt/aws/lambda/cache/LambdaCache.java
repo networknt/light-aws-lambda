@@ -76,10 +76,12 @@ public class LambdaCache {
 
         if (item.get(listAttributeKey) != null) {
             ValueMap map = new ValueMap().withList(":attrList", listAttributeValues);
+
             UpdateItemSpec updateItemSpec = new UpdateItemSpec()
                     .withPrimaryKey("Id", applicationId)
                     .withUpdateExpression("set "+ listAttributeKey + " = list_append(imageData, :attrList )")
                     .withValueMap(map);
+
             UpdateItemOutcome result = table.updateItem(updateItemSpec);
 
             LOG.debug("RESULT: {}", result.toString());
@@ -104,8 +106,14 @@ public class LambdaCache {
 
     public List<JsonWebKey> getJwkList(String applicationId) {
         Table table = dynamoDB.getTable(DYNAMO_DB_TABLE_NAME);
+
+        LOG.debug("Getting entry by Id: {}", applicationId);
+
         var entry = table.getItem("Id", applicationId);
+
+        LOG.debug("Getting list JWK");
         var attr = entry.getList("JWK");
+
         List<JsonWebKey> res = new ArrayList<>();
         for (var jwk : attr) {
 
@@ -153,7 +161,7 @@ public class LambdaCache {
         var attributeDefinitions = new ArrayList<AttributeDefinition>();
         attributeDefinitions.add(new AttributeDefinition()
                 .withAttributeName("Id")
-                .withAttributeType("N")
+                .withAttributeType("S")
         );
 
         var keySchema = new ArrayList<KeySchemaElement>();

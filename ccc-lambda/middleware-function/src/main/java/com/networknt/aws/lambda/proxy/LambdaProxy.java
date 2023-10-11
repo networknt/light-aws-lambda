@@ -33,7 +33,7 @@ public class LambdaProxy implements RequestHandler<APIGatewayProxyRequestEvent, 
 
     private static final Logger LOG = LoggerFactory.getLogger(LambdaProxy.class);
     private static final String CONFIG_NAME = "lambda-proxy";
-    private static final LambdaProxyConfig CONFIG = (LambdaProxyConfig) Config.getInstance().getJsonObjectConfig(CONFIG_NAME, LambdaProxyConfig.class);
+    public static final LambdaProxyConfig CONFIG = (LambdaProxyConfig) Config.getInstance().getJsonObjectConfig(CONFIG_NAME, LambdaProxyConfig.class);
     private static LambdaClient client;
     private static String dynamoDbTableName;
 
@@ -53,16 +53,18 @@ public class LambdaProxy implements RequestHandler<APIGatewayProxyRequestEvent, 
         // TODO - remove this. This is here just so I can test table creation...
         if (System.getenv(LambdaEnvVariables.CLEAR_AWS_DYNAMO_DB_TABLES).equals("true")) {
             try {
-                LambdaCache.getInstance().deleteTable(getLambdaProxyCacheDynamoDbTableName());
+                LambdaCache.getInstance().deleteTable();
             } catch (InterruptedException e) {
-                throw new RuntimeException("Failed to delete table: " + getLambdaProxyCacheDynamoDbTableName(), e);
+                throw new RuntimeException("Failed to delete table: ", e);
             }
         }
 
-        if (CONFIG.isEnableDynamoDbCache() && !LambdaCache.getInstance().doesTableExist(getLambdaProxyCacheDynamoDbTableName())) {
-            LOG.debug("Creating new table '{}'", getLambdaProxyCacheDynamoDbTableName());
+        if (CONFIG.isEnableDynamoDbCache() && !LambdaCache.getInstance().doesTableExist()) {
+            LOG.debug("Creating new table...");
             try {
-                LambdaCache.getInstance().initCacheTable();
+                if (!LambdaCache.getInstance().initCacheTable()) {
+                    throw new RuntimeException("Failed to init table");
+                }
             } catch (JsonProcessingException e) {
                 throw new RuntimeException(e);
             }
@@ -147,12 +149,5 @@ public class LambdaProxy implements RequestHandler<APIGatewayProxyRequestEvent, 
             LOG.error("LambdaException", e);
         }
         return response;
-    }
-
-    public static String getLambdaProxyCacheDynamoDbTableName() {
-        if (dynamoDbTableName == null) {
-            dynamoDbTableName = LambdaCache.getDynamoDbTableName(CONFIG.getLambdaAppId());
-        }
-        return dynamoDbTableName;
     }
 }

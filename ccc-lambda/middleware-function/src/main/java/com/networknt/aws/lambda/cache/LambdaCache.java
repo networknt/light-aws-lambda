@@ -2,23 +2,28 @@ package com.networknt.aws.lambda.cache;
 
 import com.amazonaws.http.SdkHttpMetadata;
 import com.amazonaws.services.dynamodbv2.AmazonDynamoDB;
+import com.amazonaws.services.dynamodbv2.AmazonDynamoDBClient;
 import com.amazonaws.services.dynamodbv2.AmazonDynamoDBClientBuilder;
-import com.amazonaws.services.dynamodbv2.document.DynamoDB;
+import com.amazonaws.services.dynamodbv2.document.*;
+import com.amazonaws.services.dynamodbv2.document.spec.GetItemSpec;
+import com.amazonaws.services.dynamodbv2.document.spec.UpdateItemSpec;
+import com.amazonaws.services.dynamodbv2.document.utils.ValueMap;
 import com.amazonaws.services.dynamodbv2.model.*;
 import com.fasterxml.jackson.core.JsonProcessingException;
 import com.networknt.aws.lambda.utility.LambdaEnvVariables;
+import com.networknt.config.Config;
 import org.jose4j.jwk.JsonWebKey;
 import org.jose4j.jwt.JwtClaims;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-import java.util.ArrayList;
-import java.util.List;
-import java.util.Map;
+import java.util.*;
 
 public class LambdaCache {
     private static final Logger LOG = LoggerFactory.getLogger(LambdaCache.class);
     private static final String DYNAMO_DB_TABLE_NAME = "LAMBDA_NATIVE_PROXY";
+    private static final String JWK_KEY = "JWK";
+    private static final String JWT_KEY = "JWT";
     private static LambdaCache _internal;
     private static final int TABLE_LIST_LIMIT = 100;
     public static LambdaCache getInstance() {
@@ -43,238 +48,91 @@ public class LambdaCache {
         this.dynamoDB = new DynamoDB(dynamoClient);
     }
 
-    /**
-     * Formats the applicationId into a dynamoDb table name.
-     *
-     * @param applicationId - app id.
-     * @return - returns new string in dynamo db table name format.
-     */
-    public static String getDynamoDbTableName(String applicationId) {
-
-        LOG.debug("Getting table name from appId '{}'", applicationId);
-
-        var dynamoDbTableName = applicationId;
-        dynamoDbTableName = dynamoDbTableName.replace("-", "_");
-        dynamoDbTableName = dynamoDbTableName.toUpperCase();
-
-        LOG.debug("DynamoDbTable name is '{}'", dynamoDbTableName);
-
-        return dynamoDbTableName;
-    }
-
-    /**
-     * Gets a cached JWK from dynamoDb
-     *
-     * @param dynamoDbTableName - table name.
-     * @param jwkKey            - key the jwk would be found under.
-     * @return - returns cached jwk and null if it was not found.
-     */
-    public CachedJwk getJwkFromCache(String dynamoDbTableName, String jwkKey) {
-        var response = this.getFromCache(jwkKey);
-
-        if (response == null || response.size() > 1) {
-            LOG.error("Response is null or contains more than one entry in attribute: {}", response);
-            throw new RuntimeException("Response is null or contains more than one entry in attribute: " + response);
-        }
-
-        if (response.size() == 0) {
-            return null;
-        }
-
-        for (var entry : response.entrySet()) {
-            var serialized = entry.getValue().getS();
-
-            try {
-                return new CachedJwk(jwkKey, serialized);
-            } catch (JsonProcessingException e) {
-                throw new RuntimeException(e);
-            }
-        }
-
-        return null;
-    }
-
-    /**
-     * Pushes Jwk to dynamo db cache.
-     *
-     * @param dynamoDbTableName - table name.
-     * @param jwkKey            - attribute key.
-     * @param jwk               - attribute value.
-     * @return - returns true if successful.
-     */
-    public boolean pushJwkToCache(String dynamoDbTableName, String jwkKey, JsonWebKey jwk) {
-        CachedJwk cachedJwk;
-
-        try {
-            cachedJwk = new CachedJwk(jwkKey, jwk);
-        } catch (JsonProcessingException e) {
-            throw new RuntimeException(e);
-        }
-
-        return this.pushToCache(cachedJwk.getDynamoDbPayload());
-    }
-
-    /**
-     * Gets cached middleware config from dynamo db.
-     *
-     * @param configKey         - key the cached config is found under.
-     * @param <T>               - config class.
-     * @return - returns cached config or null if nothing was found.
-     */
-    public <T> CachedConfig<T> getMiddlewareConfigFromCache(String configKey) {
-
-        LOG.debug("Getting config '{}' from table '{}'", configKey, DYNAMO_DB_TABLE_NAME);
-
-        var response = this.getFromCache(configKey);
-
-        if (response == null || response.size() > 1) {
-            LOG.error("Response is null or contains more than one entry in attribute: {}", response);
-            throw new RuntimeException("Response is null or contains more than one entry in attribute: " + response);
-        }
-
-        if (response.size() == 0) {
-            return null;
-        }
-
-        for (var entry : response.entrySet()) {
-            var serialized = entry.getValue().getS();
-
-            try {
-                return new CachedConfig<T>(configKey, serialized);
-            } catch (JsonProcessingException e) {
-                throw new RuntimeException(e);
-            }
-        }
-
-        return null;
-    }
-
-    /**
-     * Pushes config from a middleware handle to cache.
-     *
-     * @param configKey         - key that we are placing the attribute value under.
-     * @param config            - config we want to cache.
-     * @param <T>               - config class.
-     * @return - returns true if successfully cached the config.
-     */
-    public <T> boolean pushMiddlewareConfigToCache(String configKey, T config) {
-
-        LOG.debug("Pushing config '{}' to table '{}' with the payload of '{}'", DYNAMO_DB_TABLE_NAME, configKey, config.toString());
-
-        CachedConfig<T> cachedConfig;
-
-        try {
-            cachedConfig = new CachedConfig<>(configKey, config);
-        } catch (JsonProcessingException e) {
-            throw new RuntimeException(e);
-        }
-
-        return this.pushToCache(cachedConfig.getDynamoDbPayload());
-    }
-
-    public Map<String, AttributeValue> getConfig() {
-        final String key = "values";
-        return this.getFromCache(key);
-    }
-
-    /**
-     * Pushes a JwtClaim to dynamodb.
-     *
-     * @param jwtKey            - attribute key
-     * @param claims            - jwt claims
-     * @return - return true if successful.
-     */
-    public boolean pushJwtToCache(String jwtKey, JwtClaims claims) {
-        CachedJwtClaims cachedJwt;
-        try {
-            cachedJwt = new CachedJwtClaims(jwtKey, claims);
-        } catch (JsonProcessingException e) {
-            throw new RuntimeException(e);
-        }
-
-        return this.pushToCache(cachedJwt.getDynamoDbPayload());
-    }
-
-    /**
-     * Grabs the JwtClaim from dynamo db.
-     * We use the jwtKey as the projection expression.
-     *
-     * @param jwtKey            - attribute key used as a projection expression to get any existing keys found in the DB.
-     * @return - returns JwtClaim and returns null if it does not exist.
-     */
-    public CachedJwtClaims getJwtFromCache(String jwtKey) {
-        var response = this.getFromCache(jwtKey);
-
-        if (response == null || response.size() > 1) {
-            LOG.error("Response is null or contains more than one entry in attribute: {}", response);
-            throw new RuntimeException("Response is null or contains more than one entry in attribute: " + response);
-        }
-
-        if (response.size() == 0) {
-            return null;
-        }
-
-        for (var entry : response.entrySet()) {
-
-            var serialized = entry.getValue().getS();
-
-            try {
-                return new CachedJwtClaims(jwtKey, serialized);
-            } catch (JsonProcessingException e) {
-                LOG.error("Failed to convert string into JwtClaim class", e);
-                throw new RuntimeException("Failed to convert string into JwtClaim class: " + e);
-            }
-        }
-
-        return null;
-
-    }
-
-    /**
-     * Pushes some payload to dynamodb.
-     *
-     * @param cachePayload      - hashmap of string attribute value.
-     * @return - returns true if successful
-     */
-    private boolean pushToCache(Map<String, AttributeValue> cachePayload) {
-        var res = this.dynamoClient.putItem(DYNAMO_DB_TABLE_NAME, cachePayload);
-        return this.isSuccessResponse(res.getSdkHttpMetadata());
-    }
-
-    /**
-     * Gets some attribute from a specified table based on a projection expression.
-     *
-     * @param projectionExpression - projection expression that specifies the attributes.
-     * @return - returns attribute map if item is found and returns null if no data was found.
-     */
-    private Map<String, AttributeValue> getFromCache(String projectionExpression) {
+    public void testGetCache(String applicationId) {
         var table = this.dynamoDB.getTable(DYNAMO_DB_TABLE_NAME);
-        LOG.debug("DynamoDB Table: {}", table.toString());
-
-
-        var getItemReq = new GetItemRequest();
-        getItemReq.setTableName(DYNAMO_DB_TABLE_NAME);
-        getItemReq.setProjectionExpression(projectionExpression);
-
-        var res = this.dynamoClient.getItem(getItemReq);
-
-        if (this.isSuccessResponse(res.getSdkHttpMetadata()))
-            return res.getItem();
-
-        else return null;
+        var entry = table.getItem("Id", applicationId);
+        var map = entry.asMap();
+        LOG.debug("MAP ENTRY: {}", map);
     }
 
-    private Map<String, AttributeValue> getBatchFromCache(List<String> attributeKeys) {
-        var projectionExpression = new StringBuilder();
+    public void updateStringItem(String applicationId, String updateAttrKey, String updateAttrValue) {
 
-        for (int i = 0; i < attributeKeys.size(); i++) {
-            var attributeKey = attributeKeys.get(i);
-            projectionExpression.append(attributeKey);
+        /* primary key for item */
+        var itemKey = new HashMap<String, AttributeValue>();
+        itemKey.put("Id", new AttributeValue().withS(applicationId));
 
-            if (i != attributeKeys.size() - 1)
-                projectionExpression.append(", ");
+        /* attribute we are adding to item */
+        var attributeUpdates = new HashMap<String, AttributeValueUpdate>();
+        var update = new AttributeValueUpdate().withAction(AttributeAction.PUT).withValue(new AttributeValue().withS(updateAttrValue));
+        attributeUpdates.put(updateAttrKey, update);
+
+        /* send update request */
+        var updateItemRequest = new UpdateItemRequest().withTableName(DYNAMO_DB_TABLE_NAME).withKey(itemKey).withAttributeUpdates(attributeUpdates);
+        this.dynamoClient.updateItem(updateItemRequest);
+    }
+    public void updateListItem(String applicationId, String listAttributeKey, List<String> listAttributeValues) {
+        Table table = dynamoDB.getTable(DYNAMO_DB_TABLE_NAME);
+        var item = table.getItem("Id", applicationId);
+
+        if (item.get(listAttributeKey) != null) {
+            ValueMap map = new ValueMap().withList(":attrList", listAttributeValues);
+            UpdateItemSpec updateItemSpec = new UpdateItemSpec()
+                    .withPrimaryKey("Id", applicationId)
+                    .withUpdateExpression("set "+ listAttributeKey + " = list_append(imageData, :attrList )")
+                    .withValueMap(map);
+            UpdateItemOutcome result = table.updateItem(updateItemSpec);
+
+            LOG.debug("RESULT: {}", result.toString());
+
+        } else {
+            /* primary key for item */
+            var itemKey = new HashMap<String, AttributeValue>();
+            itemKey.put("Id", new AttributeValue().withS(applicationId));
+
+            /* attribute we are adding to item */
+            var attributeUpdates = new HashMap<String, AttributeValueUpdate>();
+            var update = new AttributeValueUpdate().withAction(AttributeAction.PUT).withValue(new AttributeValue().withSS(listAttributeValues));
+            attributeUpdates.put(listAttributeKey, update);
+
+            /* send update request */
+            var updateItemRequest = new UpdateItemRequest().withTableName(DYNAMO_DB_TABLE_NAME).withKey(itemKey).withAttributeUpdates(attributeUpdates);
+            var res = this.dynamoClient.updateItem(updateItemRequest);
+            LOG.debug("RESULT: {}", res.toString());
         }
-        return this.getFromCache(projectionExpression.toString());
+
+    }
+
+    public List<JsonWebKey> getJwkList(String applicationId) {
+        Table table = dynamoDB.getTable(DYNAMO_DB_TABLE_NAME);
+        var entry = table.getItem("Id", applicationId);
+        var attr = entry.getList("JWK");
+        List<JsonWebKey> res = new ArrayList<>();
+        for (var jwk : attr) {
+
+            if (jwk instanceof String) {
+                try {
+                    res.add(Config.getInstance().getMapper().readValue((String) jwk, JsonWebKey.class));
+                } catch (JsonProcessingException e) {
+                    throw new RuntimeException(e);
+                }
+            }
+
+        }
+
+        return res;
+    }
+
+    public void setJwkList(String applicationId, List<JsonWebKey> webKeys) {
+        List<String> serialized = new ArrayList<>();
+        for (var jwk : webKeys) {
+            try {
+                serialized.add(Config.getInstance().getMapper().writeValueAsString(jwk));
+            } catch (JsonProcessingException e) {
+                throw new RuntimeException(e);
+            }
+        }
+
+        this.updateListItem(applicationId, JWK_KEY, serialized);
     }
 
 
@@ -283,11 +141,11 @@ public class LambdaCache {
      *
      * @return - return true when a table was created. Returns false when there is a failure or the table already exists.
      */
-    private boolean createCacheTable() throws JsonProcessingException {
+    private boolean createCacheTable() {
 
         LOG.debug("Creating cache table '{}'", DYNAMO_DB_TABLE_NAME);
 
-        if (this.doesTableExist(DYNAMO_DB_TABLE_NAME)) {
+        if (this.doesTableExist()) {
             LOG.debug("Table already exists... returning...");
             return false;
         }
@@ -319,14 +177,14 @@ public class LambdaCache {
     /**
      * DEBUG FUNCTION - will be changed or deprecated in the future.
      */
-    public void deleteTable(String dynamoDbTableName) throws InterruptedException {
+    public void deleteTable() throws InterruptedException {
 
-        if (!this.doesTableExist(dynamoDbTableName)) {
+        if (!this.doesTableExist()) {
             LOG.debug("Table does not exist, no need to delete...");
             return;
         }
 
-        var table = dynamoDB.getTable(dynamoDbTableName);
+        var table = dynamoDB.getTable(DYNAMO_DB_TABLE_NAME);
         table.delete();
         table.waitForDelete();
     }
@@ -353,13 +211,12 @@ public class LambdaCache {
     /**
      * Checks to see if the table exists.
      *
-     * @param dynamoDbTableName - name of the table
      * @return - returns true if the table exists
      */
-    public boolean doesTableExist(String dynamoDbTableName) {
+    public boolean doesTableExist() {
         var tables = this.dynamoClient.listTables(TABLE_LIST_LIMIT);
         LOG.debug("Tables: {}", tables.getTableNames().toString());
-        return tables.getTableNames().contains(dynamoDbTableName);
+        return tables.getTableNames().contains(DYNAMO_DB_TABLE_NAME);
     }
 
 

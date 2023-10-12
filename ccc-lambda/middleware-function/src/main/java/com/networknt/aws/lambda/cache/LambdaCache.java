@@ -2,18 +2,11 @@ package com.networknt.aws.lambda.cache;
 
 import com.amazonaws.http.SdkHttpMetadata;
 import com.amazonaws.services.dynamodbv2.AmazonDynamoDB;
-import com.amazonaws.services.dynamodbv2.AmazonDynamoDBClient;
 import com.amazonaws.services.dynamodbv2.AmazonDynamoDBClientBuilder;
 import com.amazonaws.services.dynamodbv2.document.*;
-import com.amazonaws.services.dynamodbv2.document.spec.GetItemSpec;
-import com.amazonaws.services.dynamodbv2.document.spec.UpdateItemSpec;
-import com.amazonaws.services.dynamodbv2.document.utils.ValueMap;
 import com.amazonaws.services.dynamodbv2.model.*;
 import com.fasterxml.jackson.core.JsonProcessingException;
 import com.networknt.aws.lambda.utility.LambdaEnvVariables;
-import com.networknt.config.Config;
-import org.jose4j.jwk.JsonWebKey;
-import org.jose4j.jwt.JwtClaims;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -48,43 +41,16 @@ public class LambdaCache {
         this.dynamoDB = new DynamoDB(dynamoClient);
     }
 
-    public void testGetCache(String applicationId) {
-        var table = this.dynamoDB.getTable(DYNAMO_DB_TABLE_NAME);
-        var entry = table.getItem("Id", applicationId);
-        var map = entry.asMap();
-        LOG.debug("MAP ENTRY: {}", map);
-    }
+    private void updateStringItem(String applicationId, String updateAttrKey, String updateAttrValue) {
+        LOG.debug("Updating table entry of id: {}, with attribute key {} and value {}", applicationId, updateAttrKey, updateAttrValue);
 
-    public void updateStringItem(String applicationId, String updateAttrKey, String updateAttrValue) {
-
-        /* primary key for item */
-        var itemKey = new HashMap<String, AttributeValue>();
-        itemKey.put("Id", new AttributeValue().withS(applicationId));
-
-        /* attribute we are adding to item */
-        var attributeUpdates = new HashMap<String, AttributeValueUpdate>();
-        var update = new AttributeValueUpdate().withAction(AttributeAction.PUT).withValue(new AttributeValue().withS(updateAttrValue));
-        attributeUpdates.put(updateAttrKey, update);
-
-        /* send update request */
-        var updateItemRequest = new UpdateItemRequest().withTableName(DYNAMO_DB_TABLE_NAME).withKey(itemKey).withAttributeUpdates(attributeUpdates);
-        this.dynamoClient.updateItem(updateItemRequest);
-    }
-    public void updateListItem(String applicationId, String listAttributeKey, List<String> listAttributeValues) {
         Table table = dynamoDB.getTable(DYNAMO_DB_TABLE_NAME);
         var item = table.getItem("Id", applicationId);
 
-        if (item.get(listAttributeKey) != null) {
-            ValueMap map = new ValueMap().withList(":attrList", listAttributeValues);
+        if (item != null && item.getString(updateAttrKey) != null) {
+            LOG.debug("Update spec....");
 
-            UpdateItemSpec updateItemSpec = new UpdateItemSpec()
-                    .withPrimaryKey("Id", applicationId)
-                    .withUpdateExpression("set "+ listAttributeKey + " = list_append(imageData, :attrList )")
-                    .withValueMap(map);
-
-            UpdateItemOutcome result = table.updateItem(updateItemSpec);
-
-            LOG.debug("RESULT: {}", result.toString());
+            // TODO - Update string value
 
         } else {
             /* primary key for item */
@@ -93,54 +59,35 @@ public class LambdaCache {
 
             /* attribute we are adding to item */
             var attributeUpdates = new HashMap<String, AttributeValueUpdate>();
-            var update = new AttributeValueUpdate().withAction(AttributeAction.PUT).withValue(new AttributeValue().withSS(listAttributeValues));
-            attributeUpdates.put(listAttributeKey, update);
+            var update = new AttributeValueUpdate().withAction(AttributeAction.PUT).withValue(new AttributeValue().withS(updateAttrValue));
+            attributeUpdates.put(updateAttrKey, update);
 
             /* send update request */
             var updateItemRequest = new UpdateItemRequest().withTableName(DYNAMO_DB_TABLE_NAME).withKey(itemKey).withAttributeUpdates(attributeUpdates);
             var res = this.dynamoClient.updateItem(updateItemRequest);
             LOG.debug("RESULT: {}", res.toString());
         }
-
     }
 
-    public List<JsonWebKey> getJwkList(String applicationId) {
-        Table table = dynamoDB.getTable(DYNAMO_DB_TABLE_NAME);
+    public String getJwk(String applicationId) {
+        final Table table = dynamoDB.getTable(DYNAMO_DB_TABLE_NAME);
 
-        LOG.debug("Getting entry by Id: {}", applicationId);
-
-        var entry = table.getItem("Id", applicationId);
-
-        LOG.debug("Getting list JWK");
-        var attr = entry.getList("JWK");
-
-        List<JsonWebKey> res = new ArrayList<>();
-        for (var jwk : attr) {
-
-            if (jwk instanceof String) {
-                try {
-                    res.add(Config.getInstance().getMapper().readValue((String) jwk, JsonWebKey.class));
-                } catch (JsonProcessingException e) {
-                    throw new RuntimeException(e);
-                }
-            }
-
+        /* see if the table contains our application id. */
+        /* If not found, return null because we don't have a cache yet! */
+        Item entry;
+        try {
+            entry = table.getItem("Id", applicationId);
+            if (entry == null)
+                return null;
+        } catch (NullPointerException e) {
+            return null;
         }
 
-        return res;
+        return entry.getString(JWK_KEY);
     }
 
-    public void setJwkList(String applicationId, List<JsonWebKey> webKeys) {
-        List<String> serialized = new ArrayList<>();
-        for (var jwk : webKeys) {
-            try {
-                serialized.add(Config.getInstance().getMapper().writeValueAsString(jwk));
-            } catch (JsonProcessingException e) {
-                throw new RuntimeException(e);
-            }
-        }
-
-        this.updateListItem(applicationId, JWK_KEY, serialized);
+    public void setJwk(String applicationId, String key) {
+        this.updateStringItem(applicationId, JWK_KEY, key);
     }
 
 
@@ -151,7 +98,7 @@ public class LambdaCache {
      */
     private boolean createCacheTable() {
 
-        LOG.debug("Creating cache table '{}'", DYNAMO_DB_TABLE_NAME);
+        LOG.debug("Attempting to create new cache table '{}'", DYNAMO_DB_TABLE_NAME);
 
         if (this.doesTableExist()) {
             LOG.debug("Table already exists... returning...");
@@ -188,7 +135,7 @@ public class LambdaCache {
     public void deleteTable() throws InterruptedException {
 
         if (!this.doesTableExist()) {
-            LOG.debug("Table does not exist, no need to delete...");
+            LOG.debug("Table does not exist so we do not need to delete it....");
             return;
         }
 
@@ -223,7 +170,6 @@ public class LambdaCache {
      */
     public boolean doesTableExist() {
         var tables = this.dynamoClient.listTables(TABLE_LIST_LIMIT);
-        LOG.debug("Tables: {}", tables.getTableNames().toString());
         return tables.getTableNames().contains(DYNAMO_DB_TABLE_NAME);
     }
 

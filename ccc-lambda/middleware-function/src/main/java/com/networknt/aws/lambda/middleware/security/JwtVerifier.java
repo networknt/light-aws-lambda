@@ -1,9 +1,7 @@
 package com.networknt.aws.lambda.middleware.security;
 
-import com.fasterxml.jackson.core.JsonProcessingException;
 import com.networknt.aws.lambda.cache.LambdaCache;
 import com.networknt.aws.lambda.proxy.LambdaProxy;
-import com.networknt.config.Config;
 import com.networknt.exception.ClientException;
 import com.networknt.exception.ExpiredTokenException;
 import com.networknt.http.client.ClientConfig;
@@ -25,7 +23,6 @@ import org.jose4j.jwx.JsonWebStructure;
 
 import java.io.InputStream;
 import java.nio.charset.StandardCharsets;
-import java.security.cert.X509Certificate;
 import java.util.*;
 import java.util.function.BiFunction;
 
@@ -68,6 +65,10 @@ public class JwtVerifier extends TokenVerifier {
 
         //jwksMap = getJsonWebKeyMap();
 
+    }
+
+    public void initJwkMap() {
+        getJsonWebKeyMap();
     }
 
     /**
@@ -244,11 +245,7 @@ public class JwtVerifier extends TokenVerifier {
 
                         } else {
 
-                            List<String> jwkStrings = new ArrayList<>();
-                            for (var jwk : jwkList) {
-                                jwkStrings.add(Config.getInstance().getMapper().writeValueAsString(jwk));
-                            }
-                            LambdaCache.getInstance().updateListItem(LambdaProxy.CONFIG.getLambdaAppId(), "JWK", jwkStrings);
+                            LambdaCache.getInstance().setJwk(LambdaProxy.CONFIG.getLambdaAppId(), key);
 //                            for (JsonWebKey jwk : jwkList) {
 //
 //                                jwksMap.put(serviceId + ":" + jwk.getKeyId(), jwkList);
@@ -265,8 +262,6 @@ public class JwtVerifier extends TokenVerifier {
 
                         if (logger.isErrorEnabled())
                             logger.error("Failed to get key. - {} - {} ", new Status(GET_KEY_ERROR), ce.getMessage(), ce);
-                    } catch (JsonProcessingException e) {
-                        throw new RuntimeException("Failed to stringify JWK", e);
                     }
                 }
             } else {
@@ -274,6 +269,22 @@ public class JwtVerifier extends TokenVerifier {
                 logger.error("serviceIdAuthServers property is missing or empty in the token key configuration");
             }
         } else {
+
+            String cachedKey = LambdaCache.getInstance().getJwk(LambdaProxy.CONFIG.getLambdaAppId());
+            if (cachedKey != null) {
+                List<JsonWebKey> set = null;
+                try {
+                    set = new JsonWebKeySet(cachedKey).getJsonWebKeys();
+                } catch (JoseException e) {
+                    throw new RuntimeException(e);
+                }
+                Map<String, List<JsonWebKey>> map = new HashMap<>();
+                for (var jwk : set) {
+                    map.put(jwk.getKeyId(), set);
+                }
+                return map;
+            }
+
             // get audience from the key config
             audience = (String) keyConfig.get(ClientConfig.AUDIENCE);
             if(logger.isTraceEnabled()) logger.trace("A single audience {} is configured in client.yml", audience);
@@ -294,7 +305,7 @@ public class JwtVerifier extends TokenVerifier {
                 }
 
                 logger.debug("setting jwk list: {}", jwkList);
-                LambdaCache.getInstance().setJwkList(LambdaProxy.CONFIG.getLambdaAppId(), jwkList);
+                LambdaCache.getInstance().setJwk(LambdaProxy.CONFIG.getLambdaAppId(), key);
 //                for (JsonWebKey jwk : jwkList) {
 //                    jwksMap.put(jwk.getKeyId(), jwkList);
 //
@@ -313,10 +324,16 @@ public class JwtVerifier extends TokenVerifier {
             }
         }
         // return jwksMap
-        var webKeys = LambdaCache.getInstance().getJwkList(LambdaProxy.CONFIG.getLambdaAppId());
+        var webKey = LambdaCache.getInstance().getJwk(LambdaProxy.CONFIG.getLambdaAppId());
+        List<JsonWebKey> set = null;
+        try {
+            set = new JsonWebKeySet(webKey).getJsonWebKeys();
+        } catch (JoseException e) {
+            throw new RuntimeException(e);
+        }
         Map<String, List<JsonWebKey>> map = new HashMap<>();
-        for (var jwk : webKeys) {
-            map.put(jwk.getKeyId(), webKeys);
+        for (var jwk : set) {
+            map.put(jwk.getKeyId(), set);
         }
         return map;
     }
@@ -379,23 +396,29 @@ public class JwtVerifier extends TokenVerifier {
         // jwk is always used here.
         //List<JsonWebKey> jwkList = jwksMap.get(kid);
         logger.debug("getKeyResolver: kid --> {}", kid);
-        List<JsonWebKey> jwkList = LambdaCache.getInstance().getJwkList(LambdaProxy.CONFIG.getLambdaAppId());
+        String key = LambdaCache.getInstance().getJwk(LambdaProxy.CONFIG.getLambdaAppId());
+        List<JsonWebKey> jwkList = null;
+        try {
+            jwkList = new JsonWebKeySet(key).getJsonWebKeys();
+        } catch (JoseException e) {
+            throw new RuntimeException(e);
+        }
         if (jwkList == null) {
             jwkList = getJsonWebKeySetForToken(kid);
             if (jwkList == null || jwkList.isEmpty()) {
                 throw new RuntimeException("no JWK for kid: " + kid);
             }
-            cacheJwkList(jwkList, null);
+            cacheJwkList(key, null);
         }
         logger.debug("Got Json web key set from local cache");
         return new JwksVerificationKeyResolver(jwkList);
     }
 
-    private void cacheJwkList(List<JsonWebKey> jwkList, String serviceId) {
+    private void cacheJwkList(String key, String serviceId) {
 
-        logger.debug("cacheJwkList: {}", jwkList);
+        logger.debug("key: {}", key);
 
-        LambdaCache.getInstance().setJwkList(LambdaProxy.CONFIG.getLambdaAppId(), jwkList);
+        LambdaCache.getInstance().setJwk(LambdaProxy.CONFIG.getLambdaAppId(), key);
 //        for (JsonWebKey jwk : jwkList) {
 //            if(serviceId != null) {
 //                if(logger.isTraceEnabled()) logger.trace("cache the jwkList with serviceId {} kid {} and key {}", serviceId, jwk.getKeyId(), serviceId + ":" + jwk.getKeyId());

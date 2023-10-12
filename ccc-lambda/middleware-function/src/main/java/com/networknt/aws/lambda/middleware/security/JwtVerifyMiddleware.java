@@ -60,7 +60,7 @@ public class JwtVerifyMiddleware extends LambdaMiddleware {
 
     @Override
     public void getCachedConfigurations() {
-
+        jwtVerifier.initJwkMap();
     }
 
     public Status handleJwt(LightLambdaExchange exchange, String pathPrefix, String reqPath, List<String> jwkServiceIds) {

@@ -1,7 +1,6 @@
 package com.networknt.aws.lambda.middleware.traceability;
 
 import com.fasterxml.jackson.core.JsonProcessingException;
-import com.networknt.aws.lambda.cache.CachedConfig;
 import com.networknt.aws.lambda.cache.LambdaCache;
 import com.networknt.aws.lambda.middleware.LambdaMiddleware;
 import com.networknt.aws.lambda.middleware.chain.ChainLinkCallback;

@@ -1,13 +1,8 @@
 package com.networknt.aws.lambda.middleware.header;
 
-import com.networknt.aws.lambda.cache.CachedConfig;
-import com.networknt.aws.lambda.cache.LambdaCache;
 import com.networknt.aws.lambda.middleware.LambdaMiddleware;
 import com.networknt.aws.lambda.middleware.chain.ChainLinkCallback;
 import com.networknt.aws.lambda.middleware.LightLambdaExchange;
-import com.networknt.aws.lambda.middleware.validator.ValidatorConfig;
-import com.networknt.aws.lambda.middleware.validator.ValidatorMiddleware;
-import com.networknt.aws.lambda.proxy.LambdaProxy;
 import com.networknt.config.Config;
 import com.networknt.status.Status;
 import org.slf4j.Logger;

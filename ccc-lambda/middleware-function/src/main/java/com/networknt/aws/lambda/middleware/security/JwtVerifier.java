@@ -41,7 +41,7 @@ public class JwtVerifier extends TokenVerifier {
     SecurityConfig config;
     Map<String, Object> jwtConfig;
     int secondsOfAllowedClockSkew;
-    //static Map<String, List<JsonWebKey>> jwksMap;
+    static Map<String, List<JsonWebKey>> jwksMap;
     static String audience;  // this is the audience from the client.yml with single oauth provider.
     static Map<String, String> audienceMap; // this is the audience map from the client.yml with multiple oauth providers.
 
@@ -63,12 +63,11 @@ public class JwtVerifier extends TokenVerifier {
             logger.debug("jwt cache is enabled.");
         }
 
-        //jwksMap = getJsonWebKeyMap();
-
     }
 
     public void initJwkMap() {
-        getJsonWebKeyMap();
+        jwksMap = new HashMap<>();
+        jwksMap = getJsonWebKeyMap();
     }
 
     /**
@@ -116,12 +115,6 @@ public class JwtVerifier extends TokenVerifier {
             } else {
                 claims = cache.get(jwt);
             }
-
-//            if (pathPrefix != null) {
-//                claims = LambdaCache.getInstance().getJwtFromCache(pathPrefix + ":" + "TABLE_NAME", jwt).getJwtClaims();
-//            } else {
-//                claims = LambdaCache.getInstance().getJwtFromCache("TABLE_NAME", jwt).getJwtClaims();
-//            }
 
             if (claims != null) {
                 checkExpiry(ignoreExpiry, claims, secondsOfAllowedClockSkew, null);
@@ -180,12 +173,6 @@ public class JwtVerifier extends TokenVerifier {
             if(cache.size() > config.getJwtCacheFullSize()) {
                 logger.warn("JWT cache exceeds the size limit " + config.getJwtCacheFullSize());
             }
-
-//            if (pathPrefix != null) {
-//                LambdaCache.getInstance().pushJwtToCache(pathPrefix + ":" + LambdaProxy.CONFIG.getLambdaAppId(), jwt, claims);
-//            } else {
-//                LambdaCache.getInstance().pushJwtToCache(LambdaProxy.CONFIG.getLambdaAppId(), jwt, claims);
-//            }
         }
         return claims;
     }
@@ -245,14 +232,20 @@ public class JwtVerifier extends TokenVerifier {
 
                         } else {
 
-                            LambdaCache.getInstance().setJwk(LambdaProxy.CONFIG.getLambdaAppId(), key);
-//                            for (JsonWebKey jwk : jwkList) {
-//
-//                                jwksMap.put(serviceId + ":" + jwk.getKeyId(), jwkList);
-//                                if (logger.isDebugEnabled())
-//                                    logger.debug("Successfully cached JWK for serviceId {} kid {} with key {}", serviceId, jwk.getKeyId(), serviceId + ":" + jwk.getKeyId());
-//
-//                            }
+                            // TODO - combine this into common cache class
+                            if (LambdaProxy.CONFIG.isEnableDynamoDbCache()) {
+                                LambdaCache.getInstance().setJwk(LambdaProxy.CONFIG.getLambdaAppId(), key);
+                            } else {
+                                for (JsonWebKey jwk : jwkList) {
+
+                                    jwksMap.put(serviceId + ":" + jwk.getKeyId(), jwkList);
+                                    if (logger.isDebugEnabled())
+                                        logger.debug("Successfully cached JWK for serviceId {} kid {} with key {}", serviceId, jwk.getKeyId(), serviceId + ":" + jwk.getKeyId());
+
+                                }
+                            }
+
+
                         }
                     } catch (JoseException ce) {
                         if (logger.isErrorEnabled())
@@ -270,19 +263,22 @@ public class JwtVerifier extends TokenVerifier {
             }
         } else {
 
-            String cachedKey = LambdaCache.getInstance().getJwk(LambdaProxy.CONFIG.getLambdaAppId());
-            if (cachedKey != null) {
-                List<JsonWebKey> set = null;
-                try {
-                    set = new JsonWebKeySet(cachedKey).getJsonWebKeys();
-                } catch (JoseException e) {
-                    throw new RuntimeException(e);
+            // TODO - combine this into common cache class
+            if (LambdaProxy.CONFIG.isEnableDynamoDbCache()) {
+                String cachedKey = LambdaCache.getInstance().getJwk(LambdaProxy.CONFIG.getLambdaAppId());
+                if (cachedKey != null) {
+                    List<JsonWebKey> set = null;
+                    try {
+                        set = new JsonWebKeySet(cachedKey).getJsonWebKeys();
+                    } catch (JoseException e) {
+                        throw new RuntimeException(e);
+                    }
+                    Map<String, List<JsonWebKey>> map = new HashMap<>();
+                    for (var jwk : set) {
+                        map.put(jwk.getKeyId(), set);
+                    }
+                    return map;
                 }
-                Map<String, List<JsonWebKey>> map = new HashMap<>();
-                for (var jwk : set) {
-                    map.put(jwk.getKeyId(), set);
-                }
-                return map;
             }
 
             // get audience from the key config
@@ -304,14 +300,20 @@ public class JwtVerifier extends TokenVerifier {
                     throw new RuntimeException("cannot get JWK from OAuth server");
                 }
 
+                // TODO - combine this into common cache class
                 logger.debug("setting jwk list: {}", jwkList);
-                LambdaCache.getInstance().setJwk(LambdaProxy.CONFIG.getLambdaAppId(), key);
-//                for (JsonWebKey jwk : jwkList) {
-//                    jwksMap.put(jwk.getKeyId(), jwkList);
-//
-//                    if (logger.isDebugEnabled())
-//                        logger.debug("Successfully cached JWK for kid {}", jwk.getKeyId());
-//                }
+                if (LambdaProxy.CONFIG.isEnableDynamoDbCache()) {
+                    LambdaCache.getInstance().setJwk(LambdaProxy.CONFIG.getLambdaAppId(), key);
+                } else {
+                    for (JsonWebKey jwk : jwkList) {
+                        jwksMap.put(jwk.getKeyId(), jwkList);
+
+                        if (logger.isDebugEnabled())
+                            logger.debug("Successfully cached JWK for kid {}", jwk.getKeyId());
+                    }
+                }
+
+
             } catch (JoseException ce) {
 
                 if (logger.isErrorEnabled())
@@ -323,19 +325,26 @@ public class JwtVerifier extends TokenVerifier {
                     logger.error("Failed to get Key. - {} - {}", new Status(GET_KEY_ERROR), ce.getMessage(), ce);
             }
         }
-        // return jwksMap
-        var webKey = LambdaCache.getInstance().getJwk(LambdaProxy.CONFIG.getLambdaAppId());
-        List<JsonWebKey> set = null;
-        try {
-            set = new JsonWebKeySet(webKey).getJsonWebKeys();
-        } catch (JoseException e) {
-            throw new RuntimeException(e);
+
+        // TODO - combine this into common cache class
+        if (LambdaProxy.CONFIG.isEnableDynamoDbCache()) {
+            var webKey = LambdaCache.getInstance().getJwk(LambdaProxy.CONFIG.getLambdaAppId());
+            List<JsonWebKey> set = null;
+            try {
+                set = new JsonWebKeySet(webKey).getJsonWebKeys();
+            } catch (JoseException e) {
+                throw new RuntimeException(e);
+            }
+            Map<String, List<JsonWebKey>> map = new HashMap<>();
+            for (var jwk : set) {
+                map.put(jwk.getKeyId(), set);
+            }
+            return map;
+        } else {
+            return jwksMap;
         }
-        Map<String, List<JsonWebKey>> map = new HashMap<>();
-        for (var jwk : set) {
-            map.put(jwk.getKeyId(), set);
-        }
-        return map;
+
+
     }
 
     /**
@@ -394,40 +403,50 @@ public class JwtVerifier extends TokenVerifier {
      */
     private VerificationKeyResolver getKeyResolver(String kid, boolean isToken) {
         // jwk is always used here.
-        //List<JsonWebKey> jwkList = jwksMap.get(kid);
-        logger.debug("getKeyResolver: kid --> {}", kid);
-        String key = LambdaCache.getInstance().getJwk(LambdaProxy.CONFIG.getLambdaAppId());
-        List<JsonWebKey> jwkList = null;
-        try {
-            jwkList = new JsonWebKeySet(key).getJsonWebKeys();
-        } catch (JoseException e) {
-            throw new RuntimeException(e);
-        }
-        if (jwkList == null) {
-            jwkList = getJsonWebKeySetForToken(kid);
-            if (jwkList == null || jwkList.isEmpty()) {
-                throw new RuntimeException("no JWK for kid: " + kid);
+        List<JsonWebKey> jwkList;
+        if (LambdaProxy.CONFIG.isEnableDynamoDbCache()) {
+            String key = LambdaCache.getInstance().getJwk(LambdaProxy.CONFIG.getLambdaAppId());
+            try {
+                jwkList = new JsonWebKeySet(key).getJsonWebKeys();
+            } catch (JoseException e) {
+                throw new RuntimeException(e);
             }
-            cacheJwkList(key, null);
+            if (jwkList == null) {
+                jwkList = getJsonWebKeySetForToken(kid);
+                if (jwkList == null || jwkList.isEmpty()) {
+                    throw new RuntimeException("no JWK for kid: " + kid);
+                }
+                LambdaCache.getInstance().setJwk(LambdaProxy.CONFIG.getLambdaAppId(), key);
+            }
+        } else {
+            jwkList = jwksMap.get(kid);
+            if (jwkList == null) {
+                jwkList = getJsonWebKeySetForToken(kid);
+                if (jwkList == null || jwkList.isEmpty()) {
+                    throw new RuntimeException("no JWK for kid: " + kid);
+                }
+                cacheJwkList(jwkList, null);
+            }
         }
+
+        logger.debug("getKeyResolver: kid --> {}", kid);
+
+
+
         logger.debug("Got Json web key set from local cache");
         return new JwksVerificationKeyResolver(jwkList);
     }
 
-    private void cacheJwkList(String key, String serviceId) {
-
-        logger.debug("key: {}", key);
-
-        LambdaCache.getInstance().setJwk(LambdaProxy.CONFIG.getLambdaAppId(), key);
-//        for (JsonWebKey jwk : jwkList) {
-//            if(serviceId != null) {
-//                if(logger.isTraceEnabled()) logger.trace("cache the jwkList with serviceId {} kid {} and key {}", serviceId, jwk.getKeyId(), serviceId + ":" + jwk.getKeyId());
-//                jwksMap.put(serviceId + ":" + jwk.getKeyId(), jwkList);
-//            } else {
-//                if(logger.isTraceEnabled()) logger.trace("cache the jwkList with kid and only kid as key", jwk.getKeyId());
-//                jwksMap.put(jwk.getKeyId(), jwkList);
-//            }
-//        }
+    private void cacheJwkList(List<JsonWebKey> jwkList, String serviceId) {
+        for (JsonWebKey jwk : jwkList) {
+            if(serviceId != null) {
+                if(logger.isTraceEnabled()) logger.trace("cache the jwkList with serviceId {} kid {} and key {}", serviceId, jwk.getKeyId(), serviceId + ":" + jwk.getKeyId());
+                jwksMap.put(serviceId + ":" + jwk.getKeyId(), jwkList);
+            } else {
+                if(logger.isTraceEnabled()) logger.trace("cache the jwkList with kid and only kid as key", jwk.getKeyId());
+                jwksMap.put(jwk.getKeyId(), jwkList);
+            }
+        }
     }
 
 }

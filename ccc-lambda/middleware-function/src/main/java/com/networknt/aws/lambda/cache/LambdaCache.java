@@ -11,12 +11,14 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import java.util.*;
+import java.util.concurrent.*;
 
 public class LambdaCache {
     private static final Logger LOG = LoggerFactory.getLogger(LambdaCache.class);
-    private static final String DYNAMO_DB_TABLE_NAME = "LAMBDA_NATIVE_PROXY";
+    private static final String DYNAMO_DB_TABLE_NAME = "LAMBDA_NATIVE_CACHE_T";
     private static final String JWK_KEY = "JWK";
     private static final String JWT_KEY = "JWT";
+    private static final String HASH_ID_KEY = "Id";
     private static LambdaCache _internal;
     private static final int TABLE_LIST_LIMIT = 100;
     public static LambdaCache getInstance() {
@@ -29,6 +31,7 @@ public class LambdaCache {
     }
     private final AmazonDynamoDB dynamoClient;
     private final DynamoDB dynamoDB;
+    private final Table dynamoDbTable;
     boolean tableInitiated;
 
     private LambdaCache() {
@@ -39,13 +42,13 @@ public class LambdaCache {
                 .build();
 
         this.dynamoDB = new DynamoDB(dynamoClient);
+        this.dynamoDbTable = this.dynamoDB.getTable(DYNAMO_DB_TABLE_NAME);
     }
 
     private void updateStringItem(String applicationId, String updateAttrKey, String updateAttrValue) {
         LOG.debug("Updating table entry of id: {}, with attribute key {} and value {}", applicationId, updateAttrKey, updateAttrValue);
 
-        Table table = dynamoDB.getTable(DYNAMO_DB_TABLE_NAME);
-        var item = table.getItem("Id", applicationId);
+        var item = this.dynamoDbTable.getItem(HASH_ID_KEY, applicationId);
 
         if (item != null && item.getString(updateAttrKey) != null) {
             LOG.debug("Update spec....");
@@ -69,16 +72,34 @@ public class LambdaCache {
         }
     }
 
+    public List<String> getJwt(String applicationId) {
+        Item entry;
+        try {
+            entry = this.dynamoDbTable.getItem(HASH_ID_KEY, applicationId);
+            if (entry == null) {
+                return null;
+            }
+        } catch (NullPointerException e) {
+            return null;
+        }
+
+        return entry.getList(JWT_KEY);
+    }
+
+    public void addJwt() {
+        // TODO add JWT caching
+    }
+
     public String getJwk(String applicationId) {
-        final Table table = dynamoDB.getTable(DYNAMO_DB_TABLE_NAME);
 
         /* see if the table contains our application id. */
         /* If not found, return null because we don't have a cache yet! */
         Item entry;
         try {
-            entry = table.getItem("Id", applicationId);
+            entry = this.dynamoDbTable.getItem("Id", applicationId);
             if (entry == null)
                 return null;
+
         } catch (NullPointerException e) {
             return null;
         }
@@ -107,13 +128,13 @@ public class LambdaCache {
 
         var attributeDefinitions = new ArrayList<AttributeDefinition>();
         attributeDefinitions.add(new AttributeDefinition()
-                .withAttributeName("Id")
+                .withAttributeName(HASH_ID_KEY)
                 .withAttributeType("S")
         );
 
         var keySchema = new ArrayList<KeySchemaElement>();
         keySchema.add(new KeySchemaElement()
-                .withAttributeName("Id")
+                .withAttributeName(HASH_ID_KEY)
                 .withKeyType(KeyType.HASH)
         );
 
@@ -125,8 +146,15 @@ public class LambdaCache {
                         .withReadCapacityUnits(5L)
                         .withWriteCapacityUnits(6L));
 
-        var res = this.dynamoClient.createTable(createTableRequest);
-        return this.isSuccessResponse(res.getSdkHttpMetadata());
+        Table table = this.dynamoDB.createTable(createTableRequest);
+        try {
+            LOG.debug("Waiting for table status to be active...");
+            table.waitForActive();
+        } catch (InterruptedException e) {
+            return false;
+        }
+
+        return true;
     }
 
     /**
@@ -145,10 +173,8 @@ public class LambdaCache {
     }
 
     public boolean initCacheTable() throws JsonProcessingException {
-
-        if (!this.tableInitiated) {
+        if (!this.tableInitiated)
             this.tableInitiated = this.createCacheTable();
-        }
 
         return this.tableInitiated;
     }

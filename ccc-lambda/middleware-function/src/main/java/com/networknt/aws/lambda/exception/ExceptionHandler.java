@@ -34,8 +34,12 @@ public class ExceptionHandler {
             var notifications = new ArrayList<>();
 
             for (var res : middlewareResults)
-                if (res.getCode().startsWith("ERR"))
-                    notifications.add(res.toStringConditionally());
+                if (res.getCode().startsWith("ERR")) {
+                    notifications.add(res);
+                    responseEvent.setStatusCode(res.getStatusCode());
+                    break;
+                }
+
 
             returnSchema.put(NOTIFICATIONS_KEY, notifications);
 

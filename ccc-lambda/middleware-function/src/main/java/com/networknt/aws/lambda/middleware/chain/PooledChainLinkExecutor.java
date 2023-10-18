@@ -78,10 +78,6 @@ public class PooledChainLinkExecutor extends ThreadPoolExecutor {
                     .newInstance(this.chainLinkCallback, this.lambdaEventWrapper);
 
             newClazz.setChainDirection(this.chainDirection);
-
-            //
-            // TODO - assemble dynamo Db batch command to get all config attributes (instead of many smaller requests)
-            //
             newClazz.getCachedConfigurations();
 
             this.chain.addChainable(newClazz);

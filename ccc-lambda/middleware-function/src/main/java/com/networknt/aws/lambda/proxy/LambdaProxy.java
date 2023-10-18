@@ -51,7 +51,8 @@ public class LambdaProxy implements RequestHandler<APIGatewayProxyRequestEvent, 
         LOG.debug("Lambda CCC --start");
 
         // TODO - remove this. This is here just so I can test table creation...
-        if (System.getenv(LambdaEnvVariables.CLEAR_AWS_DYNAMO_DB_TABLES).equals("true")) {
+        if (System.getenv(LambdaEnvVariables.CLEAR_AWS_DYNAMO_DB_TABLES) != null
+                && System.getenv(LambdaEnvVariables.CLEAR_AWS_DYNAMO_DB_TABLES).equals("true")) {
             try {
                 LambdaCache.getInstance().deleteTable();
             } catch (InterruptedException e) {

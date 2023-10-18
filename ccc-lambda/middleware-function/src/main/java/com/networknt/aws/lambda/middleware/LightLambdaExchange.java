@@ -6,6 +6,8 @@ import com.amazonaws.services.lambda.runtime.events.APIGatewayProxyResponseEvent
 import com.networknt.aws.lambda.exception.ExceptionHandler;
 import com.networknt.aws.lambda.middleware.chain.ChainDirection;
 import com.networknt.aws.lambda.middleware.chain.PooledChainLinkExecutor;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 import java.util.HashMap;
 import java.util.List;
@@ -16,6 +18,8 @@ import java.util.Map;
  * Shared object among middleware threads containing information on the request/response event.
  */
 public final class LightLambdaExchange {
+
+    private static final Logger LOG = LoggerFactory.getLogger(LightLambdaExchange.class);
     private APIGatewayProxyRequestEvent request;
     private APIGatewayProxyResponseEvent response;
     private final Context context;
@@ -23,14 +27,32 @@ public final class LightLambdaExchange {
     private final Map<Attachable<? extends LambdaMiddleware>, Object> responseAttachments = new HashMap<>();
     private final PooledChainLinkExecutor requestExecutor;
     private final PooledChainLinkExecutor responseExecutor;
+
+    // Initial state
     private static final int INITIAL_STATE = 0;
+
+    // Ready to load request chain
     private static final int FLAG_REQUEST_CHAIN_READY = 1 << 1;
+
+    // Request chain ready for execution
     private static final int FLAG_STARTING_REQUEST_READY = 1 << 2;
+
+    // Request chain execution complete
     private static final int FLAG_REQUEST_DONE = 1 << 3;
+
+    // Request chain execution complete but had an exception occur
     private static final int FLAG_REQUEST_HAS_FAILURE = 1 << 4;
+
+    // Received response from backend lambda and we are preparing to execute the response chain
     private static final int FLAG_STARTING_RESPONSE_READY = 1 << 5;
+
+    // Response chain ready for execution
     private static final int FLAG_RESPONSE_CHAIN_READY = 1 << 6;
+
+    // Response chain execution complete
     private static final int FLAG_RESPONSE_DONE = 1 << 7;
+
+    // Response chain execution complete but had an exception occur
     private static final int FLAG_RESPONSE_HAS_FAILURE = 1 << 8;
     private int state = INITIAL_STATE;
     private int statusCode = 200;
@@ -110,14 +132,11 @@ public final class LightLambdaExchange {
     }
 
     public APIGatewayProxyResponseEvent getResponse() {
-        if (stateHasAllFlags(FLAG_REQUEST_DONE | FLAG_RESPONSE_DONE)) {
+        if (stateHasAnyFlags(FLAG_REQUEST_HAS_FAILURE))
+            return ExceptionHandler.handle(this.requestExecutor.getChainLinkReturns());
 
-            if (stateHasAnyFlags(FLAG_REQUEST_HAS_FAILURE))
-                return ExceptionHandler.handle(this.requestExecutor.getChainLinkReturns());
-
-            if (stateHasAnyFlags(FLAG_RESPONSE_HAS_FAILURE))
-                return ExceptionHandler.handle(this.responseExecutor.getChainLinkReturns());
-        }
+        if (stateHasAnyFlags(FLAG_RESPONSE_HAS_FAILURE))
+            return ExceptionHandler.handle(this.responseExecutor.getChainLinkReturns());
 
         return this.response;
     }
@@ -156,6 +175,7 @@ public final class LightLambdaExchange {
     }
 
     public boolean hasFailedState() {
+        LOG.debug("Checking if exchange has a failure state: {}", stateHasAnyFlags(FLAG_REQUEST_HAS_FAILURE | FLAG_RESPONSE_HAS_FAILURE));
         return stateHasAnyFlags(FLAG_REQUEST_HAS_FAILURE | FLAG_RESPONSE_HAS_FAILURE);
     }
 
@@ -166,12 +186,18 @@ public final class LightLambdaExchange {
 
     public void finalizeRequest() {
 
+        LOG.debug("Finalizing request...");
+
         if (stateHasAllFlagsClear(FLAG_REQUEST_DONE)) {
 
             for (var res : this.requestExecutor.getChainLinkReturns()) {
 
                 // TODO - change this to something more reliable than a string check
                 if (res.getCode().startsWith("ERR")) {
+
+                    LOG.debug("Request has failure...");
+                    LOG.debug("Setting status code to: {}", res.getStatusCode());
+
                     this.raiseRequestFailureFlag();
                     this.statusCode = res.getStatusCode();
                     break;

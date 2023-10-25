@@ -2,11 +2,11 @@ package com.networknt.aws.lambda.middleware.security;
 
 import com.networknt.aws.lambda.cache.LambdaCache;
 import com.networknt.aws.lambda.proxy.LambdaProxy;
+import com.networknt.client.ClientConfig;
+import com.networknt.client.oauth.OauthHelper;
+import com.networknt.client.oauth.TokenKeyRequest;
 import com.networknt.exception.ClientException;
 import com.networknt.exception.ExpiredTokenException;
-import com.networknt.http.client.ClientConfig;
-import com.networknt.http.client.oauth.OauthHelper;
-import com.networknt.http.client.oauth.TokenKeyRequest;
 import com.networknt.status.Status;
 import org.jose4j.jwk.JsonWebKey;
 import org.jose4j.jwk.JsonWebKeySet;
@@ -189,7 +189,7 @@ public class JwtVerifier extends TokenVerifier {
         // the jwk indicator will ensure that the kid is not concat to the uri for path parameter.
         // the kid is not needed to get JWK. We need to figure out only one jwk server or multiple.
         //jwksMap = new HashMap<>();
-        ClientConfig clientConfig = ClientConfig.load();
+        ClientConfig clientConfig = ClientConfig.get();
         Map<String, Object> tokenConfig = clientConfig.getTokenConfig();
         Map<String, Object> keyConfig = (Map<String, Object>) tokenConfig.get(ClientConfig.KEY);
         if (clientConfig.isMultipleAuthServers()) {

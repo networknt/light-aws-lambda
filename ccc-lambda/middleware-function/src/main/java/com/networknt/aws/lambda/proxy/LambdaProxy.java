@@ -118,6 +118,8 @@ public class LambdaProxy implements RequestHandler<APIGatewayProxyRequestEvent, 
         }
 
         LOG.debug("Lambda CCC --end");
+
+        // TODO - THIS IS DANGEROUS!!! Results should be stored with the exchange and not with the singleton instance
         REQUEST_CHAIN.getChainResults().clear();
         RESPONSE_CHAIN.getChainResults().clear();
         return exchange.getResponse();

@@ -13,8 +13,8 @@ public class SwtVerifyMiddleware extends LambdaMiddleware {
     private static final String CONFIG_NAME = "lambda-security";
     private static final SecurityConfig CONFIG = (SecurityConfig) Config.getInstance().getJsonObjectConfig(CONFIG_NAME, SecurityConfig.class);
 
-    public SwtVerifyMiddleware(ChainLinkCallback middlewareCallback, LightLambdaExchange exchange) {
-        super(false, false, false, middlewareCallback, exchange);
+    public SwtVerifyMiddleware(ChainLinkCallback middlewareCallback) {
+        super(false, false, false, middlewareCallback);
     }
 
     @Override

@@ -22,8 +22,8 @@ public class CorrelationMiddleware extends LambdaMiddleware {
     private static final Logger LOG = LoggerFactory.getLogger(CorrelationMiddleware.class);
     private static final LightLambdaExchange.Attachable<CorrelationMiddleware> CORRELATION_ATTACHMENT_KEY = LightLambdaExchange.Attachable.createMiddlewareAttachable(CorrelationMiddleware.class);
 
-    public CorrelationMiddleware(ChainLinkCallback middlewareCallback, final LightLambdaExchange eventWrapper) {
-        super(true, false, false, middlewareCallback, eventWrapper);
+    public CorrelationMiddleware(ChainLinkCallback middlewareCallback) {
+        super(true, false, false, middlewareCallback);
     }
 
     @Override

@@ -40,14 +40,15 @@ public class JwtVerifyMiddleware extends LambdaMiddleware {
     static final String STATUS_INVALID_REQUEST_PATH = "ERR10007";
     static final String STATUS_METHOD_NOT_ALLOWED = "ERR10008";
     static final String STATUS_OPENAPI_OPERATION_MISSED = "ERR10085";
-    public JwtVerifyMiddleware(ChainLinkCallback middlewareCallback, LightLambdaExchange exchange) {
-        super(false, false, false, middlewareCallback, exchange);
+    public JwtVerifyMiddleware(ChainLinkCallback middlewareCallback) {
+        super(false, false, false, middlewareCallback);
         jwtVerifier = new JwtVerifier(config);
+        jwtVerifier.initJwkMap();
     }
 
     @Override
     protected Status executeMiddleware(LightLambdaExchange exchange) throws InterruptedException {
-        if(LOG.isTraceEnabled()) LOG.trace("JwtVerifyMiddleware.executeMiddleware starts");
+        if(LOG.isDebugEnabled()) LOG.debug("JwtVerifyMiddleware.executeMiddleware starts");
         String reqPath = exchange.getRequest().getPath();
         if (config.getSkipPathPrefixes() != null && config.getSkipPathPrefixes().stream().anyMatch(reqPath::startsWith)) {
             if(LOG.isTraceEnabled())
@@ -60,7 +61,7 @@ public class JwtVerifyMiddleware extends LambdaMiddleware {
 
     @Override
     public void getCachedConfigurations() {
-        jwtVerifier.initJwkMap();
+
     }
 
     public Status handleJwt(LightLambdaExchange exchange, String pathPrefix, String reqPath, List<String> jwkServiceIds) {

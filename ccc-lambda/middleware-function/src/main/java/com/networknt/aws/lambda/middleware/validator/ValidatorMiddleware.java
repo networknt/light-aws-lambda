@@ -27,8 +27,8 @@ public class ValidatorMiddleware extends LambdaMiddleware {
 
     private static final ValidatorConfig CONFIG = (ValidatorConfig) Config.getInstance().getJsonObjectConfig(CONFIG_NAME, ValidatorConfig.class);
 
-    public ValidatorMiddleware(ChainLinkCallback middlewareCallback, LightLambdaExchange eventWrapper) {
-        super(false, true, false, middlewareCallback, eventWrapper);
+    public ValidatorMiddleware(ChainLinkCallback middlewareCallback) {
+        super(false, true, false, middlewareCallback);
     }
 
     @Override

@@ -4,7 +4,7 @@ public abstract class Chainable {
     protected final boolean audited;
     protected final boolean asynchronous;
     protected final boolean continueOnFailure;
-    protected final ChainLinkCallback middlewareCallback;
+    public final ChainLinkCallback middlewareCallback;
     private ChainDirection chainDirection;
 
     protected Chainable(boolean audited, boolean asynchronous, boolean continueOnFailure, final ChainLinkCallback middlewareCallback) {

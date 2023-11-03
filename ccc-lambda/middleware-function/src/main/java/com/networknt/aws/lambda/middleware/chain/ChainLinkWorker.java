@@ -1,13 +1,12 @@
 package com.networknt.aws.lambda.middleware.chain;
 
-import com.networknt.aws.lambda.middleware.LambdaMiddleware;
 import org.slf4j.MDC;
 
 import java.util.Map;
 
 public class ChainLinkWorker extends Thread {
 
-    public ChainLinkWorker(LambdaMiddleware runnable, AuditThreadContext context) {
+    public ChainLinkWorker(Runnable runnable, AuditThreadContext context) {
         super(runnable);
         MDC.setContextMap(context.MDCContext);
     }

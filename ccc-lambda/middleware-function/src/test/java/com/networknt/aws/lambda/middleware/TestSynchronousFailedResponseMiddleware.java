@@ -8,8 +8,8 @@ import org.slf4j.LoggerFactory;
 public class TestSynchronousFailedResponseMiddleware extends LambdaMiddleware {
     private static final Logger LOG = LoggerFactory.getLogger(TestSynchronousMiddleware.class);
 
-    public TestSynchronousFailedResponseMiddleware(ChainLinkCallback callback, LightLambdaExchange eventWrapper) {
-        super(true, false, false, callback, eventWrapper);
+    public TestSynchronousFailedResponseMiddleware(ChainLinkCallback callback) {
+        super(true, false, false, callback);
     }
 
     @Override

@@ -34,8 +34,8 @@ public class OpenApiMiddleware extends LambdaMiddleware {
 
     public static OpenApiHelper helper;
 
-    public OpenApiMiddleware(ChainLinkCallback middlewareCallback, LightLambdaExchange exchange) {
-        super(false, false, false, middlewareCallback, exchange);
+    public OpenApiMiddleware(ChainLinkCallback middlewareCallback) {
+        super(false, false, false, middlewareCallback);
         Map<String, Object> inject = Config.getInstance().getJsonMapConfig(SPEC_INJECT);
         Map<String, Object> openapi = Config.getInstance().getJsonMapConfigNoCache(CONFIG_NAME);
         OpenApiHelper.merge(openapi, inject);

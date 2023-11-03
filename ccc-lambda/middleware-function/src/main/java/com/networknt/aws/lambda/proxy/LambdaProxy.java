@@ -5,9 +5,9 @@ import com.amazonaws.services.lambda.runtime.Context;
 import com.amazonaws.services.lambda.runtime.RequestHandler;
 import com.amazonaws.services.lambda.runtime.events.APIGatewayProxyRequestEvent;
 import com.amazonaws.services.lambda.runtime.events.APIGatewayProxyResponseEvent;
-import com.networknt.aws.lambda.cache.LambdaCache;
 import com.networknt.aws.lambda.middleware.LightLambdaExchange;
-import com.networknt.aws.lambda.utility.LambdaEnvVariables;
+import com.networknt.aws.lambda.middleware.chain.Chain;
+import com.networknt.aws.lambda.middleware.chain.ChainDirection;
 import com.networknt.config.Config;
 import com.networknt.config.JsonMapper;
 import com.networknt.utility.StringUtils;
@@ -36,6 +36,8 @@ public class LambdaProxy implements RequestHandler<APIGatewayProxyRequestEvent, 
     public static final LambdaProxyConfig CONFIG = (LambdaProxyConfig) Config.getInstance().getJsonObjectConfig(CONFIG_NAME, LambdaProxyConfig.class);
     private static LambdaClient client;
     private static String dynamoDbTableName;
+    private static Chain REQUEST_CHAIN;
+    private static Chain RESPONSE_CHAIN;
 
     public LambdaProxy() {
         var builder = LambdaClient.builder().region(Region.of(CONFIG.getRegion()));
@@ -44,42 +46,44 @@ public class LambdaProxy implements RequestHandler<APIGatewayProxyRequestEvent, 
             builder.endpointOverride(URI.create(CONFIG.getEndpointOverride()));
 
         client = builder.build();
+        initChains();
+    }
+
+    private void initChains() {
+        REQUEST_CHAIN = new Chain(false, ChainDirection.REQUEST);
+        if (CONFIG.getRequestChain() != null) {
+            for (var middleware : CONFIG.getRequestChain()) {
+                LOG.debug("Adding new request middleware '{}'", middleware);
+                REQUEST_CHAIN.add(middleware);
+            }
+
+            REQUEST_CHAIN.setupGroupedChain();
+        }
+
+
+        RESPONSE_CHAIN = new Chain(false, ChainDirection.RESPONSE);
+        if (CONFIG.getResponseChain() != null) {
+            for (var middleware : CONFIG.getResponseChain()) {
+                LOG.debug("Adding new response middleware '{}'", middleware);
+                RESPONSE_CHAIN.add(middleware);
+            }
+
+            RESPONSE_CHAIN.setupGroupedChain();
+        }
+
     }
 
     @Override
     public APIGatewayProxyResponseEvent handleRequest(final APIGatewayProxyRequestEvent apiGatewayProxyRequestEvent, final Context context) {
         LOG.debug("Lambda CCC --start");
 
-        // TODO - remove this. This is here just so I can test table creation...
-        if (System.getenv(LambdaEnvVariables.CLEAR_AWS_DYNAMO_DB_TABLES) != null
-                && System.getenv(LambdaEnvVariables.CLEAR_AWS_DYNAMO_DB_TABLES).equals("true")) {
-            try {
-                LambdaCache.getInstance().deleteTable();
-            } catch (InterruptedException e) {
-                throw new RuntimeException("Failed to delete table: ", e);
-            }
-        }
-
-        if (CONFIG.isEnableDynamoDbCache() && !LambdaCache.getInstance().doesTableExist()) {
-            LOG.debug("Creating new table...");
-            try {
-                if (!LambdaCache.getInstance().initCacheTable()) {
-                    throw new RuntimeException("Failed to init table");
-                }
-            } catch (JsonProcessingException e) {
-                throw new RuntimeException(e);
-            }
-        }
-
-
-
-        final var exchange = new LightLambdaExchange(context);
+        LOG.debug("Creating new request with request chain: {}", REQUEST_CHAIN.getChain());
+        final var exchange = new LightLambdaExchange(context, REQUEST_CHAIN, RESPONSE_CHAIN);
         exchange.setRequest(apiGatewayProxyRequestEvent);
 
         LOG.debug("exchange state: {}", exchange);
 
         /* exec request chain */
-        exchange.loadRequestChain(CONFIG.getRequestChain());
         exchange.executeRequestChain();
         exchange.finalizeRequest();
 
@@ -107,7 +111,6 @@ public class LambdaProxy implements RequestHandler<APIGatewayProxyRequestEvent, 
             LOG.debug("exchange state: {}", exchange);
 
             /* exec response chain */
-            exchange.loadResponseChain(CONFIG.getResponseChain());
             exchange.executeResponseChain();
             exchange.finalizeResponse();
 
@@ -115,6 +118,8 @@ public class LambdaProxy implements RequestHandler<APIGatewayProxyRequestEvent, 
         }
 
         LOG.debug("Lambda CCC --end");
+        REQUEST_CHAIN.getChainResults().clear();
+        RESPONSE_CHAIN.getChainResults().clear();
         return exchange.getResponse();
 
 

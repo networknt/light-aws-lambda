@@ -21,8 +21,8 @@ public class ResponseBodyTransformerMiddleware extends LambdaMiddleware {
     private static BodyConfig CONFIG = (BodyConfig) Config.getInstance().getJsonObjectConfig(CONFIG_NAME, BodyConfig.class);
     private static final LightLambdaExchange.Attachable<ResponseBodyTransformerMiddleware> RESPONSE_BODY_ATTACHMENT_KEY = LightLambdaExchange.Attachable.createMiddlewareAttachable(ResponseBodyTransformerMiddleware.class);
 
-    public ResponseBodyTransformerMiddleware(ChainLinkCallback middlewareCallback, final LightLambdaExchange eventWrapper) {
-        super(true, false, false, middlewareCallback, eventWrapper);
+    public ResponseBodyTransformerMiddleware(ChainLinkCallback middlewareCallback) {
+        super(true, false, false, middlewareCallback);
     }
 
     @Override

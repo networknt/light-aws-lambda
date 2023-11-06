@@ -19,8 +19,8 @@ public class HeaderMiddleware extends LambdaMiddleware {
     private static HeaderConfig CONFIG = (HeaderConfig) Config.getInstance().getJsonObjectConfig(CONFIG_NAME, HeaderConfig.class);
     private static final Logger LOG = LoggerFactory.getLogger(HeaderMiddleware.class);
 
-    public HeaderMiddleware(ChainLinkCallback middlewareCallback, final LightLambdaExchange eventWrapper) {
-        super(false, false, false, middlewareCallback, eventWrapper);
+    public HeaderMiddleware() {
+        super(false, false, false);
     }
 
     @Override

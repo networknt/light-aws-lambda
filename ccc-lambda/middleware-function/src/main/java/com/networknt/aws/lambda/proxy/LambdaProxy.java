@@ -5,9 +5,9 @@ import com.amazonaws.services.lambda.runtime.Context;
 import com.amazonaws.services.lambda.runtime.RequestHandler;
 import com.amazonaws.services.lambda.runtime.events.APIGatewayProxyRequestEvent;
 import com.amazonaws.services.lambda.runtime.events.APIGatewayProxyResponseEvent;
-import com.networknt.aws.lambda.cache.DynamoDbCacheManager;
 import com.networknt.aws.lambda.middleware.LightLambdaExchange;
-import com.networknt.aws.lambda.utility.LambdaEnvVariables;
+import com.networknt.aws.lambda.middleware.chain.Chain;
+import com.networknt.aws.lambda.middleware.chain.ChainDirection;
 import com.networknt.config.Config;
 import com.networknt.config.JsonMapper;
 import com.networknt.utility.StringUtils;
@@ -36,6 +36,8 @@ public class LambdaProxy implements RequestHandler<APIGatewayProxyRequestEvent, 
     public static final LambdaProxyConfig CONFIG = (LambdaProxyConfig) Config.getInstance().getJsonObjectConfig(CONFIG_NAME, LambdaProxyConfig.class);
     private static LambdaClient client;
     private static String dynamoDbTableName;
+    private static Chain REQUEST_CHAIN;
+    private static Chain RESPONSE_CHAIN;
 
     public LambdaProxy() {
         var builder = LambdaClient.builder().region(Region.of(CONFIG.getRegion()));
@@ -44,53 +46,65 @@ public class LambdaProxy implements RequestHandler<APIGatewayProxyRequestEvent, 
             builder.endpointOverride(URI.create(CONFIG.getEndpointOverride()));
 
         client = builder.build();
+        initChains();
+    }
+
+    private void initChains() {
+        REQUEST_CHAIN = new Chain(false, ChainDirection.REQUEST);
+        if (CONFIG.getRequestChain() != null) {
+            for (var middleware : CONFIG.getRequestChain()) {
+                LOG.debug("Adding new request middleware '{}'", middleware);
+                REQUEST_CHAIN.add(middleware);
+            }
+
+            REQUEST_CHAIN.setupGroupedChain();
+        }
+
+
+        RESPONSE_CHAIN = new Chain(false, ChainDirection.RESPONSE);
+        if (CONFIG.getResponseChain() != null) {
+            for (var middleware : CONFIG.getResponseChain()) {
+                LOG.debug("Adding new response middleware '{}'", middleware);
+                RESPONSE_CHAIN.add(middleware);
+            }
+
+            RESPONSE_CHAIN.setupGroupedChain();
+        }
+
     }
 
     @Override
     public APIGatewayProxyResponseEvent handleRequest(final APIGatewayProxyRequestEvent apiGatewayProxyRequestEvent, final Context context) {
         LOG.debug("Lambda CCC --start");
-        final var exchange = new LightLambdaExchange(context);
+        final var exchange = new LightLambdaExchange(context, REQUEST_CHAIN, RESPONSE_CHAIN);
         exchange.setRequest(apiGatewayProxyRequestEvent);
 
-        LOG.debug("exchange state: {}", exchange);
-
         /* exec request chain */
-        exchange.loadRequestChain(CONFIG.getRequestChain());
         exchange.executeRequestChain();
         exchange.finalizeRequest();
 
-        LOG.debug("exchange state: {}", exchange);
-
         if (!exchange.hasFailedState()) {
 
+            LOG.debug("Invoke Time - Start: {}", System.currentTimeMillis());
             /* invoke lambda function */
             var path = exchange.getRequest().getPath();
             var method = exchange.getRequest().getHttpMethod().toLowerCase();
             LOG.debug("Request path: {} -- Request method: {}", path, method);
 
             var functionName = CONFIG.getFunctions().get(path + "@" + method);
-            LOG.debug("Found function name: {}", functionName);
 
             var res = this.invokeFunction(client, functionName, exchange);
-            LOG.debug("Response Raw: {}", res);
             var responseEvent = JsonMapper.fromJson(res, APIGatewayProxyResponseEvent.class);
-
-            LOG.debug("Res Body: {}", responseEvent.getBody());
-            LOG.debug("Res Headers: {}", responseEvent.getHeaders());
-
             exchange.setResponse(responseEvent);
 
-            LOG.debug("exchange state: {}", exchange);
-
             /* exec response chain */
-            exchange.loadResponseChain(CONFIG.getResponseChain());
             exchange.executeResponseChain();
             exchange.finalizeResponse();
-
-            LOG.debug("exchange state: {}", exchange);
+            LOG.debug("Invoke Time - Finish: {}", System.currentTimeMillis());
         }
 
         LOG.debug("Lambda CCC --end");
+
         return exchange.getResponse();
 
 

@@ -24,8 +24,8 @@ public class RequestBodyTransformerMiddleware extends LambdaMiddleware {
     private static final String CONFIG_NAME = "lambda-body";
     private static BodyConfig CONFIG = (BodyConfig) Config.getInstance().getJsonObjectConfig(CONFIG_NAME, BodyConfig.class);
 
-    public RequestBodyTransformerMiddleware(ChainLinkCallback middlewareCallback, final LightLambdaExchange eventWrapper) {
-        super(true, false, false, middlewareCallback, eventWrapper);
+    public RequestBodyTransformerMiddleware() {
+        super(true, false, false);
     }
 
     @Override

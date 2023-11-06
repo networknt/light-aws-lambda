@@ -4,7 +4,7 @@ import com.amazonaws.services.lambda.runtime.Context;
 import com.amazonaws.services.lambda.runtime.events.APIGatewayProxyRequestEvent;
 import com.amazonaws.services.lambda.runtime.events.APIGatewayProxyResponseEvent;
 import com.networknt.aws.lambda.exception.ExceptionHandler;
-import com.networknt.aws.lambda.middleware.chain.ChainDirection;
+import com.networknt.aws.lambda.middleware.chain.Chain;
 import com.networknt.aws.lambda.middleware.chain.PooledChainLinkExecutor;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -25,85 +25,57 @@ public final class LightLambdaExchange {
     private final Context context;
     private final Map<Attachable<? extends LambdaMiddleware>, Object> requestAttachments = new HashMap<>();
     private final Map<Attachable<? extends LambdaMiddleware>, Object> responseAttachments = new HashMap<>();
-    private final PooledChainLinkExecutor requestExecutor;
-    private final PooledChainLinkExecutor responseExecutor;
+    private final PooledChainLinkExecutor executor;
 
     // Initial state
     private static final int INITIAL_STATE = 0;
 
-    // Ready to load request chain
-    private static final int FLAG_REQUEST_CHAIN_READY = 1 << 1;
-
     // Request chain ready for execution
-    private static final int FLAG_STARTING_REQUEST_READY = 1 << 2;
+    private static final int FLAG_STARTING_REQUEST_READY = 1 << 1;
 
     // Request chain execution complete
-    private static final int FLAG_REQUEST_DONE = 1 << 3;
+    private static final int FLAG_REQUEST_DONE = 1 << 2;
 
     // Request chain execution complete but had an exception occur
-    private static final int FLAG_REQUEST_HAS_FAILURE = 1 << 4;
+    private static final int FLAG_REQUEST_HAS_FAILURE = 1 << 3;
 
     // Received response from backend lambda and we are preparing to execute the response chain
-    private static final int FLAG_STARTING_RESPONSE_READY = 1 << 5;
-
-    // Response chain ready for execution
-    private static final int FLAG_RESPONSE_CHAIN_READY = 1 << 6;
+    private static final int FLAG_STARTING_RESPONSE_READY = 1 << 4;
 
     // Response chain execution complete
-    private static final int FLAG_RESPONSE_DONE = 1 << 7;
+    private static final int FLAG_RESPONSE_DONE = 1 << 5;
 
     // Response chain execution complete but had an exception occur
-    private static final int FLAG_RESPONSE_HAS_FAILURE = 1 << 8;
+    private static final int FLAG_RESPONSE_HAS_FAILURE = 1 << 6;
     private int state = INITIAL_STATE;
     private int statusCode = 200;
+    private final Chain requestChain;
+    private final Chain responseChain;
 
-    public LightLambdaExchange(Context context) {
+    public LightLambdaExchange(Context context, Chain requestChain, Chain responseChain) {
         this.context = context;
-
+        this.requestChain = requestChain;
+        this.responseChain = responseChain;
         // TODO - add some kind of check to middleware to see if the configured handlers can be used in request and/or response chains.
-        this.requestExecutor = new PooledChainLinkExecutor(this, ChainDirection.REQUEST);
-        this.responseExecutor = new PooledChainLinkExecutor(this, ChainDirection.RESPONSE);
-    }
-
-    public void loadRequestChain(List<String> requestChain) {
-
-        if (stateHasAnyFlags(FLAG_REQUEST_CHAIN_READY))
-            return;
-
-        this.loadChain(requestChain, this.requestExecutor);
-        this.state |= FLAG_REQUEST_CHAIN_READY;
-    }
-
-    public void loadResponseChain(List<String> responseChain) {
-
-        if (stateHasAnyFlags(FLAG_RESPONSE_CHAIN_READY))
-            return;
-
-        this.loadChain(responseChain, this.responseExecutor);
-        this.state |= FLAG_RESPONSE_CHAIN_READY;
-    }
-
-    private void loadChain(List<String> chain, PooledChainLinkExecutor executor) {
-        if (chain != null && chain.size() > 0)
-            for (var className : chain)
-                executor.add(className);
+        this.executor = new PooledChainLinkExecutor();
     }
 
     public void executeRequestChain() {
 
-        if (stateHasAllFlags(FLAG_STARTING_REQUEST_READY | FLAG_REQUEST_CHAIN_READY)) {
-            this.requestExecutor.finalizeChain();
-            this.requestExecutor.executeChain();
-            this.state &= ~FLAG_REQUEST_CHAIN_READY;
+        if (stateHasAllFlags(FLAG_STARTING_REQUEST_READY)) {
+            LOG.debug("Executing request chain");
+            this.executor.executeChain(this, this.requestChain);
+            this.state &= ~FLAG_STARTING_REQUEST_READY;
         }
     }
 
     public void executeResponseChain() {
 
-        if (stateHasAllFlags(FLAG_STARTING_RESPONSE_READY | FLAG_RESPONSE_CHAIN_READY)) {
-            this.responseExecutor.finalizeChain();
-            this.responseExecutor.executeChain();
-            this.state &= ~FLAG_RESPONSE_CHAIN_READY;
+        if (stateHasAllFlags(FLAG_STARTING_RESPONSE_READY)) {
+            LOG.debug("Executing response chain");
+            this.executor.executeChain(this, this.responseChain);
+            this.state &= ~FLAG_STARTING_RESPONSE_READY;
+
         }
 
     }
@@ -133,10 +105,10 @@ public final class LightLambdaExchange {
 
     public APIGatewayProxyResponseEvent getResponse() {
         if (stateHasAnyFlags(FLAG_REQUEST_HAS_FAILURE))
-            return ExceptionHandler.handle(this.requestExecutor.getChainLinkReturns());
+            return ExceptionHandler.handle(this.executor.getChainResults());
 
         if (stateHasAnyFlags(FLAG_RESPONSE_HAS_FAILURE))
-            return ExceptionHandler.handle(this.responseExecutor.getChainLinkReturns());
+            return ExceptionHandler.handle(this.executor.getChainResults());
 
         return this.response;
     }
@@ -190,7 +162,7 @@ public final class LightLambdaExchange {
 
         if (stateHasAllFlagsClear(FLAG_REQUEST_DONE)) {
 
-            for (var res : this.requestExecutor.getChainLinkReturns()) {
+            for (var res : this.executor.getChainResults()) {
 
                 // TODO - change this to something more reliable than a string check
                 if (res.getCode().startsWith("ERR")) {
@@ -205,8 +177,6 @@ public final class LightLambdaExchange {
             }
 
             this.state |= FLAG_REQUEST_DONE;
-            this.state &= ~FLAG_REQUEST_CHAIN_READY;
-            this.state &= ~FLAG_STARTING_REQUEST_READY;
         }
 
     }
@@ -215,7 +185,7 @@ public final class LightLambdaExchange {
 
         if (stateHasAllFlagsClear(FLAG_RESPONSE_DONE)) {
 
-            for (var res : this.responseExecutor.getChainLinkReturns()) {
+            for (var res : this.executor.getChainResults()) {
 
                 // TODO - change this to something more reliable than a string check
                 if (res.getCode().startsWith("ERR")) {
@@ -225,8 +195,6 @@ public final class LightLambdaExchange {
                 }
             }
             this.state |= FLAG_RESPONSE_DONE;
-            this.state &= ~FLAG_RESPONSE_CHAIN_READY;
-            this.state &= ~FLAG_STARTING_REQUEST_READY;
         }
 
     }
@@ -271,8 +239,9 @@ public final class LightLambdaExchange {
                 ", context=" + context +
                 ", requestAttachments=" + requestAttachments +
                 ", responseAttachments=" + responseAttachments +
-                ", requestExecutor=" + requestExecutor +
-                ", responseExecutor=" + responseExecutor +
+                ", executor=" + executor +
+                ", requestChain=" + requestChain +
+                ", responseChain=" + responseChain +
                 ", state=" + state +
                 ", statusCode=" + statusCode +
                 '}';

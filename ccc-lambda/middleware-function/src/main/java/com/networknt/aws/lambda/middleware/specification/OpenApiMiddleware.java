@@ -34,8 +34,8 @@ public class OpenApiMiddleware extends LambdaMiddleware {
 
     public static OpenApiHelper helper;
 
-    public OpenApiMiddleware(ChainLinkCallback middlewareCallback, LightLambdaExchange exchange) {
-        super(false, false, false, middlewareCallback, exchange);
+    public OpenApiMiddleware() {
+        super(false, false, false);
         Map<String, Object> inject = Config.getInstance().getJsonMapConfig(SPEC_INJECT);
         Map<String, Object> openapi = Config.getInstance().getJsonMapConfigNoCache(CONFIG_NAME);
         OpenApiHelper.merge(openapi, inject);
@@ -49,6 +49,9 @@ public class OpenApiMiddleware extends LambdaMiddleware {
 
     @Override
     protected Status executeMiddleware(LightLambdaExchange exchange) throws InterruptedException {
+
+        LOG.debug("OpenAPI Specification Time - Start: {}", System.currentTimeMillis());
+
         if (LOG.isDebugEnabled())
             LOG.debug("OpenApiMiddleware.executeMiddleware starts.");
 
@@ -76,6 +79,8 @@ public class OpenApiMiddleware extends LambdaMiddleware {
 
         if (LOG.isDebugEnabled())
             LOG.debug("OpenApiMiddleware.executeMiddleware ends.");
+
+        LOG.debug("OpenAPI Specification Time - Finish: {}", System.currentTimeMillis());
 
         return LambdaMiddleware.successMiddlewareStatus();
     }

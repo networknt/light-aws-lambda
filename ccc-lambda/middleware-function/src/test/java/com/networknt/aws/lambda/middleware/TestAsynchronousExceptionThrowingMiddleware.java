@@ -10,8 +10,8 @@ import java.util.concurrent.ThreadLocalRandom;
 public class TestAsynchronousExceptionThrowingMiddleware extends LambdaMiddleware {
     private static final Logger LOG = LoggerFactory.getLogger(TestSynchronousMiddleware.class);
 
-    public TestAsynchronousExceptionThrowingMiddleware(ChainLinkCallback callback, LightLambdaExchange eventWrapper) {
-        super(true, true, false, callback, eventWrapper);
+    public TestAsynchronousExceptionThrowingMiddleware() {
+        super(true, true, false);
     }
 
     @Override

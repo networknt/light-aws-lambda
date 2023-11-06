@@ -14,7 +14,7 @@ lambda-proxy.requestChain:
   - "com.networknt.aws.lambda.middleware.header.HeaderMiddleware"
   - "com.networknt.aws.lambda.middleware.traceability.TraceabilityMiddleware"
   - "com.networknt.aws.lambda.middleware.correlation.CorrelationMiddleware"
-  - "com.networknt.aws.lambda.middleware.body.RequestBodyTransformerMiddleware"
+  #- "com.networknt.aws.lambda.middleware.body.RequestBodyTransformerMiddleware"
 
 lambda-proxy.lambdaAppId: lambda-petstore-0.0.1-SNAPSHOT
 # -------------------------------------------

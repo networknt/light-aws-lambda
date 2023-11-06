@@ -13,8 +13,8 @@ public class UnifiedSecurityMiddleware extends LambdaMiddleware {
     private static final String CONFIG_NAME = "lambda-security";
     private static final SecurityConfig CONFIG = (SecurityConfig) Config.getInstance().getJsonObjectConfig(CONFIG_NAME, SecurityConfig.class);
 
-    public UnifiedSecurityMiddleware(ChainLinkCallback middlewareCallback, LightLambdaExchange exchange) {
-        super(false, false, false, middlewareCallback, exchange);
+    public UnifiedSecurityMiddleware() {
+        super(false, false, false);
     }
 
     @Override

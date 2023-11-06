@@ -5,7 +5,7 @@ import com.amazonaws.services.lambda.runtime.Context;
 import com.amazonaws.services.lambda.runtime.RequestHandler;
 import com.amazonaws.services.lambda.runtime.events.APIGatewayProxyRequestEvent;
 import com.amazonaws.services.lambda.runtime.events.APIGatewayProxyResponseEvent;
-import com.networknt.aws.lambda.cache.LambdaCache;
+import com.networknt.aws.lambda.cache.DynamoDbCacheManager;
 import com.networknt.aws.lambda.middleware.LightLambdaExchange;
 import com.networknt.aws.lambda.utility.LambdaEnvVariables;
 import com.networknt.config.Config;
@@ -49,30 +49,6 @@ public class LambdaProxy implements RequestHandler<APIGatewayProxyRequestEvent, 
     @Override
     public APIGatewayProxyResponseEvent handleRequest(final APIGatewayProxyRequestEvent apiGatewayProxyRequestEvent, final Context context) {
         LOG.debug("Lambda CCC --start");
-
-        // TODO - remove this. This is here just so I can test table creation...
-        if (System.getenv(LambdaEnvVariables.CLEAR_AWS_DYNAMO_DB_TABLES) != null
-                && System.getenv(LambdaEnvVariables.CLEAR_AWS_DYNAMO_DB_TABLES).equals("true")) {
-            try {
-                LambdaCache.getInstance().deleteTable();
-            } catch (InterruptedException e) {
-                throw new RuntimeException("Failed to delete table: ", e);
-            }
-        }
-
-        if (CONFIG.isEnableDynamoDbCache() && !LambdaCache.getInstance().doesTableExist()) {
-            LOG.debug("Creating new table...");
-            try {
-                if (!LambdaCache.getInstance().initCacheTable()) {
-                    throw new RuntimeException("Failed to init table");
-                }
-            } catch (JsonProcessingException e) {
-                throw new RuntimeException(e);
-            }
-        }
-
-
-
         final var exchange = new LightLambdaExchange(context);
         exchange.setRequest(apiGatewayProxyRequestEvent);
 

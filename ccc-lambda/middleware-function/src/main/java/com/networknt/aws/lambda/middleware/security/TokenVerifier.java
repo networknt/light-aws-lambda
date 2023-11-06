@@ -1,5 +1,6 @@
 package com.networknt.aws.lambda.middleware.security;
 
+import com.networknt.client.ClientConfig;
 import com.networknt.config.ConfigException;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -9,7 +10,7 @@ import java.util.regex.Pattern;
 
 public class TokenVerifier {
     static final Logger logger = LoggerFactory.getLogger(TokenVerifier.class);
-    /*
+
     protected Map<String, Object> getJwkConfig(ClientConfig clientConfig, String serviceId) {
         if (logger.isTraceEnabled())
             logger.trace("serviceId = " + serviceId);
@@ -22,7 +23,6 @@ public class TokenVerifier {
         }
         return (Map<String, Object>) serviceIdAuthServers.get(serviceId);
     }
-    */
 
     /**
      * Parse the jwt or swt token from Authorization header.

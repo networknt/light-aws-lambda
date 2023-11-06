@@ -4,12 +4,15 @@ import com.networknt.aws.lambda.middleware.LambdaMiddleware;
 import com.networknt.aws.lambda.middleware.LightLambdaExchange;
 import com.networknt.aws.lambda.middleware.MiddlewareRunnable;
 import com.networknt.config.Config;
+import com.networknt.status.Status;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.slf4j.MDC;
 
 import java.util.ArrayList;
 import java.util.Collection;
+import java.util.LinkedList;
+import java.util.List;
 import java.util.concurrent.ThreadPoolExecutor;
 import java.util.concurrent.LinkedBlockingQueue;
 import java.util.concurrent.TimeUnit;
@@ -20,6 +23,10 @@ public class PooledChainLinkExecutor extends ThreadPoolExecutor {
     private final Logger LOG = LoggerFactory.getLogger(PooledChainLinkExecutor.class);
     private static final String CONFIG_NAME = "pooled-chain-executor";
     private static final PooledChainConfig CONFIG = (PooledChainConfig) Config.getInstance().getJsonObjectConfig(CONFIG_NAME, PooledChainConfig.class);
+
+    private final LinkedList<Status> chainResults = new LinkedList<>();
+    private static final String MIDDLEWARE_THREAD_INTERRUPT = "ERR14003";
+    private static final String MIDDLEWARE_UNHANDLED_EXCEPTION = "ERR14000";
 
     final Object lock = new Object();
 
@@ -87,11 +94,8 @@ public class PooledChainLinkExecutor extends ThreadPoolExecutor {
         for (var chainLinkWorker : chainLinkWorkerGroup) {
             LOG.debug("Submitting link '{}' for execution.", linkNumber++);
 
-            synchronized (lock) {
-
-                if (!this.isShutdown() && !this.isTerminating() && !this.isTerminated())
-                    chainLinkWorkerFutures.add(this.submit(chainLinkWorker));
-            }
+            if (!this.isShutdown() && !this.isTerminating() && !this.isTerminated())
+                chainLinkWorkerFutures.add(this.submit(chainLinkWorker));
         }
         return chainLinkWorkerFutures;
     }
@@ -100,7 +104,7 @@ public class PooledChainLinkExecutor extends ThreadPoolExecutor {
      * Creates the chain workers array to prepare for submission.
      *
      * @param chainLinkGroup - sub-group of main chain
-     * @param exchange
+     * @param exchange - current exchange.
      * @return - List of thread workers for the tasks.
      */
     private ArrayList<ChainLinkWorker> createChainListWorkers(ArrayList<LambdaMiddleware> chainLinkGroup, LightLambdaExchange exchange) {
@@ -111,7 +115,7 @@ public class PooledChainLinkExecutor extends ThreadPoolExecutor {
         for (var chainLink : chainLinkGroup) {
             LOG.debug("Creating thread for link '{}[{}]'.", chainLink.getClass().getName(), linkNumber++);
             var loggingContext = new ChainLinkWorker.AuditThreadContext(MDC.getCopyOfContextMap());
-            var runnable = new MiddlewareRunnable(chainLink, exchange);
+            var runnable = new MiddlewareRunnable(chainLink, exchange, this.chainLinkCallback);
             var worker = new ChainLinkWorker(runnable, loggingContext);
             chainLinkWorkerGroup.add(worker);
         }
@@ -123,6 +127,39 @@ public class PooledChainLinkExecutor extends ThreadPoolExecutor {
         synchronized (lock) {
             this.shutdownNow();
         }
+    }
+
+    protected void addChainableResult(Status result) {
+        this.chainResults.add(result);
+    }
+
+    private final ChainLinkCallback chainLinkCallback = new ChainLinkCallback() {
+
+        @Override
+        public void callback(final LightLambdaExchange eventWrapper, Status status) {
+            PooledChainLinkExecutor.this.addChainableResult(status);
+        }
+
+        /* handles any generic throwable that occurred during middleware execution. */
+        @Override
+        public void exceptionCallback(final LightLambdaExchange eventWrapper, Throwable throwable) {
+
+            if (throwable instanceof InterruptedException) {
+                LOG.error("Interrupted thread and cancelled middleware execution", throwable);
+                PooledChainLinkExecutor.this.addChainableResult(new Status(MIDDLEWARE_THREAD_INTERRUPT));
+
+            } else {
+                LOG.error("Middleware returned with unhandled exception.", throwable);
+                PooledChainLinkExecutor.this.addChainableResult(new Status(MIDDLEWARE_UNHANDLED_EXCEPTION));
+            }
+
+            PooledChainLinkExecutor.this.abortExecution();
+
+        }
+    };
+
+    public List<Status> getChainResults() {
+        return chainResults;
     }
 
 }

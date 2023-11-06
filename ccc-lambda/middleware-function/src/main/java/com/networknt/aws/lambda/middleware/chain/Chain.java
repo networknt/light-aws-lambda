@@ -1,9 +1,7 @@
 package com.networknt.aws.lambda.middleware.chain;
 
 import com.networknt.aws.lambda.middleware.LambdaMiddleware;
-import com.networknt.aws.lambda.middleware.LightLambdaExchange;
 import com.networknt.config.Config;
-import com.networknt.status.Status;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -15,10 +13,9 @@ public class Chain {
     private static final Logger LOG = LoggerFactory.getLogger(Chain.class);
     private final LinkedList<LambdaMiddleware> chain = new LinkedList<>();
     private final LinkedList<ArrayList<LambdaMiddleware>> groupedChain = new LinkedList<>();
-    private final LinkedList<Status> chainResults = new LinkedList<>();
+
     private final boolean forceSynchronousExecution;
-    private static final String MIDDLEWARE_THREAD_INTERRUPT = "ERR14003";
-    private static final String MIDDLEWARE_UNHANDLED_EXCEPTION = "ERR14000";
+
     private static final String CONFIG_NAME = "pooled-chain-executor";
     private final ChainDirection chainDirection;
     private static final PooledChainConfig CONFIG = (PooledChainConfig) Config.getInstance().getJsonObjectConfig(CONFIG_NAME, PooledChainConfig.class);
@@ -37,14 +34,6 @@ public class Chain {
             this.chain.add(chainable);
 
         else LOG.error("Attempting to add chain link after chain has been finalized!");
-    }
-
-    protected void addChainableResult(Status result) {
-
-        if (this.isFinalized)
-            this.chainResults.add(result);
-
-        else LOG.error("Attempting to add link result before chain has been finalized.");
     }
 
     public boolean isFinalized() {
@@ -131,8 +120,8 @@ public class Chain {
         }
 
         try {
-            var newClazz = middleware.getConstructor(ChainLinkCallback.class)
-                    .newInstance(this.chainLinkCallback);
+            var newClazz = middleware.getConstructor()
+                    .newInstance();
 
             newClazz.setChainDirection(this.chainDirection);
             newClazz.getCachedConfigurations();
@@ -167,32 +156,11 @@ public class Chain {
         return chain;
     }
 
-    public LinkedList<Status> getChainResults() {
-        return chainResults;
-    }
+//    public LinkedList<Status> getChainResults() {
+//        return chainResults;
+//    }
 
-    private final ChainLinkCallback chainLinkCallback = new ChainLinkCallback() {
 
-        @Override
-        public void callback(final LightLambdaExchange eventWrapper, Status status) {
-            Chain.this.addChainableResult(status);
-        }
-
-        /* handles any generic throwable that occurred during middleware execution. */
-        @Override
-        public void exceptionCallback(final LightLambdaExchange eventWrapper, Throwable throwable) {
-
-            if (throwable instanceof InterruptedException) {
-                LOG.error("Interrupted thread and cancelled middleware execution", throwable);
-                Chain.this.addChainableResult(new Status(MIDDLEWARE_THREAD_INTERRUPT));
-
-            } else {
-                LOG.error("Middleware returned with unhandled exception.", throwable);
-                Chain.this.addChainableResult(new Status(MIDDLEWARE_UNHANDLED_EXCEPTION));
-            }
-
-        }
-    };
 
 
 }

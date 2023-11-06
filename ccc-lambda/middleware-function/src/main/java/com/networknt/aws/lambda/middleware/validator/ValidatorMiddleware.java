@@ -27,8 +27,8 @@ public class ValidatorMiddleware extends LambdaMiddleware {
 
     private static final ValidatorConfig CONFIG = (ValidatorConfig) Config.getInstance().getJsonObjectConfig(CONFIG_NAME, ValidatorConfig.class);
 
-    public ValidatorMiddleware(ChainLinkCallback middlewareCallback) {
-        super(false, true, false, middlewareCallback);
+    public ValidatorMiddleware() {
+        super(false, true, false);
     }
 
     @Override
@@ -38,6 +38,7 @@ public class ValidatorMiddleware extends LambdaMiddleware {
             return LambdaMiddleware.disabledMiddlewareStatus();
 
         LOG.debug("ValidatorHandler.executeMiddleware starts.");
+        LOG.debug("Validation Time - Start: {}", System.currentTimeMillis());
 
         if (this.shouldValidateRequestBody(exchange)) {
 
@@ -65,6 +66,7 @@ public class ValidatorMiddleware extends LambdaMiddleware {
             } else return new Status(CONTENT_TYPE_MISMATCH);
         }
 
+        LOG.debug("Validation Time - Finish: {}", System.currentTimeMillis());
         LOG.debug("ValidatorHandler.executeMiddleware ends.");
 
         return LambdaMiddleware.successMiddlewareStatus();

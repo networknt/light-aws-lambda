@@ -21,8 +21,8 @@ public class AuditMiddleware extends LambdaMiddleware {
     private static final AuditConfig CONFIG = (AuditConfig) Config.getInstance().getJsonObjectConfig(CONFIG_NAME, AuditConfig.class);
     public static final LightLambdaExchange.Attachable<AuditMiddleware> AUDIT_ATTACHMENT_KEY = LightLambdaExchange.Attachable.createMiddlewareAttachable(AuditMiddleware.class);
 
-    public AuditMiddleware(boolean audited, boolean asynchronous, boolean continueOnFailure, ChainLinkCallback middlewareCallback) {
-        super(false, false, false, middlewareCallback);
+    public AuditMiddleware(boolean audited, boolean asynchronous, boolean continueOnFailure) {
+        super(false, false, false);
     }
 
     @Override

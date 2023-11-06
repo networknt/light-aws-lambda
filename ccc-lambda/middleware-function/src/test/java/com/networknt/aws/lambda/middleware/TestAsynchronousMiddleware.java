@@ -11,8 +11,8 @@ public class TestAsynchronousMiddleware extends LambdaMiddleware {
 
     private static final Logger LOG = LoggerFactory.getLogger(TestAsynchronousMiddleware.class);
 
-    public TestAsynchronousMiddleware(ChainLinkCallback callback) {
-        super(true, true, false, callback);
+    public TestAsynchronousMiddleware() {
+        super(true, true, false);
     }
 
     @Override

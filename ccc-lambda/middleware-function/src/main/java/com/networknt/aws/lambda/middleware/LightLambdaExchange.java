@@ -5,7 +5,6 @@ import com.amazonaws.services.lambda.runtime.events.APIGatewayProxyRequestEvent;
 import com.amazonaws.services.lambda.runtime.events.APIGatewayProxyResponseEvent;
 import com.networknt.aws.lambda.exception.ExceptionHandler;
 import com.networknt.aws.lambda.middleware.chain.Chain;
-import com.networknt.aws.lambda.middleware.chain.ChainDirection;
 import com.networknt.aws.lambda.middleware.chain.PooledChainLinkExecutor;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -106,10 +105,10 @@ public final class LightLambdaExchange {
 
     public APIGatewayProxyResponseEvent getResponse() {
         if (stateHasAnyFlags(FLAG_REQUEST_HAS_FAILURE))
-            return ExceptionHandler.handle(this.responseChain.getChainResults());
+            return ExceptionHandler.handle(this.executor.getChainResults());
 
         if (stateHasAnyFlags(FLAG_RESPONSE_HAS_FAILURE))
-            return ExceptionHandler.handle(this.responseChain.getChainResults());
+            return ExceptionHandler.handle(this.executor.getChainResults());
 
         return this.response;
     }
@@ -163,7 +162,7 @@ public final class LightLambdaExchange {
 
         if (stateHasAllFlagsClear(FLAG_REQUEST_DONE)) {
 
-            for (var res : this.requestChain.getChainResults()) {
+            for (var res : this.executor.getChainResults()) {
 
                 // TODO - change this to something more reliable than a string check
                 if (res.getCode().startsWith("ERR")) {
@@ -186,7 +185,7 @@ public final class LightLambdaExchange {
 
         if (stateHasAllFlagsClear(FLAG_RESPONSE_DONE)) {
 
-            for (var res : this.responseChain.getChainResults()) {
+            for (var res : this.executor.getChainResults()) {
 
                 // TODO - change this to something more reliable than a string check
                 if (res.getCode().startsWith("ERR")) {

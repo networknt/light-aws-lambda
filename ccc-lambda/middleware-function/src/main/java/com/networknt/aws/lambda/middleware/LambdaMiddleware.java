@@ -15,8 +15,8 @@ public abstract class LambdaMiddleware extends Chainable {
     public boolean hasFailure = false;
     protected static final ObjectMapper OBJECT_MAPPER = new ObjectMapper().disable(DeserializationFeature.FAIL_ON_UNKNOWN_PROPERTIES);
 
-    public LambdaMiddleware(boolean audited, boolean asynchronous, boolean continueOnFailure, ChainLinkCallback middlewareCallback) {
-        super(audited, asynchronous, continueOnFailure, middlewareCallback);
+    public LambdaMiddleware(boolean audited, boolean asynchronous, boolean continueOnFailure) {
+        super(audited, asynchronous, continueOnFailure);
     }
 
     protected abstract Status executeMiddleware(final LightLambdaExchange exchange) throws InterruptedException;

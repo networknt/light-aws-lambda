@@ -14,8 +14,8 @@ public class LimitMiddleware extends LambdaMiddleware {
     private static final String CONFIG_NAME = "lambda-limit";
     private static LimitConfig CONFIG = (LimitConfig) Config.getInstance().getJsonObjectConfig(CONFIG_NAME, LimitConfig.class);
 
-    public LimitMiddleware(ChainLinkCallback middlewareCallback) {
-        super(false, true, false, middlewareCallback);
+    public LimitMiddleware() {
+        super(false, true, false);
     }
 
     @Override

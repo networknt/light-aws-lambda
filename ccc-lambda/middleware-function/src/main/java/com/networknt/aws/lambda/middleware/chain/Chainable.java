@@ -4,14 +4,12 @@ public abstract class Chainable {
     protected final boolean audited;
     protected final boolean asynchronous;
     protected final boolean continueOnFailure;
-    public final ChainLinkCallback middlewareCallback;
     private ChainDirection chainDirection;
 
-    protected Chainable(boolean audited, boolean asynchronous, boolean continueOnFailure, final ChainLinkCallback middlewareCallback) {
+    protected Chainable(boolean audited, boolean asynchronous, boolean continueOnFailure) {
         this.audited = audited;
         this.asynchronous = asynchronous;
         this.continueOnFailure = continueOnFailure;
-        this.middlewareCallback = middlewareCallback;
     }
 
     public ChainDirection getChainDirection() {

@@ -24,8 +24,8 @@ public class TraceabilityMiddleware extends LambdaMiddleware {
     private static TraceabilityConfig CONFIG = (TraceabilityConfig) Config.getInstance().getJsonObjectConfig(CONFIG_NAME, TraceabilityConfig.class);
     private static final LightLambdaExchange.Attachable<TraceabilityMiddleware> TRACEABILITY_ATTACHMENT_KEY = LightLambdaExchange.Attachable.createMiddlewareAttachable(TraceabilityMiddleware.class);
 
-    public TraceabilityMiddleware(ChainLinkCallback middlewareCallback) {
-        super(true, false, false, middlewareCallback);
+    public TraceabilityMiddleware() {
+        super(true, false, false);
     }
 
     @Override

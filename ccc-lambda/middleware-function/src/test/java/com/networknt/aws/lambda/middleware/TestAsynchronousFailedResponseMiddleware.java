@@ -10,8 +10,8 @@ import java.util.concurrent.ThreadLocalRandom;
 public class TestAsynchronousFailedResponseMiddleware extends LambdaMiddleware {
     private static final Logger LOG = LoggerFactory.getLogger(TestSynchronousMiddleware.class);
 
-    public TestAsynchronousFailedResponseMiddleware(ChainLinkCallback callback) {
-        super(true, true, false, callback);
+    public TestAsynchronousFailedResponseMiddleware() {
+        super(true, true, false);
     }
 
     @Override

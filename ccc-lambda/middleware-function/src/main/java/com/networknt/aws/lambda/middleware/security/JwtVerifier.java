@@ -2,6 +2,7 @@ package com.networknt.aws.lambda.middleware.security;
 
 import com.networknt.aws.lambda.cache.DynamoDbCacheManager;
 import com.networknt.aws.lambda.proxy.LambdaProxy;
+import com.networknt.aws.lambda.utility.LambdaEnvVariables;
 import com.networknt.cache.CacheManager;
 import com.networknt.client.ClientConfig;
 import com.networknt.client.oauth.OauthHelper;
@@ -121,6 +122,7 @@ public class JwtVerifier extends TokenVerifier {
             }
 
             if (claims != null) {
+                logger.debug("Got claims from local cache...");
                 checkExpiry(ignoreExpiry, claims, secondsOfAllowedClockSkew, null);
                 // this claims object is signature verified already
                 return claims;
@@ -236,6 +238,7 @@ public class JwtVerifier extends TokenVerifier {
                 logger.error("serviceIdAuthServers property is missing or empty in the token key configuration");
             }
         } else {
+
             // get audience from the key config
             audience = (String) keyConfig.get(ClientConfig.AUDIENCE);
             if(logger.isTraceEnabled()) logger.trace("A single audience {} is configured in client.yml", audience);
@@ -384,6 +387,7 @@ public class JwtVerifier extends TokenVerifier {
         if(requestPathOrJwkServiceIds == null) {
             // single oauth server, kid is the key for the jwk cache. get the jwkList from the jwksMap first and then cacheManager.
             jwkList = getCachedJwk(kid, null);
+
         } else if(requestPathOrJwkServiceIds instanceof String) {
             String requestPath = (String)requestPathOrJwkServiceIds;
             // a single request path is passed in.
@@ -412,6 +416,13 @@ public class JwtVerifier extends TokenVerifier {
             if (key == null) {
                 throw new RuntimeException("no JWK for kid: " + kid);
             }
+
+            try {
+                jwkList = new JsonWebKeySet(key).getJsonWebKeys();
+            } catch (JoseException e) {
+                throw new RuntimeException(e);
+            }
+
             if(requestPathOrJwkServiceIds == null) {
                 // single jwk setup and kid is the key for the jwk cache.
                 cacheJwk(key, null);
@@ -426,6 +437,7 @@ public class JwtVerifier extends TokenVerifier {
                 }
             }
         }
+
         logger.debug("Got Json web key set from local cache");
         return new JwksVerificationKeyResolver(jwkList);
     }
@@ -458,6 +470,7 @@ public class JwtVerifier extends TokenVerifier {
             jwkList = jwksMap.get(serviceId + ":" + kid);
             if(jwkList == null) {
                 String key = (String)cacheManager.get(LambdaProxy.CONFIG.getLambdaAppId() + ":" + JWK, serviceId + ":" + kid);
+                logger.debug("JWK From Cache: {}", key);
                 if(key != null) {
                     try {
                         jwkList = new JsonWebKeySet(key).getJsonWebKeys();
@@ -470,6 +483,7 @@ public class JwtVerifier extends TokenVerifier {
             jwkList = jwksMap.get(kid);
             if(jwkList == null) {
                 String key = (String)cacheManager.get(LambdaProxy.CONFIG.getLambdaAppId() + ":" + JWK, kid);
+                logger.debug("JWK From Cache: {}", key);
                 if(key != null) {
                     try {
                         jwkList = new JsonWebKeySet(key).getJsonWebKeys();
@@ -479,6 +493,7 @@ public class JwtVerifier extends TokenVerifier {
                 }
             }
         }
+
         return jwkList;
     }
 
@@ -502,9 +517,11 @@ public class JwtVerifier extends TokenVerifier {
                     logger.debug("Successfully cached JWK in cacheManager for serviceId {} kid {} with key {}", LambdaProxy.CONFIG.getLambdaAppId(), jwk.getKeyId(), serviceId + ":" + jwk.getKeyId());
             } else {
                 if(logger.isTraceEnabled()) logger.trace("cache the jwkList with kid and only kid as key", jwk.getKeyId());
+
                 jwksMap.put(jwk.getKeyId(), jwkList);
                 if (logger.isDebugEnabled())
                     logger.debug("Successfully cached JWK in jwksMap for kid {} with key {}", jwk.getKeyId(), jwk.getKeyId());
+
                 cacheManager.put(LambdaProxy.CONFIG.getLambdaAppId() + ":" + JWK, jwk.getKeyId(), key);
                 if(logger.isDebugEnabled())
                     logger.debug("Successfully cached JWK in cacheManager for serviceId {} kid {} with key {}", LambdaProxy.CONFIG.getLambdaAppId(), jwk.getKeyId(), jwk.getKeyId());

@@ -90,19 +90,22 @@ public class LambdaProxy implements RequestHandler<APIGatewayProxyRequestEvent, 
             var path = exchange.getRequest().getPath();
             var method = exchange.getRequest().getHttpMethod().toLowerCase();
             LOG.debug("Request path: {} -- Request method: {}", path, method);
-
             var functionName = CONFIG.getFunctions().get(path + "@" + method);
-
             var res = this.invokeFunction(client, functionName, exchange);
+            LOG.debug("Invoke Time - Finish: {}", System.currentTimeMillis());
+
             var responseEvent = JsonMapper.fromJson(res, APIGatewayProxyResponseEvent.class);
             exchange.setResponse(responseEvent);
+            LOG.debug("Exec Response Chain - Start: {}", System.currentTimeMillis());
 
             /* exec response chain */
             exchange.executeResponseChain();
+            LOG.debug("Exec Response Chain - Finish: {}", System.currentTimeMillis());
             exchange.finalizeResponse();
-            LOG.debug("Invoke Time - Finish: {}", System.currentTimeMillis());
-        }
 
+
+
+        }
         LOG.debug("Lambda CCC --end");
 
         return exchange.getResponse();
@@ -111,7 +114,6 @@ public class LambdaProxy implements RequestHandler<APIGatewayProxyRequestEvent, 
     }
 
     private String invokeFunction(final LambdaClient client, String functionName, final LightLambdaExchange eventWrapper) {
-
         String serializedEvent = null;
         try {
             serializedEvent = Config.getInstance().getMapper().writeValueAsString(eventWrapper.getRequest());

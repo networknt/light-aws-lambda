@@ -37,11 +37,15 @@ public class DynamoDbCacheManager implements CacheManager {
 
     @Override
     public void put(String cacheName, String key, Object value) {
+
         // cacheName is serviceId + ":" + jwt or jwk
         String applicationId = cacheName.split(":")[0];
         String tableName = cacheName.split(":")[1];
+
         LOG.debug("Updating table entry of applicationId: {}, table name: {}, attribute key: {} and value: {}", applicationId, tableName, key, value);
+
         Table table = tables.get(tableName);
+
         var item = table.getItem(HASH_ID_KEY, applicationId);
 
         if (item != null && item.getString(key) != null) {
@@ -115,7 +119,9 @@ public class DynamoDbCacheManager implements CacheManager {
 
 
     public DynamoDbCacheManager() {
-        if(logger.isInfoEnabled()) logger.info("DynamoDbCacheManager is constructed.");
+        if(logger.isInfoEnabled())
+            logger.info("DynamoDbCacheManager is constructed.");
+
         this.tableInitiated = false;
         this.dynamoClient = AmazonDynamoDBClientBuilder
                 .standard()
@@ -128,10 +134,8 @@ public class DynamoDbCacheManager implements CacheManager {
 
     /**
      * Creates dynamo db table. We check if the table exists before creating one.
-     *
-     * @return - return true when a table was created. Returns false when there is a failure or the table already exists.
      */
-    private boolean createCacheTable(String tableName) {
+    private void createCacheTable(String tableName) {
         LOG.debug("Attempting to create new cache table '{}'", tableName);
         var attributeDefinitions = new ArrayList<AttributeDefinition>();
         attributeDefinitions.add(new AttributeDefinition()
@@ -158,10 +162,10 @@ public class DynamoDbCacheManager implements CacheManager {
             LOG.debug("Waiting for table status to be active...");
             table.waitForActive();
         } catch (InterruptedException e) {
-            return false;
+           // nothing
         }
 
-        return true;
+        //
     }
 
     /**

@@ -76,7 +76,7 @@ public class LambdaInvokerConfig {
         this.metricsName = metricsName;
     }
 
-    private Config config;
+    private final Config config;
     private Map<String, Object> mappedConfig;
 
     public LambdaInvokerConfig() {

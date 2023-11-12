@@ -57,7 +57,7 @@ public class LambdaFunctionHandler implements LightHttpHandler {
                 logger.error("An instance of MetricsHandler is not configured in the handler.yml.");
             }
         }
-        ModuleRegistry.registerModule(LambdaFunctionHandler.class.getName(), config.getMappedConfig(), null);
+        ModuleRegistry.registerModule(LambdaInvokerConfig.CONFIG_NAME, LambdaFunctionHandler.class.getName(), config.getMappedConfig(), null);
         if(logger.isInfoEnabled()) logger.info("LambdaFunctionHandler is loaded.");
     }
 
@@ -190,7 +190,7 @@ public class LambdaFunctionHandler implements LightHttpHandler {
                 logger.error("An instance of MetricsHandler is not configured in the handler.yml.");
             }
         }
-        ModuleRegistry.registerModule(LambdaFunctionHandler.class.getName(), config.getMappedConfig(), null);
+        ModuleRegistry.registerModule(LambdaInvokerConfig.CONFIG_NAME, LambdaFunctionHandler.class.getName(), config.getMappedConfig(), null);
         if(logger.isInfoEnabled()) logger.info("LambdaFunctionHandler is loaded.");
     }
 }

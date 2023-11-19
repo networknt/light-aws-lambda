@@ -7,6 +7,8 @@
 
 
 - fixes \#69 refactor module registry to add config name [\#70](https://github.com/networknt/light-aws-lambda/pull/70) ([stevehu](https://github.com/stevehu))
+
+
 ## [2.1.28](https://github.com/networknt/light-aws-lambda/tree/2.1.28) (2023-10-24)
 
 

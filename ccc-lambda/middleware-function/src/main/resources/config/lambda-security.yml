@@ -1,0 +1,34 @@
+
+# Enable JWT verification flag.
+enableVerifyJwt: ${lambda-security.enableVerifyJwt:true}
+
+# Extract JWT scope token from the X-Scope-Token header and validate the JWT token
+enableExtractScopeToken: ${lambda-security.enableExtractScopeToken:true}
+
+# Enable JWT scope verification.
+# Only valid when (enableVerifyJwt is true) AND (enableVerifyJWTScopeToken is true)
+enableVerifyScope: ${lambda-security.enableVerifyScope:true}
+
+# User for test only. should be always be false on official environment.
+enableMockJwt: ${lambda-security.enableMockJwt:false}
+
+# For test only, should be always be true on official environment.
+ignoreJwtExpiry: ${lambda-security.ignoreJwtExpiry:false}
+
+# Enable or disable JWT token logging
+logJwtToken: ${lambda-security.logJwtToken:false}
+
+# Enable or disable client_id, user_id and scope logging.
+logClientUserScope: ${lambda-security.logClientUserScope:false}
+
+# Enable JWT token cache to speed up verification. This will only verify expired time
+# and skip the signature verification as it takes more CPU power and long time.
+enableJwtCache: ${lambda-security.enableJwtCache:true}
+
+jwt:
+  certificate: ${security.certificate:100=primary.crt&101=secondary.crt}
+  #    '100': primary.crt
+  #    '101': secondary.crt
+  clockSkewInSeconds: ${security.clockSkewInSeconds:60}
+  # Key distribution server standard: JsonWebKeySet for other OAuth 2.0 provider| X509Certificate for light-oauth2
+  keyResolver: ${security.keyResolver:JsonWebKeySet}

@@ -4,14 +4,14 @@ import com.networknt.aws.lambda.middleware.LambdaMiddleware;
 import com.networknt.aws.lambda.middleware.LightLambdaExchange;
 import com.networknt.aws.lambda.middleware.chain.ChainLinkCallback;
 import com.networknt.config.Config;
+import com.networknt.security.SecurityConfig;
 import com.networknt.status.Status;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 public class SwtVerifyMiddleware extends LambdaMiddleware {
     private static final Logger LOG = LoggerFactory.getLogger(SwtVerifyMiddleware.class);
-    private static final String CONFIG_NAME = "lambda-security";
-    private static final SecurityConfig CONFIG = (SecurityConfig) Config.getInstance().getJsonObjectConfig(CONFIG_NAME, SecurityConfig.class);
+    private static final SecurityConfig CONFIG = SecurityConfig.load(SecurityConfig.CONFIG_NAME);
 
     public SwtVerifyMiddleware() {
         super(false, false, false);

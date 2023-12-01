@@ -9,6 +9,7 @@ import com.networknt.aws.lambda.middleware.chain.ChainLinkCallback;
 import com.networknt.aws.lambda.utility.HeaderKey;
 import com.networknt.aws.lambda.utility.HeaderValue;
 import com.networknt.config.Config;
+import com.networknt.openapi.ValidatorConfig;
 import com.networknt.status.Status;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -25,7 +26,7 @@ public class ValidatorMiddleware extends LambdaMiddleware {
     private static final String CONTENT_TYPE_MISMATCH = "ERR10015";
     private static OpenApiValidator OPENAPI_VALIDATOR;
 
-    private static final ValidatorConfig CONFIG = (ValidatorConfig) Config.getInstance().getJsonObjectConfig(CONFIG_NAME, ValidatorConfig.class);
+    private static final ValidatorConfig CONFIG = ValidatorConfig.load();
 
     public ValidatorMiddleware() {
         super(false, true, false);
@@ -102,7 +103,7 @@ public class ValidatorMiddleware extends LambdaMiddleware {
     private boolean shouldValidateRequestBody(final LightLambdaExchange exchange) {
         return this.getChainDirection().equals(ChainDirection.REQUEST)
                 && this.isApplicationJsonContentType(exchange.getRequest().getHeaders())
-                && CONFIG.isValidateRequest();
+                && !CONFIG.isSkipBodyValidation();
     }
 
     private boolean shouldValidateResponseBody(final LightLambdaExchange exchange) {

@@ -1,10 +1,9 @@
 package com.networknt.aws.lambda.middleware.correlation;
 import com.networknt.aws.lambda.middleware.LambdaMiddleware;
-import com.networknt.aws.lambda.middleware.chain.ChainLinkCallback;
 import com.networknt.aws.lambda.middleware.LightLambdaExchange;
 import com.networknt.aws.lambda.utility.HeaderKey;
 import com.networknt.aws.lambda.utility.LoggerKey;
-import com.networknt.config.Config;
+import com.networknt.correlation.CorrelationConfig;
 import com.networknt.status.Status;
 import org.apache.commons.codec.binary.Base64;
 import org.slf4j.Logger;
@@ -17,8 +16,7 @@ import java.util.UUID;
 
 public class CorrelationMiddleware extends LambdaMiddleware {
 
-    private static final String CONFIG_NAME = "lambda-correlation";
-    private static CorrelationConfig CONFIG = (CorrelationConfig) Config.getInstance().getJsonObjectConfig(CONFIG_NAME, CorrelationConfig.class);
+    private static final CorrelationConfig CONFIG = CorrelationConfig.load();
     private static final Logger LOG = LoggerFactory.getLogger(CorrelationMiddleware.class);
     private static final LightLambdaExchange.Attachable<CorrelationMiddleware> CORRELATION_ATTACHMENT_KEY = LightLambdaExchange.Attachable.createMiddlewareAttachable(CorrelationMiddleware.class);
 

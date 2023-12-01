@@ -1,9 +1,8 @@
 package com.networknt.aws.lambda.middleware.header;
 
 import com.networknt.aws.lambda.middleware.LambdaMiddleware;
-import com.networknt.aws.lambda.middleware.chain.ChainLinkCallback;
 import com.networknt.aws.lambda.middleware.LightLambdaExchange;
-import com.networknt.config.Config;
+import com.networknt.header.HeaderConfig;
 import com.networknt.status.Status;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -13,10 +12,9 @@ import java.util.Map;
 
 public class HeaderMiddleware extends LambdaMiddleware {
 
-    public static final String CONFIG_NAME = "lambda-header";
     private static final String UNKNOWN_HEADER_OPERATION = "ERR14004";
     private static final String HEADER_MISSING_FOR_OPERATION = "ERR14005";
-    private static HeaderConfig CONFIG = (HeaderConfig) Config.getInstance().getJsonObjectConfig(CONFIG_NAME, HeaderConfig.class);
+    private static final HeaderConfig CONFIG = HeaderConfig.load();
     private static final Logger LOG = LoggerFactory.getLogger(HeaderMiddleware.class);
 
     public HeaderMiddleware() {
@@ -45,86 +43,34 @@ public class HeaderMiddleware extends LambdaMiddleware {
 
     private Status handleRequestHeaders(LightLambdaExchange exchange) {
         var headers = exchange.getRequest().getHeaders();
-        var transforms = CONFIG.getRequestHeader();
-
-        if (headers == null || transforms == null)
+        List<String> removeList = CONFIG.getRequestRemoveList();
+        Map<String, Object> updateMap = CONFIG.getRequestUpdateMap();
+        if (headers == null || removeList == null || updateMap == null)
             return LambdaMiddleware.successMiddlewareStatus();
 
-        return this.handleTransforms(headers, transforms);
+        return this.handleTransforms(headers, removeList, updateMap);
     }
 
     private Status handleResponseHeaders(LightLambdaExchange exchange) {
         var headers = exchange.getResponse().getHeaders();
-        var transforms = CONFIG.getResponseHeader();
-
-        if (headers == null || transforms == null)
+        List<String> removeList = CONFIG.getResponseRemoveList();
+        Map<String, Object> updateMap = CONFIG.getResponseUpdateMap();
+        if (headers == null || removeList == null || updateMap == null)
             return LambdaMiddleware.successMiddlewareStatus();
 
-        return this.handleTransforms(headers, transforms);
+        return this.handleTransforms(headers, removeList, updateMap);
     }
 
-    private Status handleTransforms(Map<String, String> headers, List<HeaderConfig.HeaderChange> headerChanges) {
-
-        LOG.debug("Using transforms '{}' on headers '{}'", headerChanges, headers);
-
-        for (var headerChange : headerChanges) {
-
-            switch (headerChange.getChangeDescriptor().getChangeType()) {
-
-                case REPLACE: {
-                    if (headers.get(headerChange.getHeaderKey()) == null && CONFIG.isFailOnMissingHeader())
-                        return new Status(HEADER_MISSING_FOR_OPERATION);
-
-                    else if (headers.get(headerChange.getHeaderKey()) == null)
-                        return LambdaMiddleware.successMiddlewareStatus();
-                }
-
-                case ADD: {
-                    headers.put(headerChange.getHeaderKey(), headerChange.getChangeDescriptor().getValue());
-                    break;
-                }
-
-                case REMOVE: {
-                    headers.remove(headerChange.getHeaderKey());
-                    break;
-                }
-
-                case APPEND: {
-                    var appendedHeader = headers.get(headerChange.getHeaderKey());
-
-                    if (appendedHeader == null && CONFIG.isFailOnMissingHeader())
-                        return new Status(HEADER_MISSING_FOR_OPERATION);
-
-                    else if (appendedHeader == null)
-                        return LambdaMiddleware.successMiddlewareStatus();
-
-                    appendedHeader = appendedHeader + headerChange.getChangeDescriptor().getValue();
-                    headers.put(headerChange.getHeaderKey(), appendedHeader);
-                    break;
-                }
-
-                case PREPEND: {
-                    var prependedHeader = headers.get(headerChange.getHeaderKey());
-
-                    if (prependedHeader == null && CONFIG.isFailOnMissingHeader())
-                        return new Status(HEADER_MISSING_FOR_OPERATION);
-
-                    else if (prependedHeader == null)
-                        return LambdaMiddleware.successMiddlewareStatus();
-
-                    prependedHeader = headerChange.getChangeDescriptor().getValue() + prependedHeader;
-                    headers.put(headerChange.getHeaderKey(), prependedHeader);
-                    break;
-                }
-
-                default:
-                    return new Status(UNKNOWN_HEADER_OPERATION);
-            }
+    private Status handleTransforms(Map<String, String> headers, List<String> removeList, Map<String, Object> updateMap) {
+        LOG.debug("Using transforms remove '{}' and update '{}' on headers '{}'", removeList, updateMap, headers);
+        for (String header : removeList) {
+            headers.remove(header);
         }
-
+        for (Map.Entry<String, Object> entry : updateMap.entrySet()) {
+            headers.put(entry.getKey(), (String) entry.getValue());
+        }
         return LambdaMiddleware.successMiddlewareStatus();
     }
-
 
     @Override
     public void getCachedConfigurations() {

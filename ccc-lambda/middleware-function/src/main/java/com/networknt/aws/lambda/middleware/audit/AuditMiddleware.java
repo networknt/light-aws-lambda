@@ -1,10 +1,9 @@
 package com.networknt.aws.lambda.middleware.audit;
 
+import com.networknt.audit.AuditConfig;
 import com.networknt.aws.lambda.middleware.LambdaMiddleware;
 import com.networknt.aws.lambda.middleware.LightLambdaExchange;
-import com.networknt.aws.lambda.middleware.chain.ChainLinkCallback;
 import com.networknt.aws.lambda.middleware.security.JwtVerifyMiddleware;
-import com.networknt.config.Config;
 import com.networknt.status.Status;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -17,8 +16,7 @@ import org.slf4j.LoggerFactory;
  */
 public class AuditMiddleware extends LambdaMiddleware {
     private static final Logger LOG = LoggerFactory.getLogger(JwtVerifyMiddleware.class);
-    private static final String CONFIG_NAME = "audit";
-    private static final AuditConfig CONFIG = (AuditConfig) Config.getInstance().getJsonObjectConfig(CONFIG_NAME, AuditConfig.class);
+    private static final AuditConfig CONFIG = AuditConfig.load();
     public static final LightLambdaExchange.Attachable<AuditMiddleware> AUDIT_ATTACHMENT_KEY = LightLambdaExchange.Attachable.createMiddlewareAttachable(AuditMiddleware.class);
 
     public AuditMiddleware(boolean audited, boolean asynchronous, boolean continueOnFailure) {

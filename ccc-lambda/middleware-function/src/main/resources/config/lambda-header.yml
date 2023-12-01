@@ -1,4 +1,0 @@
-enabled: ${lambda-header.enabled:true}
-failOnMissingHeader: ${lambda-header.failOnMissingHeader:true}
-requestHeader: ${lambda-header.requestHeader:}
-responseHeader: ${lambda-header.responseHeader:}

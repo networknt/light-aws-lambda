@@ -1,3 +1,0 @@
-enabled: ${lambda-body.enabled:true}
-requestBodyTransform: ${lambda-body.requestBodyTransform:}
-responseBodyTransform: ${lambda-body.responseBodyTransform:}

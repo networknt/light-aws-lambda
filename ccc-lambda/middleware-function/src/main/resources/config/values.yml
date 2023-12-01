@@ -14,7 +14,6 @@ lambda-proxy.requestChain:
   - "com.networknt.aws.lambda.middleware.header.HeaderMiddleware"
   - "com.networknt.aws.lambda.middleware.traceability.TraceabilityMiddleware"
   - "com.networknt.aws.lambda.middleware.correlation.CorrelationMiddleware"
-  #- "com.networknt.aws.lambda.middleware.body.RequestBodyTransformerMiddleware"
 
 lambda-proxy.lambdaAppId: lambda-petstore-0.0.1-SNAPSHOT
 # -------------------------------------------
@@ -36,7 +35,7 @@ cache.caches:
 # -------------------------------------------
 
 # --------< Lambda Validator Config >--------
-lambda-validator.validateRequest: true
+openapi-validator.validateRequest: true
 # -------------------------------------------
 
 # --< Lambda Pooled Chain Executor Config >--
@@ -47,37 +46,17 @@ pooled-chain-executor.maxChainLength: 20
 # -------------------------------------------
 
 # --------< Lambda Security Config >---------
-lambda-security.ignoreJwtExpiry: true
-lambda-security.logJwtToken: true
-lambda-security.enableJwtCache: true
+security.ignoreJwtExpiry: true
+security.logJwtToken: true
+security.enableJwtCache: true
 # -------------------------------------------
 
 # ----------< Lambda Header Config >---------
-lambda-header.failOnMissingHeader: false
-lambda-header.requestHeader:
-  - headerKey: x-traceability-id
-    changeDescriptor:
-      changeType: APPEND
-      value: "-append-test"
-  - headerKey: x-added-header
-    changeDescriptor:
-      changeType: ADD
-      value: "addedHeaderValue"
-  - headerKey: x-traceability-id
-    changeDescriptor:
-      changeType: PREPEND
-      value: "prepend-test-"
-  - headerKey: x-some-random-header
-    changeDescriptor:
-      changeType: REMOVE
-      value: ""
+header.enabled: true
+
 # -------------------------------------------
 
 client.tokenKeyServerUrl: https://networknt.oktapreview.com
 client.tokenKeyUri: /oauth2/aus66u5cybTrCsbZs1d6/v1/keys
 client.tokenKeyEnableHttp2: false
 client.tokenKeyAudience: dev.canada.referenceapi.networknt.oktapreview.com
-client.tokenProxyHost: --
-client.tokenProxyPort: --
-
-

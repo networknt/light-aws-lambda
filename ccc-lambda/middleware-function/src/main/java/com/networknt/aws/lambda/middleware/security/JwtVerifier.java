@@ -1,8 +1,6 @@
 package com.networknt.aws.lambda.middleware.security;
 
-import com.networknt.aws.lambda.cache.DynamoDbCacheManager;
 import com.networknt.aws.lambda.proxy.LambdaProxy;
-import com.networknt.aws.lambda.utility.LambdaEnvVariables;
 import com.networknt.cache.CacheManager;
 import com.networknt.client.ClientConfig;
 import com.networknt.client.oauth.OauthHelper;
@@ -11,6 +9,7 @@ import com.networknt.config.ConfigException;
 import com.networknt.config.JsonMapper;
 import com.networknt.exception.ClientException;
 import com.networknt.exception.ExpiredTokenException;
+import com.networknt.security.SecurityConfig;
 import com.networknt.status.Status;
 import org.jose4j.jwk.JsonWebKey;
 import org.jose4j.jwk.JsonWebKeySet;
@@ -25,8 +24,6 @@ import org.jose4j.jwt.NumericDate;
 import org.jose4j.jwt.consumer.*;
 import org.jose4j.jwx.JsonWebStructure;
 
-import java.io.InputStream;
-import java.nio.charset.StandardCharsets;
 import java.util.*;
 import java.util.function.BiFunction;
 
@@ -43,7 +40,6 @@ public class JwtVerifier extends TokenVerifier {
     private static final int CACHE_EXPIRED_IN_MINUTES = 15;
 
     SecurityConfig config;
-    Map<String, Object> jwtConfig;
     int secondsOfAllowedClockSkew;
     static Map<String, List<JsonWebKey>> jwksMap;
     CacheManager cacheManager = CacheManager.getInstance();
@@ -52,11 +48,8 @@ public class JwtVerifier extends TokenVerifier {
 
 
     public JwtVerifier(SecurityConfig config) {
-        logger.debug("config = " + config);
         this.config = config;
-        this.jwtConfig = config.getJwt();
-        logger.debug("jwtConfig = " + jwtConfig);
-        this.secondsOfAllowedClockSkew = (Integer)jwtConfig.get(JWT_CLOCK_SKEW_IN_SECONDS);
+        this.secondsOfAllowedClockSkew = config.getClockSkewInSeconds();
 
         if(Boolean.TRUE.equals(config.isEnableJwtCache())) {
             cache = new LinkedHashMap<>() {

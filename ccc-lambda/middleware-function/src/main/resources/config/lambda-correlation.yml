@@ -1,2 +1,0 @@
-enabled: ${lambda-correlation.enabled:true}
-autogenCorrelationID: ${lambda-correlation.autogenCorrelationID:true}

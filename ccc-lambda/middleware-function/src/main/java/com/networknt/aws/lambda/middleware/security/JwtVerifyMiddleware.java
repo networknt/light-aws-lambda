@@ -2,15 +2,14 @@ package com.networknt.aws.lambda.middleware.security;
 
 import com.networknt.aws.lambda.middleware.LambdaMiddleware;
 import com.networknt.aws.lambda.middleware.LightLambdaExchange;
-import com.networknt.aws.lambda.middleware.chain.ChainLinkCallback;
 import com.networknt.aws.lambda.middleware.specification.OpenApiMiddleware;
 import com.networknt.aws.lambda.utility.HeaderKey;
-import com.networknt.config.Config;
 import com.networknt.exception.ExpiredTokenException;
 import com.networknt.oas.model.Operation;
 import com.networknt.oas.model.SecurityParameter;
 import com.networknt.oas.model.SecurityRequirement;
 import com.networknt.openapi.OpenApiOperation;
+import com.networknt.security.SecurityConfig;
 import com.networknt.status.Status;
 import com.networknt.utility.Constants;
 import org.jose4j.jwt.JwtClaims;
@@ -26,8 +25,7 @@ import static com.networknt.aws.lambda.utility.HeaderKey.SCOPE_TOKEN;
 
 public class JwtVerifyMiddleware extends LambdaMiddleware {
     private static final Logger LOG = LoggerFactory.getLogger(JwtVerifyMiddleware.class);
-    private static final String CONFIG_NAME = "lambda-security";
-    private static final SecurityConfig config = (SecurityConfig) Config.getInstance().getJsonObjectConfig(CONFIG_NAME, SecurityConfig.class);
+    private static final SecurityConfig config = SecurityConfig.load(SecurityConfig.CONFIG_NAME);
     public static JwtVerifier jwtVerifier;
 
     static final String STATUS_INVALID_AUTH_TOKEN = "ERR10000";

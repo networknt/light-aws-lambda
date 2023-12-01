@@ -3,8 +3,6 @@ package com.networknt.aws.lambda.middleware.specification;
 import com.fasterxml.jackson.core.JsonProcessingException;
 import com.networknt.aws.lambda.middleware.LambdaMiddleware;
 import com.networknt.aws.lambda.middleware.LightLambdaExchange;
-import com.networknt.aws.lambda.middleware.chain.ChainLinkCallback;
-import com.networknt.aws.lambda.middleware.security.SecurityConfig;
 import com.networknt.config.Config;
 import com.networknt.oas.model.Operation;
 import com.networknt.oas.model.Path;

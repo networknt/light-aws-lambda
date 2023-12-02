@@ -505,7 +505,7 @@ public class JwtVerifier extends TokenVerifier {
                 if (logger.isDebugEnabled())
                     logger.debug("Successfully cached JWK in jwksMap for serviceId {} kid {} with key {}", serviceId, jwk.getKeyId(), serviceId + ":" + jwk.getKeyId());
                 // cacheName is the serviceId + ":" + jwk or jwt which is the table name.
-                cacheManager.put(LambdaProxy.CONFIG.getLambdaAppId() + ":" + JWK, serviceId + ":" + jwk.getKeyId(), key);
+                if(cacheManager != null) cacheManager.put(LambdaProxy.CONFIG.getLambdaAppId() + ":" + JWK, serviceId + ":" + jwk.getKeyId(), key);
                 if(logger.isDebugEnabled())
                     logger.debug("Successfully cached JWK in cacheManager for serviceId {} kid {} with key {}", LambdaProxy.CONFIG.getLambdaAppId(), jwk.getKeyId(), serviceId + ":" + jwk.getKeyId());
             } else {
@@ -515,7 +515,7 @@ public class JwtVerifier extends TokenVerifier {
                 if (logger.isDebugEnabled())
                     logger.debug("Successfully cached JWK in jwksMap for kid {} with key {}", jwk.getKeyId(), jwk.getKeyId());
 
-                cacheManager.put(LambdaProxy.CONFIG.getLambdaAppId() + ":" + JWK, jwk.getKeyId(), key);
+                if(cacheManager != null) cacheManager.put(LambdaProxy.CONFIG.getLambdaAppId() + ":" + JWK, jwk.getKeyId(), key);
                 if(logger.isDebugEnabled())
                     logger.debug("Successfully cached JWK in cacheManager for serviceId {} kid {} with key {}", LambdaProxy.CONFIG.getLambdaAppId(), jwk.getKeyId(), jwk.getKeyId());
 

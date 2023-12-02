@@ -27,7 +27,7 @@ service.singletons:
 # ---------< Cache Manager Config >----------
 cache.caches:
   - cacheName: jwt
-    expiryInMinutes: 60
+    expiryInMinutes: 11
     maxSize: 1000
   - cacheName: jwk
     expiryInMinutes: 600
@@ -55,8 +55,8 @@ security.enableJwtCache: true
 header.enabled: true
 
 # -------------------------------------------
-
+# client.yml
 client.tokenKeyServerUrl: https://networknt.oktapreview.com
 client.tokenKeyUri: /oauth2/aus66u5cybTrCsbZs1d6/v1/keys
 client.tokenKeyEnableHttp2: false
-client.tokenKeyAudience: dev.canada.referenceapi.networknt.oktapreview.com
+# client.tokenKeyAudience: dev.canada.referenceapi.networknt.oktapreview.com

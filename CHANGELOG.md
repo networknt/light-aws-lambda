@@ -10,6 +10,8 @@
 - fixes \#74  Allow the all handlers to be executed locally without AWS [\#75](https://github.com/networknt/light-aws-lambda/pull/75) ([stevehu](https://github.com/stevehu))
 - fixes \#72 sync config file with other light-4j modules [\#73](https://github.com/networknt/light-aws-lambda/pull/73) ([stevehu](https://github.com/stevehu))
 - add ccc-lambda function to address cross-cutting concerns [\#71](https://github.com/networknt/light-aws-lambda/pull/71) ([stevehu](https://github.com/stevehu))
+
+
 ## [2.1.30](https://github.com/networknt/light-aws-lambda/tree/2.1.30) (2023-11-21)
 
 

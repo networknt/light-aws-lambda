@@ -31,3 +31,4 @@ hs_err_pid*
 .aws-sam/
 target/
 lambda-openapi.yaml
+lambda-openapi.yaml

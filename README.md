@@ -3,7 +3,7 @@ Aws lambda authorizer, middleware handlers and extensions for cross-cutting conc
 
 ### authorizer
 
-The authorizer is a lambda function and it will be configured on the AWS API Gateway to be invoked as a custom authorizer. 
+The authorizer is a lambda function and it will be configured on the AWS API Gateway to be invoked as a custom authorizer.
 
 
 ### middleware handlers
@@ -29,6 +29,3 @@ This is a Lambda extersion that will collect the logs of the Lambda function and
 ##### Metrics
 
 This is a Lambda extension that will collect the metrics of the Lambda function and send to a time series database.
-
-
-

@@ -39,4 +39,3 @@ public class TestAsynchronousMiddleware extends LambdaMiddleware {
 
     }
 }
-

@@ -1,6 +1,6 @@
 ### Test with Main
 
-We have provided a Main class in the src folder for testing all the middleware handlers with a sample request. You can run the Main class within your IDE with debug mode to see how each middleware handler works. 
+We have provided a Main class in the src folder for testing all the middleware handlers with a sample request. You can run the Main class within your IDE with debug mode to see how each middleware handler works.
 
 Before running the Main class, you need to disable the DynamoDbCacheManager as it depends on the AWS environment. To do that you need to common out the service.yml section in the values.yml
 
@@ -20,7 +20,7 @@ client.tokenKeyServerUrl: https://networknt.oktapreview.com
 client.tokenKeyUri: /oauth2/aus66u5cybTrCsbZs1d6/v1/keys
 ```
 
-If everything works fine, you should see the following error that indicate all middleware handlers are passed and the AWS Lambda invocation is failed. This is because we are testing without AWS environment. 
+If everything works fine, you should see the following error that indicate all middleware handlers are passed and the AWS Lambda invocation is failed. This is because we are testing without AWS environment.
 
 ```
 22:38:36.103 [main] DEBUG software.amazon.awssdk.auth.credentials.AwsCredentialsProviderChain -- Unable to load credentials from SystemPropertyCredentialsProvider(): Unable to load credentials from system settings. Access key must be specified either via environment variable (AWS_ACCESS_KEY_ID) or system property (aws.accessKeyId).

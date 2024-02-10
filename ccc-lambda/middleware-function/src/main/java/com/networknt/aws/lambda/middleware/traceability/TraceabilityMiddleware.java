@@ -15,7 +15,7 @@ public class TraceabilityMiddleware extends LambdaMiddleware {
     private static final Logger LOG = LoggerFactory.getLogger(TraceabilityMiddleware.class);
     private static final String CONFIG_NAME = "lambda-traceability";
     private static final TraceabilityConfig CONFIG = TraceabilityConfig.load();
-    private static final LightLambdaExchange.Attachable<TraceabilityMiddleware> TRACEABILITY_ATTACHMENT_KEY = LightLambdaExchange.Attachable.createMiddlewareAttachable(TraceabilityMiddleware.class);
+    public static final LightLambdaExchange.Attachable<TraceabilityMiddleware> TRACEABILITY_ATTACHMENT_KEY = LightLambdaExchange.Attachable.createMiddlewareAttachable(TraceabilityMiddleware.class);
 
     public TraceabilityMiddleware() {
         super(true, false, false);

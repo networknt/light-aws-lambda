@@ -1,22 +1,32 @@
 version: '3.8'
 
+networks:
+  localstack-net:
+    name: localstack-net
+    driver: bridge
+
 services:
   localstack:
     image: localstack/localstack
-    container_name: localstack-example
-    hostname: localstack
+    container_name: "${LOCALSTACK_DOCKER_NAME:-localstack-main}"
+    networks:
+      - localstack-net
     ports:
-      - "4566:4566"
+      - "127.0.0.1:4566:4566"            # LocalStack Gateway
+      - "127.0.0.1:4510-4559:4510-4559"  # external services port range
     environment:
-      # Declare which aws services will be used in localstack
       - SERVICES=sqs,sns,iam,s3,lambda
       - DEBUG=1
-      # These variables are needed for localstack
       - AWS_DEFAULT_REGION=ca-central-1
       - AWS_ACCESS_KEY_ID=testUser
       - AWS_SECRET_ACCESS_KEY=testAccessKey
       - DOCKER_HOST=unix:///var/run/docker.sock
       - DATA_DIR=/tmp/localstack/data
+      - EDGE_PORT=4566
+      - PORT_WEB_UI=8081
+      - LAMBDA_EXECUTOR=local
+      - HOSTNAME_EXTERNAL=localhost
+      - LOCALSTACK_HOSTNAME=localhost
     volumes:
-      - "${TMPDIR:-/tmp}/localstack:/tmp/localstack"
+      - "${LOCALSTACK_VOLUME_DIR:-./volume}:/var/lib/localstack"
       - /var/run/docker.sock:/var/run/docker.sock

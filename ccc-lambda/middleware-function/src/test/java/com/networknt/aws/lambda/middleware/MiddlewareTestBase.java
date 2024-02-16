@@ -1,7 +1,13 @@
 package com.networknt.aws.lambda.middleware;
 
+import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.databind.DeserializationFeature;
 import com.fasterxml.jackson.databind.ObjectMapper;
+import com.networknt.config.Config;
+import software.amazon.awssdk.core.SdkBytes;
+import software.amazon.awssdk.services.lambda.LambdaClient;
+import software.amazon.awssdk.services.lambda.model.InvokeRequest;
+import software.amazon.awssdk.services.lambda.model.LambdaException;
 
 public class MiddlewareTestBase {
     String testEvent = "{\n" +
@@ -131,5 +137,30 @@ public class MiddlewareTestBase {
 
     public static final ObjectMapper OBJECT_MAPPER = new ObjectMapper()
             .disable(DeserializationFeature.FAIL_ON_UNKNOWN_PROPERTIES);
+
+    protected String invokeFunction(final LambdaClient client, String functionName, final LightLambdaExchange eventWrapper) {
+        String serializedEvent = null;
+        try {
+            serializedEvent = Config.getInstance().getMapper().writeValueAsString(eventWrapper.getRequest());
+        } catch (JsonProcessingException e) {
+            throw new RuntimeException(e);
+        }
+        String response = null;
+
+        try {
+            var payload = SdkBytes.fromUtf8String(serializedEvent);
+            var request = InvokeRequest.builder()
+                    .functionName(functionName)
+                    .logType("Tail")
+                    .payload(payload)
+                    .build();
+            var res = client.invoke(request);
+
+            response = res.payload().asUtf8String();
+        } catch (LambdaException e) {
+            throw new RuntimeException(e);
+        }
+        return response;
+    }
 
 }

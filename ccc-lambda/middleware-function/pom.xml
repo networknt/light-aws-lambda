@@ -85,15 +85,17 @@
         <version.lambda-core>1.2.2</version.lambda-core>
         <version.lambda-events>3.11.0</version.lambda-events>
         <version.lambda-awssdk>2.20.38</version.lambda-awssdk>
+        <version.dynamodb>1.12.556</version.dynamodb>
         <version.secretsmanager-aws>2.20.127</version.secretsmanager-aws>
         <version.lambda-lambdasdk>1.11.648</version.lambda-lambdasdk>
         <version.lambda-iam>1.12.441</version.lambda-iam>
         <version.jose4j>0.9.3</version.jose4j>
         <version.logback>1.4.14</version.logback>
-        <version.junit>5.10.0</version.junit>
         <version.maven-shade>3.2.4</version.maven-shade>
         <version.maven-jar>3.2.0</version.maven-jar>
         <version.maven-compiler>3.8.1</version.maven-compiler>
+        <version.testcontainers>1.19.5</version.testcontainers>
+        <version.junit-jupiter>5.9.1</version.junit-jupiter>
     </properties>
 
     <dependencies>
@@ -210,7 +212,7 @@
         <dependency>
             <groupId>com.amazonaws</groupId>
             <artifactId>aws-java-sdk-dynamodb</artifactId>
-            <version>1.12.556</version>
+            <version>${version.dynamodb}</version>
         </dependency>
         <dependency>
             <groupId>com.amazonaws</groupId>
@@ -250,19 +252,19 @@
         <dependency>
             <groupId>org.testcontainers</groupId>
             <artifactId>localstack</artifactId>
-            <version>1.19.5</version>
+            <version>${version.testcontainers}</version>
             <scope>test</scope>
         </dependency>
         <dependency>
             <groupId>org.testcontainers</groupId>
             <artifactId>junit-jupiter</artifactId>
-            <version>1.19.5</version>
+            <version>${version.testcontainers}</version>
             <scope>test</scope>
         </dependency>
         <dependency>
             <groupId>org.junit.jupiter</groupId>
             <artifactId>junit-jupiter</artifactId>
-            <version>5.9.1</version>
+            <version>${version.junit-jupiter}</version>
             <scope>test</scope>
         </dependency>
 

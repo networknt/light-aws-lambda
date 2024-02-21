@@ -11,4 +11,3 @@ if [ -d "target" ]; then
     --zip-file fileb://target/local-lambda-2.1.32-SNAPSHOT.jar \
     --role arn:aws:iam::000000000000:role/lambda-role
 fi
-

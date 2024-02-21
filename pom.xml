@@ -126,6 +126,7 @@
         <module>lambda-validator</module>
         <module>lambda-invoker</module>
         <module>lambda-interceptor</module>
+        <module>local-lambda</module>
     </modules>
 
     <dependencyManagement>

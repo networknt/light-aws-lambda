@@ -1,12 +1,11 @@
-package com.networknt.aws.lambda.example;
+package com.networknt.aws;
 
 import com.amazonaws.services.lambda.runtime.Context;
 import com.amazonaws.services.lambda.runtime.RequestHandler;
 import com.amazonaws.services.lambda.runtime.events.APIGatewayProxyRequestEvent;
 import com.amazonaws.services.lambda.runtime.events.APIGatewayProxyResponseEvent;
 
-public class Example implements RequestHandler<APIGatewayProxyRequestEvent, APIGatewayProxyResponseEvent> {
-
+public class LocalLambdaFunction implements RequestHandler<APIGatewayProxyRequestEvent, APIGatewayProxyResponseEvent> {
     @Override
     public APIGatewayProxyResponseEvent handleRequest(APIGatewayProxyRequestEvent apiGatewayProxyRequestEvent, Context context) {
         var responseEvent = new APIGatewayProxyResponseEvent();

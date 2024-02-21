@@ -1,33 +1,31 @@
-package com.networknt.aws.lambda.middleware;
+package com.networknt.aws.lambda.middleware.header;
 
 import com.amazonaws.services.lambda.runtime.Context;
 import com.amazonaws.services.lambda.runtime.events.APIGatewayProxyRequestEvent;
-import com.fasterxml.jackson.core.JsonProcessingException;
 import com.networknt.aws.lambda.InvocationResponse;
 import com.networknt.aws.lambda.LambdaContext;
+import com.networknt.aws.lambda.middleware.LightLambdaExchange;
+import com.networknt.aws.lambda.middleware.MiddlewareTestBase;
 import com.networknt.aws.lambda.middleware.chain.Chain;
 import com.networknt.aws.lambda.middleware.chain.ChainDirection;
-import com.networknt.aws.lambda.middleware.header.HeaderMiddleware;
-import com.networknt.aws.lambda.middleware.traceability.TraceabilityMiddleware;
 import com.networknt.header.HeaderConfig;
+import org.junit.jupiter.api.Assertions;
 import org.junit.jupiter.api.Test;
+import org.junit.jupiter.api.TestInstance;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+import org.testcontainers.junit.jupiter.Testcontainers;
 
-public class HeaderMiddlewareTest extends MiddlewareTestBase {
-    private static final Logger LOG = LoggerFactory.getLogger(TraceabilityMiddlewareTest.class);
 
+@Testcontainers
+class HeaderMiddlewareTest extends MiddlewareTestBase {
+    private static final Logger LOG = LoggerFactory.getLogger(HeaderMiddlewareTest.class);
     LightLambdaExchange exchange;
 
     @Test
-    void testRequestHeader() {
-        APIGatewayProxyRequestEvent apiGatewayProxyRequestEvent = null;
-        try {
-            apiGatewayProxyRequestEvent = OBJECT_MAPPER.readValue(testEvent, APIGatewayProxyRequestEvent.class);
-        } catch (JsonProcessingException e) {
-            LOG.error("Failed to read value as APIGatewayProxyRequestEvent");
-            throw new RuntimeException(e);
-        }
+    void test() {
+        var apiGatewayProxyRequestEvent = this.createTestRequestEvent();
+
         // add a request header so that it can be removed by the middleware
         apiGatewayProxyRequestEvent.getHeaders().put("header1", "Header1Value");
         apiGatewayProxyRequestEvent.getHeaders().put("header2", "Header2Value");
@@ -54,22 +52,30 @@ public class HeaderMiddlewareTest extends MiddlewareTestBase {
 
         this.exchange = new LightLambdaExchange(lambdaContext, requestChain, null);
         this.exchange.setRequest(requestEvent);
-        exchange.executeRequestChain();
-        exchange.finalizeRequest();
-        requestEvent = exchange.getRequest();
-        // header1 and header2 should be removed from the request headers
-        assert(requestEvent.getHeaders().get("header1") == null);
-        assert(requestEvent.getHeaders().get("header2") == null);
-        // key1 and key2 should be updated in the request headers
-        assert(requestEvent.getHeaders().get("key1").equals("value1"));
-        assert(requestEvent.getHeaders().get("key2").equals("value2"));
-        // headerA and headerB should be removed from the request headers
-        assert(requestEvent.getHeaders().get("headerA") == null);
-        assert(requestEvent.getHeaders().get("headerB") == null);
-        // keyA and keyB should be updated in the request headers
-        assert(requestEvent.getHeaders().get("keyA").equals("valueA"));
-        assert(requestEvent.getHeaders().get("keyB").equals("valueB"));
+        this.exchange.executeRequestChain();
+        this.exchange.finalizeRequest();
 
+        requestEvent = exchange.getRequest();
+
+        // header1 and header2 should be removed from the request headers
+        Assertions.assertNull(requestEvent.getHeaders().get("header1"));
+        Assertions.assertNull(requestEvent.getHeaders().get("header2"));
+
+        // key1 and key2 should be updated in the request headers
+        Assertions.assertEquals("value1", requestEvent.getHeaders().get("key1"));
+        Assertions.assertEquals("value2", requestEvent.getHeaders().get("key2"));
+
+        // headerA and headerB should be removed from the request headers
+        Assertions.assertNull(requestEvent.getHeaders().get("headerA"));
+        Assertions.assertNull(requestEvent.getHeaders().get("headerB"));
+
+        // keyA and keyB should be updated in the request headers
+        Assertions.assertEquals("valueA", requestEvent.getHeaders().get("keyA"));
+        Assertions.assertEquals("valueB", requestEvent.getHeaders().get("keyB"));
+
+        String res = this.invokeLocalLambdaFunction(this.exchange);
+        LOG.debug(res);
+        Assertions.assertNotNull(res);
 
     }
 }

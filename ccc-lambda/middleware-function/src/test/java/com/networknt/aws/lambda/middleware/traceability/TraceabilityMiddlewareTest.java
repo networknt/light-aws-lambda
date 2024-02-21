@@ -1,39 +1,31 @@
-package com.networknt.aws.lambda.middleware;
+package com.networknt.aws.lambda.middleware.traceability;
 
 import com.amazonaws.services.lambda.runtime.Context;
 import com.amazonaws.services.lambda.runtime.events.APIGatewayProxyRequestEvent;
-import com.amazonaws.services.lambda.runtime.events.APIGatewayProxyResponseEvent;
-import com.fasterxml.jackson.core.JsonProcessingException;
-import com.fasterxml.jackson.databind.DeserializationFeature;
-import com.fasterxml.jackson.databind.ObjectMapper;
 import com.networknt.aws.lambda.InvocationResponse;
 import com.networknt.aws.lambda.LambdaContext;
+import com.networknt.aws.lambda.middleware.LightLambdaExchange;
+import com.networknt.aws.lambda.middleware.MiddlewareTestBase;
 import com.networknt.aws.lambda.middleware.chain.Chain;
 import com.networknt.aws.lambda.middleware.chain.ChainDirection;
-import com.networknt.aws.lambda.middleware.traceability.TraceabilityMiddleware;
-import com.networknt.aws.lambda.proxy.LambdaProxy;
 import com.networknt.aws.lambda.utility.HeaderKey;
-import org.junit.jupiter.api.BeforeAll;
+import org.junit.jupiter.api.Assertions;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.TestInstance;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+import org.testcontainers.junit.jupiter.Testcontainers;
 
-@TestInstance(TestInstance.Lifecycle.PER_CLASS)
-public class TraceabilityMiddlewareTest extends MiddlewareTestBase {
+@Testcontainers
+class TraceabilityMiddlewareTest extends MiddlewareTestBase {
     private static final Logger LOG = LoggerFactory.getLogger(TraceabilityMiddlewareTest.class);
 
     LightLambdaExchange exchange;
 
     @Test
-    void testTraceability() {
-        APIGatewayProxyRequestEvent apiGatewayProxyRequestEvent = null;
-        try {
-            apiGatewayProxyRequestEvent = OBJECT_MAPPER.readValue(testEvent, APIGatewayProxyRequestEvent.class);
-        } catch (JsonProcessingException e) {
-            LOG.error("Failed to read value as APIGatewayProxyRequestEvent");
-            throw new RuntimeException(e);
-        }
+    void test() {
+        var apiGatewayProxyRequestEvent = this.createTestRequestEvent();
+
         // add the X-Traceability-Id to the header
         apiGatewayProxyRequestEvent.getHeaders().put(HeaderKey.TRACEABILITY, "123-123-123");
         InvocationResponse invocation = InvocationResponse.builder()
@@ -50,10 +42,16 @@ public class TraceabilityMiddlewareTest extends MiddlewareTestBase {
 
         this.exchange = new LightLambdaExchange(lambdaContext, requestChain, null);
         this.exchange.setRequest(requestEvent);
-        exchange.executeRequestChain();
-        exchange.finalizeRequest();
+        this.exchange.executeRequestChain();
+        this.exchange.finalizeRequest();
+
         // X-Traceability-Id should be added to the exchange as an attachment.
-        String traceabilityId = (String) exchange.getRequestAttachment(TraceabilityMiddleware.TRACEABILITY_ATTACHMENT_KEY);
-        assert(traceabilityId.equals("123-123-123"));
+        String traceabilityId = (String) this.exchange.getRequestAttachment(TraceabilityMiddleware.TRACEABILITY_ATTACHMENT_KEY);
+        Assertions.assertEquals("123-123-123", traceabilityId);
+
+        var res = this.invokeLocalLambdaFunction(exchange);
+        LOG.debug(res);
+        Assertions.assertNotNull(res);
+
     }
 }

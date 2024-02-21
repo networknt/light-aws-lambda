@@ -30,4 +30,4 @@ hs_err_pid*
 .idea/
 .aws-sam/
 target/
-ccc-lambda/middleware-function/volume
+local-lambda/volume

@@ -75,7 +75,7 @@ public class LambdaProxy implements RequestHandler<APIGatewayProxyRequestEvent, 
 
     @Override
     public APIGatewayProxyResponseEvent handleRequest(final APIGatewayProxyRequestEvent apiGatewayProxyRequestEvent, final Context context) {
-        LOG.debug("Lambda CCC --start");
+        LOG.debug("Lambda CCC --start with request: {}", apiGatewayProxyRequestEvent);
         final var exchange = new LightLambdaExchange(context, REQUEST_CHAIN, RESPONSE_CHAIN);
         exchange.setRequest(apiGatewayProxyRequestEvent);
 
@@ -102,13 +102,10 @@ public class LambdaProxy implements RequestHandler<APIGatewayProxyRequestEvent, 
             exchange.executeResponseChain();
             LOG.debug("Exec Response Chain - Finish: {}", System.currentTimeMillis());
             exchange.finalizeResponse();
-
-
-
         }
-        LOG.debug("Lambda CCC --end");
-
-        return exchange.getResponse();
+        APIGatewayProxyResponseEvent response = exchange.getResponse();
+        LOG.debug("Lambda CCC --end with response: {}", response);
+        return response;
 
 
     }

@@ -5,6 +5,7 @@ import com.networknt.aws.lambda.middleware.LambdaMiddleware;
 import com.networknt.aws.lambda.middleware.LightLambdaExchange;
 import com.networknt.limit.LimitConfig;
 import com.networknt.status.Status;
+import org.apache.commons.lang3.NotImplementedException;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -18,16 +19,18 @@ public class LimitMiddleware extends LambdaMiddleware {
 
     @Override
     protected Status executeMiddleware(final LightLambdaExchange exchange) throws InterruptedException {
-
-        if (!CONFIG.isEnabled())
-            return LambdaMiddleware.disabledMiddlewareStatus();
-
         // TODO
-
-        return LambdaMiddleware.successMiddlewareStatus();
+        throw new NotImplementedException();
     }
 
     @Override
     public void getCachedConfigurations() {
+        // TODO
+        throw new NotImplementedException();
+    }
+
+    @Override
+    public boolean isEnabled() {
+        return CONFIG.isEnabled();
     }
 }

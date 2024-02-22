@@ -12,6 +12,7 @@ import com.networknt.openapi.OpenApiOperation;
 import com.networknt.security.SecurityConfig;
 import com.networknt.status.Status;
 import com.networknt.utility.Constants;
+import org.apache.commons.lang3.NotImplementedException;
 import org.jose4j.jwt.JwtClaims;
 import org.jose4j.jwt.MalformedClaimException;
 import org.jose4j.jwt.consumer.InvalidJwtException;
@@ -62,7 +63,15 @@ public class JwtVerifyMiddleware extends LambdaMiddleware {
 
     @Override
     public void getCachedConfigurations() {
+        // TODO
+        throw new NotImplementedException();
+    }
 
+    @Override
+    public boolean isEnabled() {
+
+        // TODO - is this right?
+        return config.isEnableVerifyJwt();
     }
 
     public Status handleJwt(LightLambdaExchange exchange, String pathPrefix, String reqPath, List<String> jwkServiceIds) {

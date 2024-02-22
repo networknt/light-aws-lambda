@@ -20,7 +20,7 @@ import java.util.concurrent.ExecutionException;
 import java.util.concurrent.Future;
 
 public class PooledChainLinkExecutor extends ThreadPoolExecutor {
-    private final Logger LOG = LoggerFactory.getLogger(PooledChainLinkExecutor.class);
+    private static final Logger LOG = LoggerFactory.getLogger(PooledChainLinkExecutor.class);
     private static final String CONFIG_NAME = "pooled-chain-executor";
     private static final PooledChainConfig CONFIG = (PooledChainConfig) Config.getInstance().getJsonObjectConfig(CONFIG_NAME, PooledChainConfig.class);
 
@@ -34,7 +34,7 @@ public class PooledChainLinkExecutor extends ThreadPoolExecutor {
         super(CONFIG.getCorePoolSize(), CONFIG.getMaxPoolSize(), CONFIG.getKeepAliveTime(), TimeUnit.MILLISECONDS, new LinkedBlockingQueue<>());
     }
 
-    public void executeChain(LightLambdaExchange exchange, Chain chain) {
+    public void executeChain(final LightLambdaExchange exchange, final Chain chain) {
 
         if (!chain.isFinalized()) {
             LOG.error("Execution attempt on a chain that is not finalized! Call 'finalizeChain' before 'executeChain'");
@@ -72,9 +72,13 @@ public class PooledChainLinkExecutor extends ThreadPoolExecutor {
             try {
                 chainLinkWorkerFuture.get();
 
-            } catch (InterruptedException | ExecutionException e) {
+            } catch (ExecutionException e) {
                 LOG.error(e.getMessage(), e);
                 return;
+
+            } catch (InterruptedException e) {
+                LOG.error(e.getMessage(), e);
+                Thread.currentThread().interrupt();
             }
         }
     }
@@ -82,15 +86,15 @@ public class PooledChainLinkExecutor extends ThreadPoolExecutor {
     /**
      * Creates a collection of futures. One for each submitted task.
      *
-     * @param chainLinkWorkerGroup  - list of threads for submission.
-     * @return                      - list of futures for submitted tasks.
+     * @param chainLinkWorkerGroup - list of threads for submission.
+     * @return - list of futures for submitted tasks.
      */
-    private Collection<Future<?>> createChainLinkWorkerFutures(ArrayList<ChainLinkWorker> chainLinkWorkerGroup) {
+    private Collection<Future<?>> createChainLinkWorkerFutures(final ArrayList<ChainLinkWorker> chainLinkWorkerGroup) {
 
         final Collection<Future<?>> chainLinkWorkerFutures = new ArrayList<>();
         int linkNumber = 1;
 
-        /* submit each link in the group into a queue */
+        /* submit each link in the group into the pooled executor queue */
         for (var chainLinkWorker : chainLinkWorkerGroup) {
             LOG.debug("Submitting link '{}' for execution.", linkNumber++);
 
@@ -104,20 +108,26 @@ public class PooledChainLinkExecutor extends ThreadPoolExecutor {
      * Creates the chain workers array to prepare for submission.
      *
      * @param chainLinkGroup - sub-group of main chain
-     * @param exchange - current exchange.
+     * @param exchange       - current exchange.
      * @return - List of thread workers for the tasks.
      */
-    private ArrayList<ChainLinkWorker> createChainListWorkers(ArrayList<LambdaMiddleware> chainLinkGroup, LightLambdaExchange exchange) {
+    private ArrayList<ChainLinkWorker> createChainListWorkers(final ArrayList<LambdaMiddleware> chainLinkGroup, final LightLambdaExchange exchange) {
         final ArrayList<ChainLinkWorker> chainLinkWorkerGroup = new ArrayList<>();
         int linkNumber = 1;
 
         /* create a worker for each link in a group */
         for (var chainLink : chainLinkGroup) {
             LOG.debug("Creating thread for link '{}[{}]'.", chainLink.getClass().getName(), linkNumber++);
-            var loggingContext = new ChainLinkWorker.AuditThreadContext(MDC.getCopyOfContextMap());
-            var runnable = new MiddlewareRunnable(chainLink, exchange, this.chainLinkCallback);
-            var worker = new ChainLinkWorker(runnable, loggingContext);
-            chainLinkWorkerGroup.add(worker);
+
+            if (chainLink.isEnabled()) {
+                final var loggingContext = new ChainLinkWorker.AuditThreadContext(MDC.getCopyOfContextMap());
+                final var runnable = new MiddlewareRunnable(chainLink, exchange, this.chainLinkCallback);
+                final var worker = new ChainLinkWorker(runnable, loggingContext);
+                chainLinkWorkerGroup.add(worker);
+
+            } else
+                LOG.debug("Middleware handler '{}' is disabled, no worker will be created.", chainLink.getClass().getName());
+
         }
 
         return chainLinkWorkerGroup;

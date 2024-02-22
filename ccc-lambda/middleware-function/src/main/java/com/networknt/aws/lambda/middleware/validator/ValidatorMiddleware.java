@@ -73,11 +73,6 @@ public class ValidatorMiddleware extends LambdaMiddleware {
         return LambdaMiddleware.successMiddlewareStatus();
     }
 
-    @Override
-    public void getCachedConfigurations() {
-
-    }
-
     private static OpenApiValidator getValidatorInstance() {
         if (OPENAPI_VALIDATOR == null) {
             // TODO - maybe load other than resources within the jar.
@@ -116,4 +111,16 @@ public class ValidatorMiddleware extends LambdaMiddleware {
         return headers.containsKey(HeaderKey.CONTENT_TYPE)
                 && headers.get(HeaderKey.CONTENT_TYPE).equals(HeaderValue.APPLICATION_JSON);
     }
+
+    @Override
+    public void getCachedConfigurations() {
+        // TODO
+    }
+
+    @Override
+    public boolean isEnabled() {
+        return CONFIG.isEnabled();
+    }
+
+
 }

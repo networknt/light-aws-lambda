@@ -53,7 +53,6 @@ class HeaderMiddlewareTest extends MiddlewareTestBase {
         this.exchange = new LightLambdaExchange(lambdaContext, requestChain, null);
         this.exchange.setRequest(requestEvent);
         this.exchange.executeRequestChain();
-        this.exchange.finalizeRequest();
 
         requestEvent = exchange.getRequest();
 

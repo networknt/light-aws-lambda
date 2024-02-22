@@ -81,7 +81,6 @@ public class LambdaProxy implements RequestHandler<APIGatewayProxyRequestEvent, 
 
         /* exec request chain */
         exchange.executeRequestChain();
-        exchange.finalizeRequest();
 
         if (!exchange.hasFailedState()) {
 
@@ -101,7 +100,6 @@ public class LambdaProxy implements RequestHandler<APIGatewayProxyRequestEvent, 
             /* exec response chain */
             exchange.executeResponseChain();
             LOG.debug("Exec Response Chain - Finish: {}", System.currentTimeMillis());
-            exchange.finalizeResponse();
         }
         APIGatewayProxyResponseEvent response = exchange.getResponse();
         LOG.debug("Lambda CCC --end with response: {}", response);

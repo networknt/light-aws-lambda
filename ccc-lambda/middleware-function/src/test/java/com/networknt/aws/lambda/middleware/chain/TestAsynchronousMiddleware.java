@@ -39,4 +39,9 @@ public class TestAsynchronousMiddleware extends LambdaMiddleware {
     public void getCachedConfigurations() {
 
     }
+
+    @Override
+    public boolean isEnabled() {
+        return true;
+    }
 }

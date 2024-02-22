@@ -4,6 +4,7 @@ import com.amazonaws.services.lambda.runtime.Context;
 import com.amazonaws.services.lambda.runtime.events.APIGatewayProxyRequestEvent;
 import com.networknt.aws.lambda.InvocationResponse;
 import com.networknt.aws.lambda.LambdaContext;
+import com.networknt.aws.lambda.TestUtils;
 import com.networknt.aws.lambda.middleware.LightLambdaExchange;
 import com.networknt.aws.lambda.middleware.MiddlewareTestBase;
 import com.networknt.aws.lambda.middleware.chain.Chain;
@@ -24,7 +25,7 @@ class HeaderMiddlewareTest extends MiddlewareTestBase {
 
     @Test
     void test() {
-        var apiGatewayProxyRequestEvent = this.createTestRequestEvent();
+        var apiGatewayProxyRequestEvent = TestUtils.createTestRequestEvent();
 
         // add a request header so that it can be removed by the middleware
         apiGatewayProxyRequestEvent.getHeaders().put("header1", "Header1Value");

@@ -38,8 +38,14 @@ class PooledChainLinkExecutorTest {
         var disabledHeaderConfig = HeaderConfig.load("header_disabled_test");
         var headerDisabledHandler = new HeaderMiddleware(disabledHeaderConfig);
 
+        var testSynchronousMiddleware = new TestSynchronousMiddleware();
+
         var chain = new Chain(false, ChainDirection.REQUEST);
+        chain.addChainable(testSynchronousMiddleware);
         chain.addChainable(headerDisabledHandler);
+        chain.addChainable(testSynchronousMiddleware);
+        chain.addChainable(testSynchronousMiddleware);
+        chain.addChainable(testSynchronousMiddleware);
         chain.setupGroupedChain();
 
         /* create a new exchange with the disabled header chain + fake context (LightLambdaExchange uses PooledChainLinkExecutor to execute request/response chains) */

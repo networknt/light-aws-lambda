@@ -25,10 +25,7 @@ public class OpenApiMiddleware extends LambdaMiddleware {
     private static final Logger LOG = LoggerFactory.getLogger(OpenApiMiddleware.class);
     private static final String STATUS_METHOD_NOT_ALLOWED = "ERR10008";
     private static final String CONFIG_NAME = "lambda-openapi";
-
     private static final String SPEC_INJECT = "openapi-inject";
-
-    //private static final SecurityConfig CONFIG = (SecurityConfig) Config.getInstance().getJsonObjectConfig(CONFIG_NAME, SecurityConfig.class);
 
     public static OpenApiHelper helper;
 
@@ -85,7 +82,14 @@ public class OpenApiMiddleware extends LambdaMiddleware {
 
     @Override
     public void getCachedConfigurations() {
+        // TODO
+    }
 
+    @Override
+    public boolean isEnabled() {
+
+        // TODO - do we have a config for this middleware?
+        return true;
     }
 
 }

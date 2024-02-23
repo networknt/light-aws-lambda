@@ -13,7 +13,6 @@ import org.slf4j.MDC;
 public class TraceabilityMiddleware extends LambdaMiddleware {
 
     private static final Logger LOG = LoggerFactory.getLogger(TraceabilityMiddleware.class);
-    private static final String CONFIG_NAME = "lambda-traceability";
     private static final TraceabilityConfig CONFIG = TraceabilityConfig.load();
     public static final LightLambdaExchange.Attachable<TraceabilityMiddleware> TRACEABILITY_ATTACHMENT_KEY = LightLambdaExchange.Attachable.createMiddlewareAttachable(TraceabilityMiddleware.class);
 
@@ -45,5 +44,11 @@ public class TraceabilityMiddleware extends LambdaMiddleware {
 
     @Override
     public void getCachedConfigurations() {
+        // TODO
+    }
+
+    @Override
+    public boolean isEnabled() {
+        return CONFIG.isEnabled();
     }
 }

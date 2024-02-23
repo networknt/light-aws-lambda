@@ -19,6 +19,8 @@ import java.util.Map;
 public final class LightLambdaExchange {
 
     private static final Logger LOG = LoggerFactory.getLogger(LightLambdaExchange.class);
+
+    // TODO change these request, response members to a more generic type to handle other more edge cases (i.e. lambda stream request/response)
     private APIGatewayProxyRequestEvent request;
     private APIGatewayProxyResponseEvent response;
     private final Context context;
@@ -55,6 +57,7 @@ public final class LightLambdaExchange {
         this.context = context;
         this.requestChain = requestChain;
         this.responseChain = responseChain;
+
         // TODO - add some kind of check to middleware to see if the configured handlers can be used in request and/or response chains.
         this.executor = new PooledChainLinkExecutor();
     }
@@ -62,9 +65,29 @@ public final class LightLambdaExchange {
     public void executeRequestChain() {
 
         if (stateHasAllFlags(FLAG_STARTING_REQUEST_READY)) {
+
             LOG.debug("Executing request chain");
             this.executor.executeChain(this, this.requestChain);
             this.state &= ~FLAG_STARTING_REQUEST_READY;
+
+            if (stateHasAllFlagsClear(FLAG_REQUEST_DONE)) {
+                for (var res : this.executor.getChainResults()) {
+
+                    // TODO - change this to something more reliable than a string check
+                    if (res.getCode().startsWith("ERR")) {
+
+                        LOG.debug("Request has failure...");
+                        LOG.debug("Setting status code to: {}", res.getStatusCode());
+
+                        this.state |= FLAG_REQUEST_HAS_FAILURE;
+                        this.statusCode = res.getStatusCode();
+                        break;
+                    }
+                }
+            }
+
+            this.state |= FLAG_REQUEST_DONE;
+
         }
     }
 
@@ -74,6 +97,20 @@ public final class LightLambdaExchange {
             LOG.debug("Executing response chain");
             this.executor.executeChain(this, this.responseChain);
             this.state &= ~FLAG_STARTING_RESPONSE_READY;
+
+            if (stateHasAllFlagsClear(FLAG_RESPONSE_DONE)) {
+
+                for (var res : this.executor.getChainResults()) {
+
+                    // TODO - change this to something more reliable than a string check
+                    if (res.getCode().startsWith("ERR")) {
+                        this.state |= FLAG_RESPONSE_HAS_FAILURE;
+                        this.statusCode = res.getStatusCode();
+                        break;
+                    }
+                }
+                this.state |= FLAG_RESPONSE_DONE;
+            }
 
         }
 
@@ -140,62 +177,9 @@ public final class LightLambdaExchange {
         return responseAttachments;
     }
 
-    private void raiseRequestFailureFlag() {
-        if (stateHasAllFlagsClear(FLAG_REQUEST_HAS_FAILURE))
-            this.state |= FLAG_REQUEST_HAS_FAILURE;
-    }
-
     public boolean hasFailedState() {
         LOG.debug("Checking if exchange has a failure state: {}", stateHasAnyFlags(FLAG_REQUEST_HAS_FAILURE | FLAG_RESPONSE_HAS_FAILURE));
         return stateHasAnyFlags(FLAG_REQUEST_HAS_FAILURE | FLAG_RESPONSE_HAS_FAILURE);
-    }
-
-    private void raiseResponseFailureFlag() {
-        if (stateHasAllFlagsClear(FLAG_RESPONSE_HAS_FAILURE))
-            this.state |= FLAG_RESPONSE_HAS_FAILURE;
-    }
-
-    public void finalizeRequest() {
-
-        LOG.debug("Finalizing request...");
-
-        if (stateHasAllFlagsClear(FLAG_REQUEST_DONE)) {
-
-            for (var res : this.executor.getChainResults()) {
-
-                // TODO - change this to something more reliable than a string check
-                if (res.getCode().startsWith("ERR")) {
-
-                    LOG.debug("Request has failure...");
-                    LOG.debug("Setting status code to: {}", res.getStatusCode());
-
-                    this.raiseRequestFailureFlag();
-                    this.statusCode = res.getStatusCode();
-                    break;
-                }
-            }
-
-            this.state |= FLAG_REQUEST_DONE;
-        }
-
-    }
-
-    public void finalizeResponse() {
-
-        if (stateHasAllFlagsClear(FLAG_RESPONSE_DONE)) {
-
-            for (var res : this.executor.getChainResults()) {
-
-                // TODO - change this to something more reliable than a string check
-                if (res.getCode().startsWith("ERR")) {
-                    this.raiseResponseFailureFlag();
-                    this.statusCode = res.getStatusCode();
-                    break;
-                }
-            }
-            this.state |= FLAG_RESPONSE_DONE;
-        }
-
     }
 
     public static class Attachable<T extends LambdaMiddleware> {
@@ -228,6 +212,17 @@ public final class LightLambdaExchange {
 
     private boolean stateHasAllFlagsClear(int flags) {
         return (this.state & flags) == 0;
+    }
+
+    public String getExchangeStateAsString() {
+        String eol = "\",\n";
+        return "state {\n" +
+                "    \"FLAG_STARTING_REQUEST_READY\": \"" + this.stateHasAnyFlags(FLAG_STARTING_REQUEST_READY) + eol +
+                "    \"FLAG_REQUEST_HAS_FAILURE\": " + this.stateHasAnyFlags(FLAG_REQUEST_HAS_FAILURE) + eol +
+                "    \"FLAG_STARTING_RESPONSE_READY\": \"" + this.stateHasAnyFlags(FLAG_STARTING_RESPONSE_READY) + eol +
+                "    \"FLAG_RESPONSE_DONE\": \"" + this.stateHasAnyFlags(FLAG_RESPONSE_DONE) + eol +
+                "    \"FLAG_RESPONSE_HAS_FAILURE\": \"" + this.stateHasAnyFlags(FLAG_RESPONSE_HAS_FAILURE) + eol +
+                "}";
     }
 
     @Override

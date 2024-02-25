@@ -77,13 +77,15 @@ public class JwtVerifyMiddleware extends LambdaMiddleware {
     public Status handleJwt(LightLambdaExchange exchange, String pathPrefix, String reqPath, List<String> jwkServiceIds) {
         Map<String, Object> auditInfo = null;
         Map<String, String> headerMap = exchange.getRequest().getHeaders();
-        String authorization = headerMap.get(HeaderKey.AUTHORIZATION);
+        String authorization = (headerMap.get(HeaderKey.AUTHORIZATION_UPPER) == null) ? headerMap.get(HeaderKey.AUTHORIZATION_LOWER) : headerMap.get(HeaderKey.AUTHORIZATION_UPPER);
+
+        if (LOG.isTraceEnabled()) LOG.trace("pathPrefix = {} and reqPath = {} and headerMap = {}", pathPrefix, reqPath, headerMap.isEmpty() ? "empty" : headerMap.toString());
 
         if (LOG.isTraceEnabled() && authorization != null && authorization.length() > 10)
             LOG.trace("Authorization header = " + authorization.substring(0, 10));
         // if an empty authorization header or a value length less than 6 ("Basic "), return an error
         if(authorization == null ) {
-            if (LOG.isDebugEnabled()) LOG.debug("JwtVerifyMiddleware.executeMiddleware ends with an error.");
+            if (LOG.isDebugEnabled()) LOG.debug("JwtVerifyMiddleware.executeMiddleware ends with an error. Authorization header value is NULL");
             return new Status(STATUS_MISSING_AUTH_TOKEN);
         } else if(authorization.trim().length() < 6) {
             if (LOG.isDebugEnabled()) LOG.debug("JwtVerifyMiddleware.executeMiddleware ends with an error.");
@@ -219,7 +221,7 @@ public class JwtVerifyMiddleware extends LambdaMiddleware {
                 }
             } else {
                 if (LOG.isDebugEnabled())
-                    LOG.debug("JwtVerifyHandler.handleRequest ends with an error.");
+                    LOG.debug("JwtVerifyHandler.handleRequest ends with an error. Cannot extract Bearer Token from Authorization header");
                 return new Status(STATUS_MISSING_AUTH_TOKEN);
             }
         }

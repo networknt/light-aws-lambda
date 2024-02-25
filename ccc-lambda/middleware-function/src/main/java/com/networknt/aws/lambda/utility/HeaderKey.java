@@ -8,8 +8,8 @@ public class HeaderKey {
     /* unique header keys used by light-4j */
     public static final String TRACEABILITY = "X-Traceability-Id";
     public static final String CORRELATION = "X-Correlation-Id";
-    public static final String AUTHORIZATION = "Authorization";
-
+    public static final String AUTHORIZATION_UPPER = "Authorization";
+    public static final String AUTHORIZATION_LOWER = "authorization";
     public static final String SCOPE_TOKEN = "X-Scope-Token";
     /* common header keys */
     public static final String CONTENT_TYPE = "Content-Type";

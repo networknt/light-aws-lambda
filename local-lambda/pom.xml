@@ -3,6 +3,7 @@
          xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
          xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 http://maven.apache.org/xsd/maven-4.0.0.xsd">
     <modelVersion>4.0.0</modelVersion>
+
     <parent>
         <groupId>com.networknt</groupId>
         <artifactId>light-aws-lambda</artifactId>
@@ -12,14 +13,7 @@
 
     <artifactId>local-lambda</artifactId>
     <packaging>jar</packaging>
-    <properties>
-        <java.version>11</java.version>
-        <maven.compiler.source>${java.version}</maven.compiler.source>
-        <maven.compiler.target>${java.version}</maven.compiler.target>
-        <project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
-        <version.lambda-core>1.2.2</version.lambda-core>
-        <version.lambda-events>3.11.0</version.lambda-events>
-    </properties>
+    <description>A local lambda function that is used for local testing for ccc-lambda</description>
 
     <dependencies>
         <dependency>

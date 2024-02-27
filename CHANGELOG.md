@@ -1,5 +1,26 @@
 # Change Log
 
+## [2.1.32](https://github.com/networknt/light-aws-lambda/tree/2.1.32) (2024-02-27)
+
+
+**Merged pull requests:**
+
+
+- fixes \#103 Add a plugin to copy local-lambda jar to the volume [\#104](https://github.com/networknt/light-aws-lambda/pull/104) ([stevehu](https://github.com/stevehu))
+- fixes \#101 add volume folder and subfolder lib for local-lambda [\#102](https://github.com/networknt/light-aws-lambda/pull/102) ([stevehu](https://github.com/stevehu))
+- support for upper or lower authorization header [\#100](https://github.com/networknt/light-aws-lambda/pull/100) ([DiogoFKT](https://github.com/DiogoFKT))
+- Enabled/Disabled Middleware Handler Check [\#98](https://github.com/networknt/light-aws-lambda/pull/98) ([KalevGonvick](https://github.com/KalevGonvick))
+- fixes \#95 add logback.xml and log request/response in the ccc-lambda [\#96](https://github.com/networknt/light-aws-lambda/pull/96) ([stevehu](https://github.com/stevehu))
+- Added AWS Lambda Mocking [\#94](https://github.com/networknt/light-aws-lambda/pull/94) ([KalevGonvick](https://github.com/KalevGonvick))
+- fixes \#92 fix the pom.xml for the middleware-handler [\#93](https://github.com/networknt/light-aws-lambda/pull/93) ([stevehu](https://github.com/stevehu))
+- fixes \#09 support JSON string for serviceIdAuthServers for ClientConfig [\#91](https://github.com/networknt/light-aws-lambda/pull/91) ([stevehu](https://github.com/stevehu))
+- [pre-commit.ci] pre-commit autoupdate [\#86](https://github.com/networknt/light-aws-lambda/pull/86) ([pre-commit-ci](https://github.com/apps/pre-commit-ci))
+- fixes \#84 add health check and server info handlers to ccc-lambda [\#85](https://github.com/networknt/light-aws-lambda/pull/85) ([stevehu](https://github.com/stevehu))
+- fixes \#80 support path prefix based header manipulation in ccc-lambda [\#83](https://github.com/networknt/light-aws-lambda/pull/83) ([stevehu](https://github.com/stevehu))
+- fixes \#81 add pre-commit hook and apply it [\#82](https://github.com/networknt/light-aws-lambda/pull/82) ([stevehu](https://github.com/stevehu))
+- fixes \#78 Use NoneDecryptedInstance to load the config for registerMo… [\#79](https://github.com/networknt/light-aws-lambda/pull/79) ([stevehu](https://github.com/stevehu))
+
+
 ## [2.1.31](https://github.com/networknt/light-aws-lambda/tree/2.1.31) (2024-01-16)
 
 

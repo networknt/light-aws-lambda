@@ -78,11 +78,11 @@
         <project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
         <version.light-4j>2.1.32</version.light-4j>
         <version.http-client>1.0.8</version.http-client>
-        <version.jackson>2.15.2</version.jackson>
+        <version.jackson>2.15.3</version.jackson>
         <version.slf4j>2.0.9</version.slf4j>
         <version.encoder>1.2.3</version.encoder>
         <version.lambda-core>1.2.2</version.lambda-core>
-        <version.lambda-events>3.11.0</version.lambda-events>
+        <version.lambda-events>3.11.1</version.lambda-events>
         <version.lambda-awssdk>2.20.38</version.lambda-awssdk>
         <version.dynamodb>1.12.556</version.dynamodb>
         <version.secretsmanager-aws>2.20.127</version.secretsmanager-aws>
@@ -349,5 +349,33 @@
                 <skipLocalInvoke>false</skipLocalInvoke>
             </properties>
         </profile>
+        <profile>
+            <id>release-sign-artifacts</id>
+            <activation>
+                <property>
+                    <name>performRelease</name>
+                    <value>true</value>
+                </property>
+            </activation>
+            <build>
+                <plugins>
+                    <plugin>
+                        <groupId>org.apache.maven.plugins</groupId>
+                        <artifactId>maven-gpg-plugin</artifactId>
+                        <version>1.6</version>
+                        <executions>
+                            <execution>
+                                <id>sign-artifacts</id>
+                                <phase>verify</phase>
+                                <goals>
+                                    <goal>sign</goal>
+                                </goals>
+                            </execution>
+                        </executions>
+                    </plugin>
+                </plugins>
+            </build>
+        </profile>
+
     </profiles>
 </project>

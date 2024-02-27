@@ -6,6 +6,8 @@
 **Merged pull requests:**
 
 
+- fixes \#107 make ccc-lambda a release jar to maven central [\#108](https://github.com/networknt/light-aws-lambda/pull/108) ([stevehu](https://github.com/stevehu))
+- fixes \#105 update parent pom.xml to add local-lambda module [\#106](https://github.com/networknt/light-aws-lambda/pull/106) ([stevehu](https://github.com/stevehu))
 - fixes \#103 Add a plugin to copy local-lambda jar to the volume [\#104](https://github.com/networknt/light-aws-lambda/pull/104) ([stevehu](https://github.com/stevehu))
 - fixes \#101 add volume folder and subfolder lib for local-lambda [\#102](https://github.com/networknt/light-aws-lambda/pull/102) ([stevehu](https://github.com/stevehu))
 - support for upper or lower authorization header [\#100](https://github.com/networknt/light-aws-lambda/pull/100) ([DiogoFKT](https://github.com/DiogoFKT))

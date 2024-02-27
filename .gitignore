@@ -30,4 +30,3 @@ hs_err_pid*
 .idea/
 .aws-sam/
 target/
-local-lambda/volume

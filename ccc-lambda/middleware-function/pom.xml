@@ -81,13 +81,11 @@
         <version.jackson>2.15.3</version.jackson>
         <version.slf4j>2.0.9</version.slf4j>
         <version.encoder>1.2.3</version.encoder>
-        <version.lambda-core>1.2.2</version.lambda-core>
-        <version.lambda-events>3.11.1</version.lambda-events>
-        <version.lambda-awssdk>2.20.38</version.lambda-awssdk>
-        <version.dynamodb>1.12.556</version.dynamodb>
-        <version.secretsmanager-aws>2.20.127</version.secretsmanager-aws>
-        <version.lambda-lambdasdk>1.11.648</version.lambda-lambdasdk>
-        <version.lambda-iam>1.12.441</version.lambda-iam>
+        <version.lambda-core>1.2.3</version.lambda-core>
+        <version.lambda-events>3.11.4</version.lambda-events>
+        <version.lambda-awssdk>2.24.11</version.lambda-awssdk>
+        <version.dynamodb>1.12.667</version.dynamodb>
+        <version.lambda-iam>1.12.667</version.lambda-iam>
         <version.jose4j>0.9.3</version.jose4j>
         <version.logback>1.4.14</version.logback>
         <version.maven-shade>3.2.4</version.maven-shade>

@@ -1,4 +1,4 @@
-PROJECT_NAME=Authorizer
+PROJECT_NAME=CccLambda
 PROJECT_VERSION=1.0.0
 
 # mvn clean might fail due to permission issue on Linux, so remove target with root.

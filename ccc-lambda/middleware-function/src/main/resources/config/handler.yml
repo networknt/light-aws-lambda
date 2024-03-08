@@ -63,8 +63,7 @@ handlers:
 additionalHandlers: ${handler.additionalHandlers:}
 
 chains:
-  default:
-    - exception
+  request:
     # - metrics
     - traceability
     - correlation
@@ -72,7 +71,10 @@ chains:
     # - security
     - audit
     - validator
-
+  response:
+    - specification
+    - audit
+    - validator
   admin:
     - exception
     - correlation

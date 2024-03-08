@@ -1,12 +1,7 @@
-package com.networknt.aws.lambda.middleware.exception;
-import com.amazonaws.services.lambda.runtime.Context;
-import com.amazonaws.services.lambda.runtime.events.APIGatewayProxyRequestEvent;
+package com.networknt.aws.lambda.middleware;
 import com.amazonaws.services.lambda.runtime.events.APIGatewayProxyResponseEvent;
 import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.databind.ObjectMapper;
-import com.networknt.aws.lambda.handler.MiddlewareHandler;
-import com.networknt.aws.lambda.middleware.LambdaMiddleware;
-import com.networknt.aws.lambda.middleware.LightLambdaExchange;
 import com.networknt.aws.lambda.utility.HeaderKey;
 import com.networknt.aws.lambda.utility.HeaderValue;
 import com.networknt.config.Config;
@@ -17,7 +12,12 @@ import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
 
-public class ExceptionMiddleware extends LambdaMiddleware implements MiddlewareHandler {
+/**
+ * This class is used to handle exceptions and return the response to the client. It is called by
+ * the LightLambdaExchange when returning response from the exchange.
+ *
+ */
+public class ExceptionUtil {
 
     private static final String DATA_KEY = "data";
     private static final String NOTIFICATIONS_KEY = "notifications";
@@ -25,15 +25,13 @@ public class ExceptionMiddleware extends LambdaMiddleware implements MiddlewareH
     private static final ExceptionConfig CONFIG = (ExceptionConfig) Config.getInstance().getJsonObjectConfig(ExceptionConfig.CONFIG_NAME, ExceptionConfig.class);
     private static final ObjectMapper OBJECT_MAPPER = new ObjectMapper();
 
-    public ExceptionMiddleware() {
-        super(true, false, false);
-    }
-
-    protected ExceptionMiddleware(boolean audited, boolean asynchronous, boolean continueOnFailure) {
-        super(audited, asynchronous, continueOnFailure);
-    }
-
-    public static APIGatewayProxyResponseEvent handle(List<Status> middlewareResults) {
+    /**
+     * Convert the middleware results to APIGatewayProxyResponseEvent
+     *
+     * @param middlewareResults a list of middleware results
+     * @return APIGatewayProxyResponseEvent
+     */
+    public static APIGatewayProxyResponseEvent convert(List<Status> middlewareResults) {
 
         if (CONFIG.isEnabled()) {
             var responseEvent = new APIGatewayProxyResponseEvent();
@@ -66,37 +64,5 @@ public class ExceptionMiddleware extends LambdaMiddleware implements MiddlewareH
             }
 
         } else return new APIGatewayProxyResponseEvent();
-
-
-    }
-
-    @Override
-    public void register() {
-
-    }
-
-    @Override
-    public void reload() {
-
-    }
-
-    @Override
-    public APIGatewayProxyResponseEvent handleRequest(APIGatewayProxyRequestEvent apiGatewayProxyRequestEvent, Context context) {
-        return null;
-    }
-
-    @Override
-    protected Status executeMiddleware(LightLambdaExchange exchange) throws InterruptedException {
-        return null;
-    }
-
-    @Override
-    public void getCachedConfigurations() {
-
-    }
-
-    @Override
-    public boolean isEnabled() {
-        return false;
     }
 }

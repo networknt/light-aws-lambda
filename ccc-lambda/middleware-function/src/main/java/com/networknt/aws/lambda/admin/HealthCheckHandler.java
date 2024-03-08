@@ -4,6 +4,7 @@ import com.amazonaws.services.lambda.runtime.Context;
 import com.amazonaws.services.lambda.runtime.RequestHandler;
 import com.amazonaws.services.lambda.runtime.events.APIGatewayProxyRequestEvent;
 import com.amazonaws.services.lambda.runtime.events.APIGatewayProxyResponseEvent;
+import com.networknt.aws.lambda.handler.LambdaHandler;
 import com.networknt.config.Config;
 import com.networknt.health.HealthConfig;
 import com.networknt.utility.ModuleRegistry;
@@ -13,7 +14,7 @@ import org.slf4j.LoggerFactory;
 import java.util.HashMap;
 import java.util.Map;
 
-public class HealthCheckHandler implements RequestHandler<APIGatewayProxyRequestEvent, APIGatewayProxyResponseEvent> {
+public class HealthCheckHandler implements LambdaHandler {
     public static final String HEALTH_RESULT_OK = "OK";
     public static final String HEALTH_RESULT_ERROR = "ERROR";
 

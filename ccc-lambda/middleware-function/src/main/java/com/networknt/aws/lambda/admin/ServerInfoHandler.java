@@ -3,6 +3,7 @@ package com.networknt.aws.lambda.admin;
 import com.amazonaws.services.lambda.runtime.RequestHandler;
 import com.amazonaws.services.lambda.runtime.events.APIGatewayProxyRequestEvent;
 import com.amazonaws.services.lambda.runtime.events.APIGatewayProxyResponseEvent;
+import com.networknt.aws.lambda.handler.LambdaHandler;
 import com.networknt.config.Config;
 import com.networknt.config.JsonMapper;
 import com.networknt.info.ServerInfoConfig;
@@ -13,7 +14,7 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import java.util.Map;
 
-public class ServerInfoHandler implements RequestHandler<APIGatewayProxyRequestEvent, APIGatewayProxyResponseEvent> {
+public class ServerInfoHandler implements LambdaHandler {
     static final String STATUS_SERVER_INFO_DISABLED = "ERR10013";
     static final Logger logger = LoggerFactory.getLogger(ServerInfoHandler.class);
     static ServerInfoConfig config;

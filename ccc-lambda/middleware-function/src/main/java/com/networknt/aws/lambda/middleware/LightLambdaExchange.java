@@ -3,7 +3,7 @@ package com.networknt.aws.lambda.middleware;
 import com.amazonaws.services.lambda.runtime.Context;
 import com.amazonaws.services.lambda.runtime.events.APIGatewayProxyRequestEvent;
 import com.amazonaws.services.lambda.runtime.events.APIGatewayProxyResponseEvent;
-import com.networknt.aws.lambda.middleware.exception.ExceptionHandler;
+import com.networknt.aws.lambda.middleware.exception.ExceptionMiddleware;
 import com.networknt.aws.lambda.middleware.chain.Chain;
 import com.networknt.aws.lambda.middleware.chain.PooledChainLinkExecutor;
 import org.slf4j.Logger;
@@ -141,10 +141,10 @@ public final class LightLambdaExchange {
 
     public APIGatewayProxyResponseEvent getResponse() {
         if (stateHasAnyFlags(FLAG_REQUEST_HAS_FAILURE))
-            return ExceptionHandler.handle(this.executor.getChainResults());
+            return ExceptionMiddleware.handle(this.executor.getChainResults());
 
         if (stateHasAnyFlags(FLAG_RESPONSE_HAS_FAILURE))
-            return ExceptionHandler.handle(this.executor.getChainResults());
+            return ExceptionMiddleware.handle(this.executor.getChainResults());
 
         return this.response;
     }

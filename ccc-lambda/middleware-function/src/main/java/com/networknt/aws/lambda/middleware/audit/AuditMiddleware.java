@@ -1,6 +1,10 @@
 package com.networknt.aws.lambda.middleware.audit;
 
+import com.amazonaws.services.lambda.runtime.Context;
+import com.amazonaws.services.lambda.runtime.events.APIGatewayProxyRequestEvent;
+import com.amazonaws.services.lambda.runtime.events.APIGatewayProxyResponseEvent;
 import com.networknt.audit.AuditConfig;
+import com.networknt.aws.lambda.handler.MiddlewareHandler;
 import com.networknt.aws.lambda.middleware.LambdaMiddleware;
 import com.networknt.aws.lambda.middleware.LightLambdaExchange;
 import com.networknt.aws.lambda.middleware.security.JwtVerifyMiddleware;
@@ -15,12 +19,13 @@ import org.slf4j.LoggerFactory;
  * responsible to update the attachment in the exchange.
  *
  */
-public class AuditMiddleware extends LambdaMiddleware {
+public class AuditMiddleware extends LambdaMiddleware implements MiddlewareHandler {
     private static final Logger LOG = LoggerFactory.getLogger(AuditMiddleware.class);
     private static final AuditConfig CONFIG = AuditConfig.load();
     public static final LightLambdaExchange.Attachable<AuditMiddleware> AUDIT_ATTACHMENT_KEY = LightLambdaExchange.Attachable.createMiddlewareAttachable(AuditMiddleware.class);
 
-    public AuditMiddleware(boolean audited, boolean asynchronous, boolean continueOnFailure) {
+
+    public AuditMiddleware() {
         super(false, false, false);
     }
 
@@ -39,5 +44,20 @@ public class AuditMiddleware extends LambdaMiddleware {
     @Override
     public boolean isEnabled() {
         return CONFIG.isEnabled();
+    }
+
+    @Override
+    public void register() {
+
+    }
+
+    @Override
+    public void reload() {
+
+    }
+
+    @Override
+    public APIGatewayProxyResponseEvent handleRequest(APIGatewayProxyRequestEvent apiGatewayProxyRequestEvent, Context context) {
+        return null;
     }
 }

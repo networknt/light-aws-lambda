@@ -1,5 +1,9 @@
 package com.networknt.aws.lambda.middleware.security;
 
+import com.amazonaws.services.lambda.runtime.Context;
+import com.amazonaws.services.lambda.runtime.events.APIGatewayProxyRequestEvent;
+import com.amazonaws.services.lambda.runtime.events.APIGatewayProxyResponseEvent;
+import com.networknt.aws.lambda.handler.MiddlewareHandler;
 import com.networknt.aws.lambda.middleware.LambdaMiddleware;
 import com.networknt.aws.lambda.middleware.LightLambdaExchange;
 import com.networknt.aws.lambda.middleware.specification.OpenApiMiddleware;
@@ -24,7 +28,7 @@ import java.util.*;
 import static com.networknt.aws.lambda.middleware.audit.AuditMiddleware.AUDIT_ATTACHMENT_KEY;
 import static com.networknt.aws.lambda.utility.HeaderKey.SCOPE_TOKEN;
 
-public class JwtVerifyMiddleware extends LambdaMiddleware {
+public class JwtVerifyMiddleware extends LambdaMiddleware implements MiddlewareHandler {
     private static final Logger LOG = LoggerFactory.getLogger(JwtVerifyMiddleware.class);
     private static final SecurityConfig config = SecurityConfig.load(SecurityConfig.CONFIG_NAME);
     public static JwtVerifier jwtVerifier;
@@ -72,6 +76,16 @@ public class JwtVerifyMiddleware extends LambdaMiddleware {
 
         // TODO - is this right?
         return config.isEnableVerifyJwt();
+    }
+
+    @Override
+    public void register() {
+
+    }
+
+    @Override
+    public void reload() {
+
     }
 
     public Status handleJwt(LightLambdaExchange exchange, String pathPrefix, String reqPath, List<String> jwkServiceIds) {
@@ -393,4 +407,8 @@ public class JwtVerifyMiddleware extends LambdaMiddleware {
     }
 
 
+    @Override
+    public APIGatewayProxyResponseEvent handleRequest(APIGatewayProxyRequestEvent apiGatewayProxyRequestEvent, Context context) {
+        return null;
+    }
 }

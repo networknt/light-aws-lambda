@@ -1,7 +1,9 @@
 package com.networknt.aws.lambda.middleware.header;
 
+import com.amazonaws.services.lambda.runtime.Context;
 import com.amazonaws.services.lambda.runtime.events.APIGatewayProxyRequestEvent;
 import com.amazonaws.services.lambda.runtime.events.APIGatewayProxyResponseEvent;
+import com.networknt.aws.lambda.handler.MiddlewareHandler;
 import com.networknt.aws.lambda.middleware.LambdaMiddleware;
 import com.networknt.aws.lambda.middleware.LightLambdaExchange;
 import com.networknt.header.HeaderConfig;
@@ -13,7 +15,7 @@ import org.slf4j.LoggerFactory;
 import java.util.List;
 import java.util.Map;
 
-public class HeaderMiddleware extends LambdaMiddleware {
+public class HeaderMiddleware extends LambdaMiddleware implements MiddlewareHandler {
 
     private static final String UNKNOWN_HEADER_OPERATION = "ERR14004";
     private static HeaderConfig CONFIG;
@@ -148,5 +150,20 @@ public class HeaderMiddleware extends LambdaMiddleware {
     @Override
     public boolean isEnabled() {
         return CONFIG.isEnabled();
+    }
+
+    @Override
+    public void register() {
+
+    }
+
+    @Override
+    public void reload() {
+
+    }
+
+    @Override
+    public APIGatewayProxyResponseEvent handleRequest(APIGatewayProxyRequestEvent apiGatewayProxyRequestEvent, Context context) {
+        return null;
     }
 }

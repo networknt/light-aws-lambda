@@ -1,7 +1,11 @@
 package com.networknt.aws.lambda.middleware.validator;
 
+import com.amazonaws.services.lambda.runtime.Context;
+import com.amazonaws.services.lambda.runtime.events.APIGatewayProxyRequestEvent;
+import com.amazonaws.services.lambda.runtime.events.APIGatewayProxyResponseEvent;
 import com.mservicetech.openapi.common.RequestEntity;
 import com.mservicetech.openapi.validation.OpenApiValidator;
+import com.networknt.aws.lambda.handler.MiddlewareHandler;
 import com.networknt.aws.lambda.middleware.LightLambdaExchange;
 import com.networknt.aws.lambda.middleware.LambdaMiddleware;
 import com.networknt.aws.lambda.middleware.chain.ChainDirection;
@@ -18,7 +22,7 @@ import java.io.IOException;
 import java.io.InputStream;
 import java.util.Map;
 
-public class ValidatorMiddleware extends LambdaMiddleware {
+public class ValidatorMiddleware extends LambdaMiddleware implements MiddlewareHandler {
 
     private static final Logger LOG = LoggerFactory.getLogger(ValidatorMiddleware.class);
     private static final String CONFIG_NAME = "lambda-validator";
@@ -122,5 +126,19 @@ public class ValidatorMiddleware extends LambdaMiddleware {
         return CONFIG.isEnabled();
     }
 
+    @Override
+    public void register() {
 
+    }
+
+    @Override
+    public void reload() {
+
+    }
+
+
+    @Override
+    public APIGatewayProxyResponseEvent handleRequest(APIGatewayProxyRequestEvent apiGatewayProxyRequestEvent, Context context) {
+        return null;
+    }
 }

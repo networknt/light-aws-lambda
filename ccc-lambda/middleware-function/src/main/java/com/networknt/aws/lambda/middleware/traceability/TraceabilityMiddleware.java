@@ -1,5 +1,9 @@
 package com.networknt.aws.lambda.middleware.traceability;
 
+import com.amazonaws.services.lambda.runtime.Context;
+import com.amazonaws.services.lambda.runtime.events.APIGatewayProxyRequestEvent;
+import com.amazonaws.services.lambda.runtime.events.APIGatewayProxyResponseEvent;
+import com.networknt.aws.lambda.handler.MiddlewareHandler;
 import com.networknt.aws.lambda.middleware.LambdaMiddleware;
 import com.networknt.aws.lambda.middleware.LightLambdaExchange;
 import com.networknt.aws.lambda.utility.HeaderKey;
@@ -10,7 +14,7 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.slf4j.MDC;
 
-public class TraceabilityMiddleware extends LambdaMiddleware {
+public class TraceabilityMiddleware extends LambdaMiddleware implements MiddlewareHandler {
 
     private static final Logger LOG = LoggerFactory.getLogger(TraceabilityMiddleware.class);
     private static final TraceabilityConfig CONFIG = TraceabilityConfig.load();
@@ -50,5 +54,20 @@ public class TraceabilityMiddleware extends LambdaMiddleware {
     @Override
     public boolean isEnabled() {
         return CONFIG.isEnabled();
+    }
+
+    @Override
+    public void register() {
+
+    }
+
+    @Override
+    public void reload() {
+
+    }
+
+    @Override
+    public APIGatewayProxyResponseEvent handleRequest(APIGatewayProxyRequestEvent apiGatewayProxyRequestEvent, Context context) {
+        return null;
     }
 }

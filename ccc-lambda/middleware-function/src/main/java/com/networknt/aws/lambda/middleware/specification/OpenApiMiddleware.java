@@ -1,6 +1,10 @@
 package com.networknt.aws.lambda.middleware.specification;
 
+import com.amazonaws.services.lambda.runtime.Context;
+import com.amazonaws.services.lambda.runtime.events.APIGatewayProxyRequestEvent;
+import com.amazonaws.services.lambda.runtime.events.APIGatewayProxyResponseEvent;
 import com.fasterxml.jackson.core.JsonProcessingException;
+import com.networknt.aws.lambda.handler.MiddlewareHandler;
 import com.networknt.aws.lambda.middleware.LambdaMiddleware;
 import com.networknt.aws.lambda.middleware.LightLambdaExchange;
 import com.networknt.config.Config;
@@ -21,7 +25,22 @@ import java.util.Optional;
 
 import static com.networknt.aws.lambda.middleware.audit.AuditMiddleware.AUDIT_ATTACHMENT_KEY;
 
-public class OpenApiMiddleware extends LambdaMiddleware {
+public class OpenApiMiddleware extends LambdaMiddleware implements MiddlewareHandler {
+    @Override
+    public void register() {
+
+    }
+
+    @Override
+    public void reload() {
+
+    }
+
+    @Override
+    public APIGatewayProxyResponseEvent handleRequest(APIGatewayProxyRequestEvent apiGatewayProxyRequestEvent, Context context) {
+        return null;
+    }
+
     private static final Logger LOG = LoggerFactory.getLogger(OpenApiMiddleware.class);
     private static final String STATUS_METHOD_NOT_ALLOWED = "ERR10008";
     private static final String CONFIG_NAME = "lambda-openapi";

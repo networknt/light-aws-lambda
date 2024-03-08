@@ -1,4 +1,8 @@
 package com.networknt.aws.lambda.middleware.correlation;
+import com.amazonaws.services.lambda.runtime.Context;
+import com.amazonaws.services.lambda.runtime.events.APIGatewayProxyRequestEvent;
+import com.amazonaws.services.lambda.runtime.events.APIGatewayProxyResponseEvent;
+import com.networknt.aws.lambda.handler.MiddlewareHandler;
 import com.networknt.aws.lambda.middleware.LambdaMiddleware;
 import com.networknt.aws.lambda.middleware.LightLambdaExchange;
 import com.networknt.aws.lambda.utility.HeaderKey;
@@ -15,7 +19,7 @@ import java.nio.ByteBuffer;
 import java.util.UUID;
 
 
-public class CorrelationMiddleware extends LambdaMiddleware {
+public class CorrelationMiddleware extends LambdaMiddleware implements MiddlewareHandler {
 
     private static final CorrelationConfig CONFIG = CorrelationConfig.load();
     private static final Logger LOG = LoggerFactory.getLogger(CorrelationMiddleware.class);
@@ -61,11 +65,26 @@ public class CorrelationMiddleware extends LambdaMiddleware {
         return CONFIG.isEnabled();
     }
 
+    @Override
+    public void register() {
+
+    }
+
+    @Override
+    public void reload() {
+
+    }
+
     private String getUUID() {
         UUID id = UUID.randomUUID();
         ByteBuffer bb = ByteBuffer.wrap(new byte[16]);
         bb.putLong(id.getMostSignificantBits());
         bb.putLong(id.getLeastSignificantBits());
         return Base64.encodeBase64URLSafeString(bb.array());
+    }
+
+    @Override
+    public APIGatewayProxyResponseEvent handleRequest(APIGatewayProxyRequestEvent apiGatewayProxyRequestEvent, Context context) {
+        return null;
     }
 }

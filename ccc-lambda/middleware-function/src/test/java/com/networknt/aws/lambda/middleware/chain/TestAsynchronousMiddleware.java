@@ -1,6 +1,9 @@
 package com.networknt.aws.lambda.middleware.chain;
 
-import com.networknt.aws.lambda.middleware.LambdaMiddleware;
+import com.amazonaws.services.lambda.runtime.Context;
+import com.amazonaws.services.lambda.runtime.events.APIGatewayProxyRequestEvent;
+import com.amazonaws.services.lambda.runtime.events.APIGatewayProxyResponseEvent;
+import com.networknt.aws.lambda.handler.MiddlewareHandler;
 import com.networknt.aws.lambda.middleware.LightLambdaExchange;
 import com.networknt.status.Status;
 import org.slf4j.Logger;
@@ -8,7 +11,7 @@ import org.slf4j.LoggerFactory;
 
 import java.util.concurrent.ThreadLocalRandom;
 
-public class TestAsynchronousMiddleware extends LambdaMiddleware {
+public class TestAsynchronousMiddleware implements MiddlewareHandler {
 
     private static final Logger LOG = LoggerFactory.getLogger(TestAsynchronousMiddleware.class);
 
@@ -16,7 +19,7 @@ public class TestAsynchronousMiddleware extends LambdaMiddleware {
     }
 
     @Override
-    protected Status executeMiddleware(final LightLambdaExchange exchange) throws InterruptedException {
+    public Status executeMiddleware(final LightLambdaExchange exchange) throws InterruptedException {
         LOG.info("I am executing asynchronously");
 
         int randomSlept = ThreadLocalRandom.current().nextInt(5, 15);
@@ -31,7 +34,7 @@ public class TestAsynchronousMiddleware extends LambdaMiddleware {
         }
 
         LOG.info("I am done executing asynchronously, doing callback");
-        return LambdaMiddleware.successMiddlewareStatus();
+        return successMiddlewareStatus();
     }
 
     @Override
@@ -42,5 +45,35 @@ public class TestAsynchronousMiddleware extends LambdaMiddleware {
     @Override
     public boolean isEnabled() {
         return true;
+    }
+
+    @Override
+    public void register() {
+
+    }
+
+    @Override
+    public void reload() {
+
+    }
+
+    @Override
+    public boolean isContinueOnFailure() {
+        return false;
+    }
+
+    @Override
+    public boolean isAudited() {
+        return false;
+    }
+
+    @Override
+    public boolean isAsynchronous() {
+        return true;
+    }
+
+    @Override
+    public APIGatewayProxyResponseEvent handleRequest(APIGatewayProxyRequestEvent apiGatewayProxyRequestEvent, Context context) {
+        return null;
     }
 }

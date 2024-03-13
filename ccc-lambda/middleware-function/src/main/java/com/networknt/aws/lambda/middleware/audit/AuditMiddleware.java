@@ -6,6 +6,7 @@ import com.amazonaws.services.lambda.runtime.events.APIGatewayProxyResponseEvent
 import com.networknt.audit.AuditConfig;
 import com.networknt.aws.lambda.handler.MiddlewareHandler;
 import com.networknt.aws.lambda.middleware.LightLambdaExchange;
+import com.networknt.aws.lambda.middleware.LightLambdaExchange.Attachable;
 import com.networknt.status.Status;
 import org.apache.commons.lang3.NotImplementedException;
 import org.slf4j.Logger;
@@ -20,7 +21,7 @@ import org.slf4j.LoggerFactory;
 public class AuditMiddleware implements MiddlewareHandler {
     private static final Logger LOG = LoggerFactory.getLogger(AuditMiddleware.class);
     private static final AuditConfig CONFIG = AuditConfig.load();
-    public static final LightLambdaExchange.Attachable<AuditMiddleware> AUDIT_ATTACHMENT_KEY = LightLambdaExchange.Attachable.createMiddlewareAttachable(AuditMiddleware.class);
+    public static final Attachable<AuditMiddleware> AUDIT_ATTACHMENT_KEY = LightLambdaExchange.Attachable.createMiddlewareAttachable(AuditMiddleware.class);
 
 
     public AuditMiddleware() {

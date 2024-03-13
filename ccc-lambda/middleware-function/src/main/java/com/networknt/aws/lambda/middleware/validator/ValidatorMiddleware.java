@@ -96,13 +96,13 @@ public class ValidatorMiddleware implements MiddlewareHandler {
     }
 
     private boolean shouldValidateRequestBody(final LightLambdaExchange exchange) {
-        return this.getChainDirection().equals(ChainDirection.REQUEST)
+        return exchange.isRequestInProgress()
                 && this.isApplicationJsonContentType(exchange.getRequest().getHeaders())
                 && !CONFIG.isSkipBodyValidation();
     }
 
     private boolean shouldValidateResponseBody(final LightLambdaExchange exchange) {
-        return this.getChainDirection().equals(ChainDirection.RESPONSE)
+        return exchange.isResponseInProgress()
                 && this.isApplicationJsonContentType(exchange.getResponse().getHeaders())
                 && CONFIG.isValidateResponse();
     }

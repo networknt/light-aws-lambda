@@ -9,6 +9,7 @@ import com.networknt.aws.lambda.middleware.chain.PooledChainLinkExecutor;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
+import java.util.Collections;
 import java.util.HashMap;
 import java.util.Map;
 
@@ -24,8 +25,8 @@ public final class LightLambdaExchange {
     private APIGatewayProxyRequestEvent request;
     private APIGatewayProxyResponseEvent response;
     private final Context context;
-    private final Map<Attachable<? super MiddlewareHandler>, Object> requestAttachments = new HashMap<>();
-    private final Map<Attachable<? super MiddlewareHandler>, Object> responseAttachments = new HashMap<>();
+    private final Map<Attachable<?>, Object> requestAttachments = Collections.synchronizedMap(new HashMap<>());
+    private final Map<Attachable<?>, Object> responseAttachments = Collections.synchronizedMap(new HashMap<>());
     private final PooledChainLinkExecutor executor;
 
     // Initial state
@@ -53,6 +54,12 @@ public final class LightLambdaExchange {
     private final Chain requestChain;
     private final Chain responseChain;
 
+    /**
+     *
+     * @param context
+     * @param requestChain
+     * @param responseChain
+     */
     public LightLambdaExchange(Context context, Chain requestChain, Chain responseChain) {
         this.context = context;
         this.requestChain = requestChain;
@@ -62,6 +69,9 @@ public final class LightLambdaExchange {
         this.executor = new PooledChainLinkExecutor();
     }
 
+    /**
+     *
+     */
     public void executeRequestChain() {
 
         if (stateHasAllFlags(FLAG_STARTING_REQUEST_READY)) {
@@ -91,6 +101,9 @@ public final class LightLambdaExchange {
         }
     }
 
+    /**
+     *
+     */
     public void executeResponseChain() {
 
         if (stateHasAllFlags(FLAG_STARTING_RESPONSE_READY)) {
@@ -116,6 +129,10 @@ public final class LightLambdaExchange {
 
     }
 
+    /**
+     *
+     * @param response
+     */
     public void setResponse(APIGatewayProxyResponseEvent response) {
 
         if (stateHasAnyFlags(FLAG_STARTING_RESPONSE_READY | FLAG_RESPONSE_DONE | FLAG_RESPONSE_HAS_FAILURE))
@@ -126,6 +143,10 @@ public final class LightLambdaExchange {
         this.state |= FLAG_STARTING_RESPONSE_READY;
     }
 
+    /**
+     *
+     * @param request
+     */
     public void setRequest(APIGatewayProxyRequestEvent request) {
 
         if (stateHasAnyFlags(FLAG_STARTING_REQUEST_READY | FLAG_REQUEST_DONE | FLAG_REQUEST_HAS_FAILURE))
@@ -135,10 +156,10 @@ public final class LightLambdaExchange {
         this.state |= FLAG_STARTING_REQUEST_READY;
     }
 
-    public APIGatewayProxyRequestEvent getRequest() {
-        return request;
-    }
-
+    /**
+     *
+     * @return
+     */
     public APIGatewayProxyResponseEvent getResponse() {
         if (stateHasAnyFlags(FLAG_REQUEST_HAS_FAILURE))
             return ExceptionUtil.convert(this.executor.getChainResults());
@@ -152,68 +173,119 @@ public final class LightLambdaExchange {
     public Context getContext() {
         return context;
     }
+    public APIGatewayProxyRequestEvent getRequest() {
+        return request;
+    }
 
-    public void addRequestAttachment(Attachable<MiddlewareHandler> key, Object o) {
+    /**
+     *
+     * @param key
+     * @param o
+     * @param <T>
+     */
+    public <T> void addRequestAttachment(Attachable<T> key, Object o) {
         this.requestAttachments.put(key, o);
     }
 
-    public void addResponseAttachment(Attachable<? super MiddlewareHandler> key, Object o) {
+    /**
+     *
+     * @param key
+     * @param o
+     * @param <T>
+     */
+    public <T> void addResponseAttachment(Attachable<T> key, Object o) {
         this.responseAttachments.put(key, o);
     }
 
-    public Object getRequestAttachment(Attachable<? super MiddlewareHandler> attachable) {
+    /**
+     *
+     * @param attachable
+     * @return
+     */
+    public Object getRequestAttachment(Attachable<?> attachable) {
         return this.requestAttachments.get(attachable);
     }
 
-    public Object getResponseAttachment(Attachable<? super MiddlewareHandler> attachable) {
+    /**
+     *
+     * @param attachable
+     * @return
+     */
+    public Object getResponseAttachment(Attachable<?> attachable) {
         return this.responseAttachments.get(attachable);
     }
 
-    public Map<Attachable<? super MiddlewareHandler>, Object> getRequestAttachments() {
-        return requestAttachments;
-    }
-
-    public Map<Attachable<? super MiddlewareHandler>, Object> getResponseAttachments() {
-        return responseAttachments;
-    }
-
+    /**
+     *
+     * @return
+     */
     public boolean hasFailedState() {
         LOG.debug("Checking if exchange has a failure state: {}", stateHasAnyFlags(FLAG_REQUEST_HAS_FAILURE | FLAG_RESPONSE_HAS_FAILURE));
         return stateHasAnyFlags(FLAG_REQUEST_HAS_FAILURE | FLAG_RESPONSE_HAS_FAILURE);
     }
 
-    public static class Attachable<T> {
-        private final Class<T> key;
-
-        private Attachable(Class<T> key) {
-            this.key = key;
-        }
-
-        public Class<T> getKey() {
-            return key;
-        }
-
-        public static <T> Attachable<T> createMiddlewareAttachable(Class<? super T> middleware) {
-            return new Attachable(middleware);
-        }
+    /**
+     * Checks to see if the exchange is in the 'request in progress' state.
+     * The exchange is in the request state when the request chain is ready and has not finished executing.
+     *
+     * @return - returns true if the exchange is handing the request.
+     */
+    public boolean isRequestInProgress() {
+        return this.stateHasAllFlags(FLAG_STARTING_REQUEST_READY)
+                && this.stateHasAllFlagsClear(FLAG_REQUEST_DONE);
     }
 
+    /**
+     * Checks to see if the exchange is in the response in progress state.
+     * The exchange is in the response state when the request chain is complete, and the response chain is ready and has not finished executing.
+     *
+     * @return - return true if the exchange is handling the response.
+     */
+    public boolean isResponseInProgress() {
+        return this.stateHasAllFlags(FLAG_REQUEST_DONE | FLAG_STARTING_RESPONSE_READY)
+                && this.stateHasAllFlagsClear(FLAG_RESPONSE_DONE);
+    }
+
+    /**
+     *
+     * @param flags
+     * @return
+     */
     private boolean stateHasAnyFlags(int flags) {
         return (this.state & flags) != 0;
     }
 
+    /**
+     *
+     * @param flags
+     * @return
+     */
     private boolean stateHasAnyFlagsClear(int flags) {
         return (this.state & flags) != flags;
     }
 
+    /**
+     *
+     * @param flags
+     * @return
+     */
     private boolean stateHasAllFlags(int flags) {
         return (this.state & flags) == flags;
     }
 
+    /**
+     *
+     * @param flags
+     * @return
+     */
     private boolean stateHasAllFlagsClear(int flags) {
         return (this.state & flags) == 0;
     }
 
+    /**
+     *
+     * @return
+     */
     public String getExchangeStateAsString() {
         String eol = "\",\n";
         return "state {\n" +
@@ -239,6 +311,33 @@ public final class LightLambdaExchange {
                 ", state=" + state +
                 ", statusCode=" + statusCode +
                 '}';
+    }
+
+    /**
+     *
+     * @param <T>
+     */
+    public static class Attachable<T> {
+        private final Class<T> key;
+
+        private Attachable(Class<T> key) {
+            this.key = key;
+        }
+
+        public Class<T> getKey() {
+            return key;
+        }
+
+        /**
+         * Creates a new attachable key.
+         *
+         * @param middleware - class to create a key for.
+         * @return - returns new attachable instance.
+         * @param <T> - given class has to implement the MiddlewareHandler interface.
+         */
+        public static <T extends MiddlewareHandler> Attachable<T> createMiddlewareAttachable(Class<T> middleware) {
+            return new Attachable<>(middleware);
+        }
     }
 
 

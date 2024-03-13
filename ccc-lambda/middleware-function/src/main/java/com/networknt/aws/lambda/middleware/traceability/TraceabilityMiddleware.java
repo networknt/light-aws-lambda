@@ -4,7 +4,6 @@ import com.amazonaws.services.lambda.runtime.Context;
 import com.amazonaws.services.lambda.runtime.events.APIGatewayProxyRequestEvent;
 import com.amazonaws.services.lambda.runtime.events.APIGatewayProxyResponseEvent;
 import com.networknt.aws.lambda.handler.MiddlewareHandler;
-import com.networknt.aws.lambda.middleware.LambdaMiddleware;
 import com.networknt.aws.lambda.middleware.LightLambdaExchange;
 import com.networknt.aws.lambda.utility.HeaderKey;
 import com.networknt.aws.lambda.utility.LoggerKey;
@@ -14,21 +13,20 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.slf4j.MDC;
 
-public class TraceabilityMiddleware extends LambdaMiddleware implements MiddlewareHandler {
+public class TraceabilityMiddleware implements MiddlewareHandler {
 
     private static final Logger LOG = LoggerFactory.getLogger(TraceabilityMiddleware.class);
     private static final TraceabilityConfig CONFIG = TraceabilityConfig.load();
     public static final LightLambdaExchange.Attachable<TraceabilityMiddleware> TRACEABILITY_ATTACHMENT_KEY = LightLambdaExchange.Attachable.createMiddlewareAttachable(TraceabilityMiddleware.class);
 
     public TraceabilityMiddleware() {
-        super(true, false, false);
     }
 
     @Override
-    protected Status executeMiddleware(final LightLambdaExchange exchange) throws InterruptedException {
+    public Status executeMiddleware(final LightLambdaExchange exchange) throws InterruptedException {
 
         if (!CONFIG.isEnabled())
-            return LambdaMiddleware.disabledMiddlewareStatus();
+            return disabledMiddlewareStatus();
 
         if (LOG.isDebugEnabled())
             LOG.debug("TraceabilityMiddleware.executeMiddleware starts.");
@@ -43,7 +41,7 @@ public class TraceabilityMiddleware extends LambdaMiddleware implements Middlewa
         if (LOG.isDebugEnabled())
             LOG.debug("TraceabilityMiddleware.executeMiddleware ends.");
 
-        return LambdaMiddleware.successMiddlewareStatus();
+        return successMiddlewareStatus();
     }
 
     @Override
@@ -64,6 +62,21 @@ public class TraceabilityMiddleware extends LambdaMiddleware implements Middlewa
     @Override
     public void reload() {
 
+    }
+
+    @Override
+    public boolean isContinueOnFailure() {
+        return false;
+    }
+
+    @Override
+    public boolean isAudited() {
+        return false;
+    }
+
+    @Override
+    public boolean isAsynchronous() {
+        return false;
     }
 
     @Override

@@ -3,6 +3,7 @@ package com.networknt.aws.lambda.middleware;
 import com.amazonaws.services.lambda.runtime.Context;
 import com.amazonaws.services.lambda.runtime.events.APIGatewayProxyRequestEvent;
 import com.amazonaws.services.lambda.runtime.events.APIGatewayProxyResponseEvent;
+import com.networknt.aws.lambda.handler.MiddlewareHandler;
 import com.networknt.aws.lambda.middleware.chain.Chain;
 import com.networknt.aws.lambda.middleware.chain.PooledChainLinkExecutor;
 import org.slf4j.Logger;
@@ -23,8 +24,8 @@ public final class LightLambdaExchange {
     private APIGatewayProxyRequestEvent request;
     private APIGatewayProxyResponseEvent response;
     private final Context context;
-    private final Map<Attachable<? extends LambdaMiddleware>, Object> requestAttachments = new HashMap<>();
-    private final Map<Attachable<? extends LambdaMiddleware>, Object> responseAttachments = new HashMap<>();
+    private final Map<Attachable<? super MiddlewareHandler>, Object> requestAttachments = new HashMap<>();
+    private final Map<Attachable<? super MiddlewareHandler>, Object> responseAttachments = new HashMap<>();
     private final PooledChainLinkExecutor executor;
 
     // Initial state
@@ -152,27 +153,27 @@ public final class LightLambdaExchange {
         return context;
     }
 
-    public <T extends LambdaMiddleware> void addRequestAttachment(Attachable<T> key, Object o) {
+    public void addRequestAttachment(Attachable<MiddlewareHandler> key, Object o) {
         this.requestAttachments.put(key, o);
     }
 
-    public <T extends LambdaMiddleware> void addResponseAttachment(Attachable<T> key, Object o) {
+    public void addResponseAttachment(Attachable<? super MiddlewareHandler> key, Object o) {
         this.responseAttachments.put(key, o);
     }
 
-    public <T extends LambdaMiddleware> Object getRequestAttachment(Attachable<T> attachable) {
+    public Object getRequestAttachment(Attachable<? super MiddlewareHandler> attachable) {
         return this.requestAttachments.get(attachable);
     }
 
-    public <T extends LambdaMiddleware> Object getResponseAttachment(Attachable<T> attachable) {
+    public Object getResponseAttachment(Attachable<? super MiddlewareHandler> attachable) {
         return this.responseAttachments.get(attachable);
     }
 
-    public Map<Attachable<? extends LambdaMiddleware>, Object> getRequestAttachments() {
+    public Map<Attachable<? super MiddlewareHandler>, Object> getRequestAttachments() {
         return requestAttachments;
     }
 
-    public Map<Attachable<? extends LambdaMiddleware>, Object> getResponseAttachments() {
+    public Map<Attachable<? super MiddlewareHandler>, Object> getResponseAttachments() {
         return responseAttachments;
     }
 
@@ -181,7 +182,7 @@ public final class LightLambdaExchange {
         return stateHasAnyFlags(FLAG_REQUEST_HAS_FAILURE | FLAG_RESPONSE_HAS_FAILURE);
     }
 
-    public static class Attachable<T extends LambdaMiddleware> {
+    public static class Attachable<T> {
         private final Class<T> key;
 
         private Attachable(Class<T> key) {
@@ -192,8 +193,8 @@ public final class LightLambdaExchange {
             return key;
         }
 
-        public static <T extends LambdaMiddleware> Attachable<T> createMiddlewareAttachable(Class<T> middleware) {
-            return new Attachable<T>(middleware);
+        public static <T> Attachable<T> createMiddlewareAttachable(Class<? super T> middleware) {
+            return new Attachable(middleware);
         }
     }
 

@@ -1,6 +1,6 @@
 package com.networknt.aws.lambda.middleware.chain;
 
-import com.networknt.aws.lambda.middleware.LambdaMiddleware;
+import com.networknt.aws.lambda.handler.MiddlewareHandler;
 import com.networknt.config.Config;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -11,8 +11,8 @@ import java.util.LinkedList;
 
 public class Chain {
     private static final Logger LOG = LoggerFactory.getLogger(Chain.class);
-    private final LinkedList<LambdaMiddleware> chain = new LinkedList<>();
-    private final LinkedList<ArrayList<LambdaMiddleware>> groupedChain = new LinkedList<>();
+    private final LinkedList<MiddlewareHandler> chain = new LinkedList<>();
+    private final LinkedList<ArrayList<MiddlewareHandler>> groupedChain = new LinkedList<>();
 
     private final boolean forceSynchronousExecution;
 
@@ -28,7 +28,7 @@ public class Chain {
         this.forceSynchronousExecution = forceSynchronousExecution;
     }
 
-    public void addChainable(LambdaMiddleware chainable) {
+    public void addChainable(MiddlewareHandler chainable) {
 
         if (!this.isFinalized)
             this.chain.add(chainable);
@@ -40,7 +40,7 @@ public class Chain {
         return isFinalized;
     }
 
-    public LinkedList<ArrayList<LambdaMiddleware>> getGroupedChain() {
+    public LinkedList<ArrayList<MiddlewareHandler>> getGroupedChain() {
         return groupedChain;
     }
 
@@ -53,23 +53,23 @@ public class Chain {
         if (this.isFinalized)
             return;
 
-        var group = new ArrayList<LambdaMiddleware>();
+        var group = new ArrayList<MiddlewareHandler>();
         for (var chainable : this.chain) {
 
             if (this.forceSynchronousExecution) {
                 this.cutGroup(group, chainable);
                 group = new ArrayList<>();
 
-            } else if (this.isMiddlewareAsynchronous(chainable)) {
+            } else if (chainable.isAsynchronous()) {
                 group.add(chainable);
 
-            } else if (!this.isMiddlewareAsynchronous(chainable) && !group.isEmpty()) {
+            } else if (!chainable.isAsynchronous() && !group.isEmpty()) {
                 this.groupedChain.add(group);
                 group = new ArrayList<>();
                 this.cutGroup(group, chainable);
                 group = new ArrayList<>();
 
-            } else if (!this.isMiddlewareAsynchronous(chainable) && group.isEmpty()) {
+            } else if (!chainable.isAsynchronous() && group.isEmpty()) {
                 this.cutGroup(group, chainable);
                 group = new ArrayList<>();
             }
@@ -92,8 +92,8 @@ public class Chain {
     public Chain add(String className) {
         try {
 
-            if (Class.forName(className).getSuperclass().equals(LambdaMiddleware.class))
-                return this.add((Class<? extends LambdaMiddleware>) Class.forName(className));
+            if (Class.forName(className).getSuperclass().equals(MiddlewareHandler.class))
+                return this.add((Class<? extends MiddlewareHandler>) Class.forName(className));
 
             else throw new RuntimeException(className + " is not a member of LambdaMiddleware...");
 
@@ -112,7 +112,7 @@ public class Chain {
      * @param  middleware - middleware class
      * @return - this
      */
-    public Chain add(Class<? extends LambdaMiddleware> middleware) {
+    public Chain add(Class<? extends MiddlewareHandler> middleware) {
 
         if (CONFIG.getMaxChainSize() <= this.chain.size()) {
             LOG.error("Chain is already at maxChainSize({}), cannot add anymore middleware to the chain.", CONFIG.getMaxChainSize());
@@ -123,7 +123,6 @@ public class Chain {
             var newClazz = middleware.getConstructor()
                     .newInstance();
 
-            newClazz.setChainDirection(this.chainDirection);
             newClazz.getCachedConfigurations();
 
             this.chain.add(newClazz);
@@ -142,25 +141,13 @@ public class Chain {
         return this;
     }
 
-    private void cutGroup(ArrayList<LambdaMiddleware> group, LambdaMiddleware chainable) {
+    private void cutGroup(ArrayList<MiddlewareHandler> group, MiddlewareHandler chainable) {
         group.add(chainable);
         this.groupedChain.add(group);
     }
 
-    private boolean isMiddlewareAsynchronous(LambdaMiddleware chainable) {
-        LOG.trace("Checking if chainable class '{}' is asynchronous.", chainable.getClass());
-        return chainable.asynchronous;
-    }
-
-    public LinkedList<LambdaMiddleware> getChain() {
+    public LinkedList<MiddlewareHandler> getChain() {
         return chain;
     }
-
-//    public LinkedList<Status> getChainResults() {
-//        return chainResults;
-//    }
-
-
-
 
 }

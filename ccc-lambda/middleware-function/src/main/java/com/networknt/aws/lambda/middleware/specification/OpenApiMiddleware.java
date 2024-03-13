@@ -5,7 +5,6 @@ import com.amazonaws.services.lambda.runtime.events.APIGatewayProxyRequestEvent;
 import com.amazonaws.services.lambda.runtime.events.APIGatewayProxyResponseEvent;
 import com.fasterxml.jackson.core.JsonProcessingException;
 import com.networknt.aws.lambda.handler.MiddlewareHandler;
-import com.networknt.aws.lambda.middleware.LambdaMiddleware;
 import com.networknt.aws.lambda.middleware.LightLambdaExchange;
 import com.networknt.config.Config;
 import com.networknt.oas.model.Operation;
@@ -25,7 +24,7 @@ import java.util.Optional;
 
 import static com.networknt.aws.lambda.middleware.audit.AuditMiddleware.AUDIT_ATTACHMENT_KEY;
 
-public class OpenApiMiddleware extends LambdaMiddleware implements MiddlewareHandler {
+public class OpenApiMiddleware implements MiddlewareHandler {
     @Override
     public void register() {
 
@@ -34,6 +33,21 @@ public class OpenApiMiddleware extends LambdaMiddleware implements MiddlewareHan
     @Override
     public void reload() {
 
+    }
+
+    @Override
+    public boolean isContinueOnFailure() {
+        return false;
+    }
+
+    @Override
+    public boolean isAudited() {
+        return false;
+    }
+
+    @Override
+    public boolean isAsynchronous() {
+        return false;
     }
 
     @Override
@@ -49,7 +63,6 @@ public class OpenApiMiddleware extends LambdaMiddleware implements MiddlewareHan
     public static OpenApiHelper helper;
 
     public OpenApiMiddleware() {
-        super(false, false, false);
         Map<String, Object> inject = Config.getInstance().getJsonMapConfig(SPEC_INJECT);
         Map<String, Object> openapi = Config.getInstance().getJsonMapConfigNoCache(CONFIG_NAME);
         OpenApiHelper.merge(openapi, inject);
@@ -62,7 +75,7 @@ public class OpenApiMiddleware extends LambdaMiddleware implements MiddlewareHan
     }
 
     @Override
-    protected Status executeMiddleware(LightLambdaExchange exchange) throws InterruptedException {
+    public Status executeMiddleware(LightLambdaExchange exchange) throws InterruptedException {
 
         LOG.debug("OpenAPI Specification Time - Start: {}", System.currentTimeMillis());
 
@@ -96,7 +109,7 @@ public class OpenApiMiddleware extends LambdaMiddleware implements MiddlewareHan
 
         LOG.debug("OpenAPI Specification Time - Finish: {}", System.currentTimeMillis());
 
-        return LambdaMiddleware.successMiddlewareStatus();
+        return successMiddlewareStatus();
     }
 
     @Override

@@ -4,7 +4,6 @@ import com.amazonaws.services.lambda.runtime.Context;
 import com.amazonaws.services.lambda.runtime.events.APIGatewayProxyRequestEvent;
 import com.amazonaws.services.lambda.runtime.events.APIGatewayProxyResponseEvent;
 import com.networknt.aws.lambda.handler.MiddlewareHandler;
-import com.networknt.aws.lambda.middleware.LambdaMiddleware;
 import com.networknt.aws.lambda.middleware.LightLambdaExchange;
 import com.networknt.header.HeaderConfig;
 import com.networknt.status.Status;
@@ -15,14 +14,13 @@ import org.slf4j.LoggerFactory;
 import java.util.List;
 import java.util.Map;
 
-public class HeaderMiddleware extends LambdaMiddleware implements MiddlewareHandler {
+public class HeaderMiddleware implements MiddlewareHandler {
 
     private static final String UNKNOWN_HEADER_OPERATION = "ERR14004";
     private static HeaderConfig CONFIG;
     private static final Logger LOG = LoggerFactory.getLogger(HeaderMiddleware.class);
 
     public HeaderMiddleware() {
-        super(false, false, false);
         CONFIG = HeaderConfig.load();
         LOG.info("HeaderMiddleware is constructed");
     }
@@ -32,17 +30,16 @@ public class HeaderMiddleware extends LambdaMiddleware implements MiddlewareHand
      * @param cfg HeaderConfig
      */
     public HeaderMiddleware(HeaderConfig cfg) {
-        super(false, false, false);
         CONFIG = cfg;
         LOG.info("HeaderMiddleware is constructed");
     }
 
     @Override
-    protected Status executeMiddleware(final LightLambdaExchange exchange) {
+    public Status executeMiddleware(final LightLambdaExchange exchange) {
         if(LOG.isTraceEnabled()) LOG.trace("HeaderMiddleware.executeMiddleware starts.");
         if (!CONFIG.isEnabled()) {
             if(LOG.isTraceEnabled()) LOG.trace("HeaderMiddleware is not enabled.");
-            return LambdaMiddleware.disabledMiddlewareStatus();
+            return disabledMiddlewareStatus();
         }
         return this.handleHeaders(exchange);
     }
@@ -138,7 +135,7 @@ public class HeaderMiddleware extends LambdaMiddleware implements MiddlewareHand
                 }
             }
         }
-        return LambdaMiddleware.successMiddlewareStatus();
+        return successMiddlewareStatus();
     }
 
     @Override
@@ -160,6 +157,21 @@ public class HeaderMiddleware extends LambdaMiddleware implements MiddlewareHand
     @Override
     public void reload() {
 
+    }
+
+    @Override
+    public boolean isContinueOnFailure() {
+        return false;
+    }
+
+    @Override
+    public boolean isAudited() {
+        return false;
+    }
+
+    @Override
+    public boolean isAsynchronous() {
+        return false;
     }
 
     @Override

@@ -3,7 +3,6 @@ import com.amazonaws.services.lambda.runtime.Context;
 import com.amazonaws.services.lambda.runtime.events.APIGatewayProxyRequestEvent;
 import com.amazonaws.services.lambda.runtime.events.APIGatewayProxyResponseEvent;
 import com.networknt.aws.lambda.handler.MiddlewareHandler;
-import com.networknt.aws.lambda.middleware.LambdaMiddleware;
 import com.networknt.aws.lambda.middleware.LightLambdaExchange;
 import com.networknt.aws.lambda.utility.HeaderKey;
 import com.networknt.aws.lambda.utility.LoggerKey;
@@ -19,18 +18,17 @@ import java.nio.ByteBuffer;
 import java.util.UUID;
 
 
-public class CorrelationMiddleware extends LambdaMiddleware implements MiddlewareHandler {
+public class CorrelationMiddleware implements MiddlewareHandler {
 
     private static final CorrelationConfig CONFIG = CorrelationConfig.load();
     private static final Logger LOG = LoggerFactory.getLogger(CorrelationMiddleware.class);
     private static final LightLambdaExchange.Attachable<CorrelationMiddleware> CORRELATION_ATTACHMENT_KEY = LightLambdaExchange.Attachable.createMiddlewareAttachable(CorrelationMiddleware.class);
 
     public CorrelationMiddleware() {
-        super(true, false, false);
     }
 
     @Override
-    protected Status executeMiddleware(final LightLambdaExchange exchange) throws InterruptedException {
+    public Status executeMiddleware(final LightLambdaExchange exchange) throws InterruptedException {
         LOG.debug("CorrelationHandler.handleRequest starts.");
 
         // check if the cid is in the request header
@@ -51,7 +49,7 @@ public class CorrelationMiddleware extends LambdaMiddleware implements Middlewar
             MDC.put(LoggerKey.CORRELATION, cid);
 
         LOG.debug("CorrelationHandler.handleRequest ends.");
-        return LambdaMiddleware.successMiddlewareStatus();
+        return successMiddlewareStatus();
     }
 
     @Override
@@ -73,6 +71,21 @@ public class CorrelationMiddleware extends LambdaMiddleware implements Middlewar
     @Override
     public void reload() {
 
+    }
+
+    @Override
+    public boolean isContinueOnFailure() {
+        return false;
+    }
+
+    @Override
+    public boolean isAudited() {
+        return false;
+    }
+
+    @Override
+    public boolean isAsynchronous() {
+        return false;
     }
 
     private String getUUID() {

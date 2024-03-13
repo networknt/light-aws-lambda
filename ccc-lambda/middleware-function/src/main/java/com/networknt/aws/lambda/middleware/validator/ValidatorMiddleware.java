@@ -7,12 +7,9 @@ import com.mservicetech.openapi.common.RequestEntity;
 import com.mservicetech.openapi.validation.OpenApiValidator;
 import com.networknt.aws.lambda.handler.MiddlewareHandler;
 import com.networknt.aws.lambda.middleware.LightLambdaExchange;
-import com.networknt.aws.lambda.middleware.LambdaMiddleware;
 import com.networknt.aws.lambda.middleware.chain.ChainDirection;
-import com.networknt.aws.lambda.middleware.chain.ChainLinkCallback;
 import com.networknt.aws.lambda.utility.HeaderKey;
 import com.networknt.aws.lambda.utility.HeaderValue;
-import com.networknt.config.Config;
 import com.networknt.openapi.ValidatorConfig;
 import com.networknt.status.Status;
 import org.slf4j.Logger;
@@ -22,7 +19,7 @@ import java.io.IOException;
 import java.io.InputStream;
 import java.util.Map;
 
-public class ValidatorMiddleware extends LambdaMiddleware implements MiddlewareHandler {
+public class ValidatorMiddleware implements MiddlewareHandler {
 
     private static final Logger LOG = LoggerFactory.getLogger(ValidatorMiddleware.class);
     private static final String CONFIG_NAME = "lambda-validator";
@@ -33,14 +30,13 @@ public class ValidatorMiddleware extends LambdaMiddleware implements MiddlewareH
     private static final ValidatorConfig CONFIG = ValidatorConfig.load();
 
     public ValidatorMiddleware() {
-        super(false, true, false);
     }
 
     @Override
-    protected Status executeMiddleware(final LightLambdaExchange exchange) throws InterruptedException {
+    public Status executeMiddleware(final LightLambdaExchange exchange) throws InterruptedException {
 
         if (!CONFIG.isEnabled())
-            return LambdaMiddleware.disabledMiddlewareStatus();
+            return disabledMiddlewareStatus();
 
         LOG.debug("ValidatorHandler.executeMiddleware starts.");
         LOG.debug("Validation Time - Start: {}", System.currentTimeMillis());
@@ -57,7 +53,7 @@ public class ValidatorMiddleware extends LambdaMiddleware implements MiddlewareH
                 if (status != null)
                     return new Status(status.getCode());
 
-                else return LambdaMiddleware.successMiddlewareStatus();
+                else return successMiddlewareStatus();
 
             } else return new Status(CONTENT_TYPE_MISMATCH);
 
@@ -66,7 +62,7 @@ public class ValidatorMiddleware extends LambdaMiddleware implements MiddlewareH
             if (exchange.getResponse().getBody() != null) {
 
                 // TODO - response body validation
-                return LambdaMiddleware.successMiddlewareStatus();
+                return successMiddlewareStatus();
 
             } else return new Status(CONTENT_TYPE_MISMATCH);
         }
@@ -74,7 +70,7 @@ public class ValidatorMiddleware extends LambdaMiddleware implements MiddlewareH
         LOG.debug("Validation Time - Finish: {}", System.currentTimeMillis());
         LOG.debug("ValidatorHandler.executeMiddleware ends.");
 
-        return LambdaMiddleware.successMiddlewareStatus();
+        return successMiddlewareStatus();
     }
 
     private static OpenApiValidator getValidatorInstance() {
@@ -134,6 +130,21 @@ public class ValidatorMiddleware extends LambdaMiddleware implements MiddlewareH
     @Override
     public void reload() {
 
+    }
+
+    @Override
+    public boolean isContinueOnFailure() {
+        return false;
+    }
+
+    @Override
+    public boolean isAudited() {
+        return false;
+    }
+
+    @Override
+    public boolean isAsynchronous() {
+        return false;
     }
 
 

@@ -5,6 +5,7 @@ import com.amazonaws.services.lambda.runtime.Context;
 import com.amazonaws.services.lambda.runtime.RequestHandler;
 import com.amazonaws.services.lambda.runtime.events.APIGatewayProxyRequestEvent;
 import com.amazonaws.services.lambda.runtime.events.APIGatewayProxyResponseEvent;
+import com.networknt.aws.lambda.handler.Handler;
 import com.networknt.aws.lambda.middleware.LightLambdaExchange;
 import com.networknt.aws.lambda.middleware.chain.Chain;
 import com.networknt.aws.lambda.middleware.chain.ChainDirection;
@@ -46,7 +47,7 @@ public class LambdaProxy implements RequestHandler<APIGatewayProxyRequestEvent, 
             builder.endpointOverride(URI.create(CONFIG.getEndpointOverride()));
 
         client = builder.build();
-        initChains();
+        Handler.init();
     }
 
     private void initChains() {

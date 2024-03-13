@@ -4,26 +4,22 @@ import com.amazonaws.services.lambda.runtime.Context;
 import com.amazonaws.services.lambda.runtime.events.APIGatewayProxyRequestEvent;
 import com.amazonaws.services.lambda.runtime.events.APIGatewayProxyResponseEvent;
 import com.networknt.aws.lambda.handler.MiddlewareHandler;
-import com.networknt.aws.lambda.middleware.LambdaMiddleware;
 import com.networknt.aws.lambda.middleware.LightLambdaExchange;
-import com.networknt.aws.lambda.middleware.chain.ChainLinkCallback;
-import com.networknt.config.Config;
 import com.networknt.security.SecurityConfig;
 import com.networknt.status.Status;
 import org.apache.commons.lang3.NotImplementedException;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-public class UnifiedSecurityMiddleware extends LambdaMiddleware implements MiddlewareHandler {
+public class UnifiedSecurityMiddleware implements MiddlewareHandler {
     private static final Logger LOG = LoggerFactory.getLogger(UnifiedSecurityMiddleware.class);
     private static final SecurityConfig CONFIG = SecurityConfig.load(SecurityConfig.CONFIG_NAME);
 
     public UnifiedSecurityMiddleware() {
-        super(false, false, false);
     }
 
     @Override
-    protected Status executeMiddleware(LightLambdaExchange exchange) throws InterruptedException {
+    public Status executeMiddleware(LightLambdaExchange exchange) throws InterruptedException {
         return null;
     }
 
@@ -48,6 +44,21 @@ public class UnifiedSecurityMiddleware extends LambdaMiddleware implements Middl
     @Override
     public void reload() {
 
+    }
+
+    @Override
+    public boolean isContinueOnFailure() {
+        return false;
+    }
+
+    @Override
+    public boolean isAudited() {
+        return false;
+    }
+
+    @Override
+    public boolean isAsynchronous() {
+        return false;
     }
 
     @Override

@@ -4,7 +4,6 @@ import com.amazonaws.services.lambda.runtime.Context;
 import com.amazonaws.services.lambda.runtime.events.APIGatewayProxyRequestEvent;
 import com.amazonaws.services.lambda.runtime.events.APIGatewayProxyResponseEvent;
 import com.networknt.aws.lambda.handler.MiddlewareHandler;
-import com.networknt.aws.lambda.middleware.LambdaMiddleware;
 import com.networknt.aws.lambda.middleware.LightLambdaExchange;
 import com.networknt.aws.lambda.middleware.specification.OpenApiMiddleware;
 import com.networknt.aws.lambda.utility.HeaderKey;
@@ -28,7 +27,7 @@ import java.util.*;
 import static com.networknt.aws.lambda.middleware.audit.AuditMiddleware.AUDIT_ATTACHMENT_KEY;
 import static com.networknt.aws.lambda.utility.HeaderKey.SCOPE_TOKEN;
 
-public class JwtVerifyMiddleware extends LambdaMiddleware implements MiddlewareHandler {
+public class JwtVerifyMiddleware implements MiddlewareHandler {
     private static final Logger LOG = LoggerFactory.getLogger(JwtVerifyMiddleware.class);
     private static final SecurityConfig config = SecurityConfig.load(SecurityConfig.CONFIG_NAME);
     public static JwtVerifier jwtVerifier;
@@ -44,13 +43,12 @@ public class JwtVerifyMiddleware extends LambdaMiddleware implements MiddlewareH
     static final String STATUS_METHOD_NOT_ALLOWED = "ERR10008";
     static final String STATUS_OPENAPI_OPERATION_MISSED = "ERR10085";
     public JwtVerifyMiddleware() {
-        super(false, false, false);
         jwtVerifier = new JwtVerifier(config);
         jwtVerifier.initJwkMap();
     }
 
     @Override
-    protected Status executeMiddleware(LightLambdaExchange exchange) throws InterruptedException {
+    public Status executeMiddleware(LightLambdaExchange exchange) throws InterruptedException {
         if(LOG.isDebugEnabled()) LOG.debug("JwtVerifyMiddleware.executeMiddleware starts");
 
         LOG.debug("JWT Verification Time - Start: {}", System.currentTimeMillis());
@@ -59,7 +57,7 @@ public class JwtVerifyMiddleware extends LambdaMiddleware implements MiddlewareH
         if (config.getSkipPathPrefixes() != null && config.getSkipPathPrefixes().stream().anyMatch(reqPath::startsWith)) {
             if(LOG.isTraceEnabled())
                 LOG.trace("Skip request path base on skipPathPrefixes for " + reqPath);
-            return LambdaMiddleware.successMiddlewareStatus();
+            return successMiddlewareStatus();
         }
         // only UnifiedSecurityHandler will have the jwkServiceIds as the third parameter.
         return handleJwt(exchange, null, reqPath, null);
@@ -86,6 +84,21 @@ public class JwtVerifyMiddleware extends LambdaMiddleware implements MiddlewareH
     @Override
     public void reload() {
 
+    }
+
+    @Override
+    public boolean isContinueOnFailure() {
+        return false;
+    }
+
+    @Override
+    public boolean isAudited() {
+        return false;
+    }
+
+    @Override
+    public boolean isAsynchronous() {
+        return false;
     }
 
     public Status handleJwt(LightLambdaExchange exchange, String pathPrefix, String reqPath, List<String> jwkServiceIds) {
@@ -162,7 +175,7 @@ public class JwtVerifyMiddleware extends LambdaMiddleware implements MiddlewareH
                                 if (LOG.isDebugEnabled())
                                     LOG.debug("JwtVerifyHandler.handleRequest ends without verifying scope due to spec.");
 
-                                return LambdaMiddleware.successMiddlewareStatus();
+                                return successMiddlewareStatus();
                             } else {
                                 // this will return an error message to the client.
                             }
@@ -207,7 +220,7 @@ public class JwtVerifyMiddleware extends LambdaMiddleware implements MiddlewareH
                     if (LOG.isDebugEnabled())
                         LOG.debug("JwtVerifyHandler.handleRequest ends.");
 
-                    return LambdaMiddleware.successMiddlewareStatus();
+                    return successMiddlewareStatus();
 
                 } catch (InvalidJwtException e) {
 

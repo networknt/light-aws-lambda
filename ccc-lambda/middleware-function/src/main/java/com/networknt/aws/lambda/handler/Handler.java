@@ -16,6 +16,8 @@ public class Handler {
     private static final Logger LOG = LoggerFactory.getLogger(Handler.class);
     // Accessed directly.
     public static HandlerConfig config = HandlerConfig.load();
+    public static final String REQUEST_CHAIN = "request";
+    public static final String RESPONSE_CHAIN = "response";
 
     // each handler keyed by a name.
     static final Map<String, LambdaHandler> handlers = new HashMap<>();
@@ -34,6 +36,14 @@ public class Handler {
         initPaths();
         initDefaultHandlers();
         ModuleRegistry.registerModule(HandlerConfig.CONFIG_NAME, Handler.class.getName(), Config.getNoneDecryptedInstance().getJsonMapConfigNoCache(HandlerConfig.CONFIG_NAME), null);
+    }
+
+    public ArrayList<LambdaHandler> getRequestChain() {
+        return (ArrayList<LambdaHandler>) handlerListById.get(REQUEST_CHAIN);
+    }
+
+    public ArrayList<LambdaHandler> getResponseChain() {
+        return (ArrayList<LambdaHandler>) handlerListById.get(RESPONSE_CHAIN);
     }
 
     /**

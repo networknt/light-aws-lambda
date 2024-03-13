@@ -13,7 +13,6 @@ public class TestAsynchronousMiddleware extends LambdaMiddleware {
     private static final Logger LOG = LoggerFactory.getLogger(TestAsynchronousMiddleware.class);
 
     public TestAsynchronousMiddleware() {
-        super(true, true, false);
     }
 
     @Override

@@ -50,9 +50,10 @@ class PooledChainLinkExecutorTest {
         chain.setupGroupedChain();
 
         /* create a new exchange with the disabled header chain + fake context (LightLambdaExchange uses PooledChainLinkExecutor to execute request/response chains) */
-        var exchange = new LightLambdaExchange(lambdaContext, chain, null);
+        var exchange = new LightLambdaExchange(lambdaContext, chain);
         exchange.setRequest(requestEvent);
-        exchange.executeRequestChain();
+
+        exchange.executeChain();
 
         // header1 and header2 should not be removed from the request headers
         Assertions.assertNotNull(requestEvent.getHeaders().get("header1"));

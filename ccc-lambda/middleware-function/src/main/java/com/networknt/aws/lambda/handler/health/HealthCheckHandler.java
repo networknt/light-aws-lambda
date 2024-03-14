@@ -97,4 +97,9 @@ public class HealthCheckHandler implements LambdaHandler {
     public void reload() {
         throw new NotImplementedException();
     }
+
+    @Override
+    public boolean isAsynchronous() {
+        return false;
+    }
 }

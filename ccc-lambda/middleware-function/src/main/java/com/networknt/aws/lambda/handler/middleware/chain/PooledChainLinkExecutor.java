@@ -1,5 +1,6 @@
 package com.networknt.aws.lambda.handler.middleware.chain;
 
+import com.networknt.aws.lambda.handler.LambdaHandler;
 import com.networknt.aws.lambda.handler.MiddlewareHandler;
 import com.networknt.aws.lambda.handler.middleware.LightLambdaExchange;
 import com.networknt.aws.lambda.handler.middleware.MiddlewareRunnable;
@@ -111,7 +112,7 @@ public class PooledChainLinkExecutor extends ThreadPoolExecutor {
      * @param exchange       - current exchange.
      * @return - List of thread workers for the tasks.
      */
-    private ArrayList<ChainLinkWorker> createChainListWorkers(final ArrayList<MiddlewareHandler> chainLinkGroup, final LightLambdaExchange exchange) {
+    private ArrayList<ChainLinkWorker> createChainListWorkers(final ArrayList<LambdaHandler> chainLinkGroup, final LightLambdaExchange exchange) {
         final ArrayList<ChainLinkWorker> chainLinkWorkerGroup = new ArrayList<>();
         int linkNumber = 1;
 

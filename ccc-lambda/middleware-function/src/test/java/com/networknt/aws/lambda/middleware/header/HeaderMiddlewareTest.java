@@ -50,9 +50,9 @@ class HeaderMiddlewareTest extends MiddlewareTestBase {
         requestChain.addChainable(headerMiddleware);
         requestChain.setupGroupedChain();
 
-        this.exchange = new LightLambdaExchange(lambdaContext, requestChain, null);
+        this.exchange = new LightLambdaExchange(lambdaContext, requestChain);
         this.exchange.setRequest(requestEvent);
-        this.exchange.executeRequestChain();
+        this.exchange.executeChain();
 
         requestEvent = exchange.getRequest();
 

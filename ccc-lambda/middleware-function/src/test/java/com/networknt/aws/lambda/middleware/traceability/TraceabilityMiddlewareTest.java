@@ -40,9 +40,9 @@ class TraceabilityMiddlewareTest extends MiddlewareTestBase {
         requestChain.addChainable(traceabilityMiddleware);
         requestChain.setupGroupedChain();
 
-        this.exchange = new LightLambdaExchange(lambdaContext, requestChain, null);
+        this.exchange = new LightLambdaExchange(lambdaContext, requestChain);
         this.exchange.setRequest(requestEvent);
-        this.exchange.executeRequestChain();
+        this.exchange.executeChain();
 
         // X-Traceability-Id should be added to the exchange as an attachment.
         String traceabilityId = (String) this.exchange.getRequestAttachment(TraceabilityMiddleware.TRACEABILITY_ATTACHMENT_KEY);

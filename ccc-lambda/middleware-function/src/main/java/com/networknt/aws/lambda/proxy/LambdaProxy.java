@@ -42,36 +42,13 @@ public class LambdaProxy implements LambdaFunctionEntry {
         Handler.init();
     }
 
-//    private static void initChains() {
-//        requestChain = new Chain(false);
-//        if (CONFIG.getRequestChain() != null) {
-//            for (var middleware : CONFIG.getRequestChain()) {
-//                LOG.debug("Adding new request middleware '{}'", middleware);
-//                requestChain.add(middleware);
-//            }
-//
-//            requestChain.setupGroupedChain();
-//        }
-//
-//
-//        responseChain = new Chain(false);
-//        if (CONFIG.getResponseChain() != null) {
-//            for (var middleware : CONFIG.getResponseChain()) {
-//                LOG.debug("Adding new response middleware '{}'", middleware);
-//                responseChain.add(middleware);
-//            }
-//
-//            responseChain.setupGroupedChain();
-//        }
-//
-//    }
 
     @Override
     public APIGatewayProxyResponseEvent handleRequest(final APIGatewayProxyRequestEvent apiGatewayProxyRequestEvent, final Context context) {
         LOG.debug("Lambda CCC --start with request: {}", apiGatewayProxyRequestEvent);
         var requestPath = apiGatewayProxyRequestEvent.getPath();
-        Chain chain = Handler.getChainForPath(requestPath);
-        final var exchange = new LightLambdaExchange(context, chain);
+        //Chain chain = Handler.getChainForPath(requestPath);
+        final var exchange = new LightLambdaExchange(context, new Chain(false));
         exchange.setRequest(apiGatewayProxyRequestEvent);
 
         APIGatewayProxyResponseEvent response = exchange.getResponse();

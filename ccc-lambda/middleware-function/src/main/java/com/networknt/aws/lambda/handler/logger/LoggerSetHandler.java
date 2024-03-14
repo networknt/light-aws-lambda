@@ -23,6 +23,12 @@ public class LoggerSetHandler implements LambdaHandler {
     public void reload() {
 
     }
+
+    @Override
+    public boolean isAsynchronous() {
+        return false;
+    }
+
     @Override
     public Status execute(LightLambdaExchange exchange) throws InterruptedException {
         return null;

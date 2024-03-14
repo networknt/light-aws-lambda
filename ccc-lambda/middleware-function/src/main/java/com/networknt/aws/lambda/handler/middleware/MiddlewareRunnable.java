@@ -1,16 +1,17 @@
 package com.networknt.aws.lambda.handler.middleware;
 
+import com.networknt.aws.lambda.handler.LambdaHandler;
 import com.networknt.aws.lambda.handler.MiddlewareHandler;
 import com.networknt.aws.lambda.handler.middleware.chain.ChainLinkCallback;
 
 public class MiddlewareRunnable implements Runnable {
 
-    private final MiddlewareHandler middlewareHandler;
+    private final LambdaHandler middlewareHandler;
     private final LightLambdaExchange exchange;
 
     private final ChainLinkCallback callback;
 
-    public MiddlewareRunnable(MiddlewareHandler middlewareHandler, LightLambdaExchange exchange, ChainLinkCallback callback) {
+    public MiddlewareRunnable(LambdaHandler middlewareHandler, LightLambdaExchange exchange, ChainLinkCallback callback) {
         this.middlewareHandler = middlewareHandler;
         this.exchange = exchange;
         this.callback = callback;

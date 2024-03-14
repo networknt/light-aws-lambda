@@ -26,6 +26,11 @@ public class LoggerGetHandler implements LambdaHandler {
     }
 
     @Override
+    public boolean isAsynchronous() {
+        return false;
+    }
+
+    @Override
     public Status execute(LightLambdaExchange exchange) throws InterruptedException {
         return null;
     }

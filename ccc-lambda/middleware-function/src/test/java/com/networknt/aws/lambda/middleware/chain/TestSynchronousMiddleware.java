@@ -60,7 +60,7 @@ public class TestSynchronousMiddleware implements MiddlewareHandler {
 
     @Override
     public boolean isAudited() {
-        return false;
+        return true;
     }
 
     @Override

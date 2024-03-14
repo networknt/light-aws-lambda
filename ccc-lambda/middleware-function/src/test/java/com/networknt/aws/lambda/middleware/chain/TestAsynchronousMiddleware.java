@@ -61,11 +61,11 @@ public class TestAsynchronousMiddleware implements MiddlewareHandler {
 
     @Override
     public boolean isAudited() {
-        return false;
+        return true;
     }
 
     @Override
     public boolean isAsynchronous() {
-        return false;
+        return true;
     }
 }

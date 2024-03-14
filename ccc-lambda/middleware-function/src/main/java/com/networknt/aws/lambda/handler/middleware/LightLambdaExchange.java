@@ -52,39 +52,35 @@ public final class LightLambdaExchange {
     private static final int FLAG_RESPONSE_HAS_FAILURE = 1 << 6;
     private int state = INITIAL_STATE;
     private int statusCode = 200;
-//    private final Chain requestChain;
-//    private final Chain responseChain;
     private final Chain chain;
 
     public LightLambdaExchange(Context context, Chain chain) {
         this.context = context;
-//        this.requestChain = requestChain;
-//        this.responseChain = responseChain;
         this.chain = chain;
         this.executor = new PooledChainLinkExecutor();
     }
 
-//    public void executeRequestChain() {
-//
-//        if (stateHasAllFlags(FLAG_STARTING_REQUEST_READY)) {
-//            this.executor.executeChain(this, this.requestChain);
-//            this.state &= ~FLAG_STARTING_REQUEST_READY;
-//
-//            if (stateHasAllFlagsClear(FLAG_REQUEST_DONE)) {
-//                for (var res : this.executor.getChainResults()) {
-//
-//                    if (this.hasErrorCode(res)) {
-//                        this.state |= FLAG_REQUEST_HAS_FAILURE;
-//                        this.statusCode = res.getStatusCode();
-//                        break;
-//                    }
-//                }
-//            }
-//
-//            this.state |= FLAG_REQUEST_DONE;
-//
-//        }
-//    }
+    public void executeChain() {
+
+        if (stateHasAllFlags(FLAG_STARTING_REQUEST_READY)) {
+            this.executor.executeChain(this, this.chain);
+            this.state &= ~FLAG_STARTING_REQUEST_READY;
+
+            if (stateHasAllFlagsClear(FLAG_REQUEST_DONE)) {
+                for (var res : this.executor.getChainResults()) {
+
+                    if (this.hasErrorCode(res)) {
+                        this.state |= FLAG_REQUEST_HAS_FAILURE;
+                        this.statusCode = res.getStatusCode();
+                        break;
+                    }
+                }
+            }
+
+            this.state |= FLAG_REQUEST_DONE;
+
+        }
+    }
 
 //    public void executeResponseChain() {
 //        if (stateHasAllFlags(FLAG_STARTING_RESPONSE_READY)) {

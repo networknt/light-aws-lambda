@@ -3,8 +3,9 @@ package com.networknt.aws.lambda.middleware.chain;
 import com.networknt.aws.lambda.InvocationResponse;
 import com.networknt.aws.lambda.LambdaContext;
 import com.networknt.aws.lambda.TestUtils;
-import com.networknt.aws.lambda.middleware.LightLambdaExchange;
-import com.networknt.aws.lambda.middleware.header.HeaderMiddleware;
+import com.networknt.aws.lambda.handler.middleware.LightLambdaExchange;
+import com.networknt.aws.lambda.handler.middleware.chain.Chain;
+import com.networknt.aws.lambda.handler.middleware.header.HeaderMiddleware;
 import com.networknt.header.HeaderConfig;
 import org.junit.jupiter.api.Assertions;
 import org.junit.jupiter.api.Test;
@@ -40,7 +41,7 @@ class PooledChainLinkExecutorTest {
 
         var testSynchronousMiddleware = new TestSynchronousMiddleware();
 
-        var chain = new Chain(false, ChainDirection.REQUEST);
+        var chain = new Chain(false);
         chain.addChainable(testSynchronousMiddleware);
         chain.addChainable(headerDisabledHandler);
         chain.addChainable(testSynchronousMiddleware);

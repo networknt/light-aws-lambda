@@ -42,21 +42,22 @@ basePath: ${handler.basePath:/}
 #------------------------------------------------------------------------------
 handlers:
   # Light-framework cross-cutting concerns implemented in the microservice
-  - com.networknt.aws.lambda.middleware.exception.ExceptionMiddleware@exception
-  - com.networknt.aws.lambda.middleware.correlation.CorrelationMiddleware@correlation
-  - com.networknt.aws.lambda.middleware.traceability.TraceabilityMiddleware@traceability
-  - com.networknt.aws.lambda.middleware.header.HeaderMiddleware@header
-  - com.networknt.aws.lambda.middleware.specification.OpenApiMiddleware@specification
-  # - com.networknt.aws.lambda.middleware.security.JwtVerifyMiddleware@security
-  - com.networknt.aws.lambda.middleware.audit.AuditMiddleware@audit
-  - com.networknt.aws.lambda.middleware.validator.ValidatorMiddleware@validator
+  #- com.networknt.aws.lambda.middleware.exception.ExceptionMiddleware@exception
+  - com.networknt.aws.lambda.handler.middleware.correlation.CorrelationMiddleware@correlation
+  - com.networknt.aws.lambda.handler.middleware.traceability.TraceabilityMiddleware@traceability
+  - com.networknt.aws.lambda.handler.middleware.header.HeaderMiddleware@header
+  - com.networknt.aws.lambda.handler.middleware.specification.OpenApiMiddleware@specification
+  - com.networknt.aws.lambda.handler.middleware.invoke.LambdaFunctionInvoker@invoke
+  #- com.networknt.aws.lambda.handler.middleware.security.JwtVerifyMiddleware@security
+  - com.networknt.aws.lambda.handler.middleware.audit.AuditMiddleware@audit
+  - com.networknt.aws.lambda.handler.middleware.validator.ValidatorMiddleware@validator
   # Customer business domain specific cross-cutting concerns handlers
   # Framework endpoint handlers
-  - com.networknt.aws.lambda.admin.HealthCheckHandler@health
-  - com.networknt.aws.lambda.admin.ServerInfoHandler@info
-  - com.networknt.aws.lambda.admin.LoggerGetHandler@getLogger
-  - com.networknt.aws.lambda.admin.LoggerSetHandler@setLogger
-  - com.networknt.aws.lambda.admin.LoggerGetContentHandler@getContent
+  - com.networknt.aws.lambda.handler.health.HealthCheckHandler@health
+  - com.networknt.aws.lambda.handler.info.ServerInfoHandler@info
+  - com.networknt.aws.lambda.handler.logger.LoggerGetHandler@getLogger
+  - com.networknt.aws.lambda.handler.logger.LoggerSetHandler@setLogger
+  - com.networknt.aws.lambda.handler.logger.LoggerGetContentHandler@getContent
   # - com.networknt.aws.lambda.admin.ModuleRegistryGetHandler@modules
   # - com.networknt.aws.lambda.admin.ConfigReloadHandler@configReload
 
@@ -68,7 +69,7 @@ chains:
     - traceability
     - correlation
     - specification
-    # - security
+    #- security
     - audit
     - validator
   response:
@@ -76,7 +77,7 @@ chains:
     - audit
     - validator
   admin:
-    - exception
+    #- exception
     - correlation
     - specification
     # - security
@@ -85,30 +86,48 @@ chains:
 additionalChains: ${handler.additionalChains:}
 
 paths:
+
   - path: '/*'
     method: 'GET'
     exec:
-      - default
+      - request
+      - invoke
+      - response
+
   - path: '/*'
     method: 'POST'
     exec:
-      - default
+      - request
+      - invoke
+      - response
+
   - path: '/*'
     method: 'PUT'
     exec:
-      - default
+      - request
+      - invoke
+      - LambdaHandler
+
   - path: '/*'
     method: 'DELETE'
     exec:
-      - default
+      - request
+      - invoke
+      - response
+
   - path: '/*'
     method: 'PATCH'
     exec:
-      - default
+      - request
+      - invoke
+      - response
+
   - path: '/*'
     method: 'OPTIONS'
     exec:
-      - default
+      - request
+      - invoke
+      - response
 
   - path: '/health'
     method: 'GET'
@@ -121,21 +140,25 @@ paths:
     exec:
       - admin
       - health
+
   - path: '/adm/server/info'
     method: 'get'
     exec:
       - admin
       - info
+
   - path: '/adm/logger'
     method: 'get'
     exec:
       - admin
       - getLogger
+
   - path: '/adm/logger'
     method: 'post'
     exec:
       - admin
       - setLogger
+
   - path: '/adm/logger/content'
     method: 'GET'
     exec:

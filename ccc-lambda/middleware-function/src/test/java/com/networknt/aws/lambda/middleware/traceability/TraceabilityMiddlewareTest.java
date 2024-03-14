@@ -5,14 +5,13 @@ import com.amazonaws.services.lambda.runtime.events.APIGatewayProxyRequestEvent;
 import com.networknt.aws.lambda.InvocationResponse;
 import com.networknt.aws.lambda.LambdaContext;
 import com.networknt.aws.lambda.TestUtils;
-import com.networknt.aws.lambda.middleware.LightLambdaExchange;
+import com.networknt.aws.lambda.handler.middleware.LightLambdaExchange;
+import com.networknt.aws.lambda.handler.middleware.traceability.TraceabilityMiddleware;
 import com.networknt.aws.lambda.middleware.MiddlewareTestBase;
-import com.networknt.aws.lambda.middleware.chain.Chain;
-import com.networknt.aws.lambda.middleware.chain.ChainDirection;
+import com.networknt.aws.lambda.handler.middleware.chain.Chain;
 import com.networknt.aws.lambda.utility.HeaderKey;
 import org.junit.jupiter.api.Assertions;
 import org.junit.jupiter.api.Test;
-import org.junit.jupiter.api.TestInstance;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.testcontainers.junit.jupiter.Testcontainers;
@@ -36,7 +35,7 @@ class TraceabilityMiddlewareTest extends MiddlewareTestBase {
         APIGatewayProxyRequestEvent requestEvent = invocation.getEvent();
         Context lambdaContext = new LambdaContext(invocation.getRequestId());
 
-        Chain requestChain = new Chain(false, ChainDirection.REQUEST);
+        Chain requestChain = new Chain(false);
         TraceabilityMiddleware traceabilityMiddleware = new TraceabilityMiddleware();
         requestChain.addChainable(traceabilityMiddleware);
         requestChain.setupGroupedChain();

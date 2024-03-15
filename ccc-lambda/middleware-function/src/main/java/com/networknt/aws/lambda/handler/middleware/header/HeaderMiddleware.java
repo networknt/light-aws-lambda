@@ -159,7 +159,7 @@ public class HeaderMiddleware implements MiddlewareHandler {
 
     @Override
     public boolean isContinueOnFailure() {
-        throw new NotImplementedException();
+        return false;
     }
 
     @Override
@@ -169,7 +169,7 @@ public class HeaderMiddleware implements MiddlewareHandler {
 
     @Override
     public boolean isAsynchronous() {
-        throw new NotImplementedException();
+        return true;
     }
 
 }

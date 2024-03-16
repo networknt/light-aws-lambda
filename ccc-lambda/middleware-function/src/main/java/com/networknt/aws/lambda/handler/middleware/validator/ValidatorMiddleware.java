@@ -74,9 +74,7 @@ public class ValidatorMiddleware implements MiddlewareHandler {
 
     private static OpenApiValidator getValidatorInstance() {
         if (OPENAPI_VALIDATOR == null) {
-            // TODO - maybe load other than resources within the jar.
-            InputStream in  = ValidatorMiddleware.class.getClassLoader().getResourceAsStream(OPENAPI_NAME);
-
+            InputStream in  = Config.getInstance().getInputStreamFromFile(OPENAPI_NAME);
             if (in != null) {
                 OPENAPI_VALIDATOR = new OpenApiValidator(in);
 

@@ -7,7 +7,10 @@ import com.networknt.aws.lambda.handler.Handler;
 import com.networknt.aws.lambda.handler.LambdaFunctionEntry;
 import com.networknt.aws.lambda.handler.middleware.LightLambdaExchange;
 import com.networknt.aws.lambda.handler.chain.Chain;
+import com.networknt.aws.lambda.handler.middleware.validator.ValidatorMiddleware;
 import com.networknt.config.Config;
+import com.networknt.openapi.ValidatorConfig;
+import com.networknt.utility.ModuleRegistry;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -31,6 +34,12 @@ public class LambdaProxy implements LambdaFunctionEntry {
 
     public LambdaProxy() {
         Handler.init();
+        ModuleRegistry.registerModule(
+                LambdaProxyConfig.CONFIG_NAME,
+                LambdaProxy.class.getName(),
+                Config.getNoneDecryptedInstance().getJsonMapConfigNoCache(LambdaProxyConfig.CONFIG_NAME),
+                null
+        );
     }
 
     @Override

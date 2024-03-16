@@ -25,7 +25,7 @@ public class OpenApiMiddleware implements MiddlewareHandler {
     public static final String OPENAPI_CONFIG_NAME = "openapi-validator";
     private static final Logger LOG = LoggerFactory.getLogger(OpenApiMiddleware.class);
     private static final String STATUS_METHOD_NOT_ALLOWED = "ERR10008";
-    private static final String CONFIG_NAME = "lambda-openapi";
+    private static final String CONFIG_NAME = "openapi";
     static ValidatorConfig CONFIG = ValidatorConfig.load();
     private static final String SPEC_INJECT = "openapi-inject";
 

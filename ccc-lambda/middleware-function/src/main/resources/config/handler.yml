@@ -73,7 +73,6 @@ chains:
     - audit
     - validator
   response:
-    - specification
     - audit
     - validator
   admin:

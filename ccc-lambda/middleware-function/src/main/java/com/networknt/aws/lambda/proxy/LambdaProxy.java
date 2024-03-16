@@ -33,21 +33,21 @@ public class LambdaProxy implements LambdaFunctionEntry {
         Handler.init();
     }
 
-
     @Override
     public APIGatewayProxyResponseEvent handleRequest(final APIGatewayProxyRequestEvent apiGatewayProxyRequestEvent, final Context context) {
         LOG.debug("Lambda CCC --start with request: {}", apiGatewayProxyRequestEvent);
         var requestPath = apiGatewayProxyRequestEvent.getPath();
-        //Chain chain = Handler.getChainForPath(requestPath);
-        final var exchange = new LightLambdaExchange(context, new Chain(false));
+        var requestMethod = apiGatewayProxyRequestEvent.getHttpMethod();
+        LOG.debug("Request path: {} -- Request method: {}", requestPath, requestMethod);
+        Chain chain = Handler.getChain(requestPath + "@" + requestMethod);
+        if(chain == null) chain = Handler.getDefaultChain();
+        final var exchange = new LightLambdaExchange(context, chain);
         exchange.setRequest(apiGatewayProxyRequestEvent);
-
+        exchange.executeChain();
         APIGatewayProxyResponseEvent response = exchange.getResponse();
         LOG.debug("Lambda CCC --end with response: {}", response);
         return response;
     }
-
-
 
     @Override
     public void handleRequest(InputStream inputStream, OutputStream outputStream, Context context) throws IOException {

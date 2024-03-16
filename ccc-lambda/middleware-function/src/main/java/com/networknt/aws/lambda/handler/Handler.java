@@ -266,5 +266,10 @@ public class Handler {
         return handlers;
     }
 
-
+    public static Chain getChain(String endpoint) {
+        return endpointChain.get(endpoint);
+    }
+    public static Chain getDefaultChain() {
+        return defaultChain;
+    }
 }

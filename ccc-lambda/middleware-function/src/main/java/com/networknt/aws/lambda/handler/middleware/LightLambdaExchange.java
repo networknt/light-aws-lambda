@@ -235,6 +235,14 @@ public final class LightLambdaExchange {
     }
 
     /**
+     * Checks to see if the exchange is in the response in progress state.
+     * @return int state
+     */
+    public int getState() {
+        return state;
+    }
+
+    /**
      * Checks to see if any of the provided flags is true.
      *
      * @param flags - flags to check.

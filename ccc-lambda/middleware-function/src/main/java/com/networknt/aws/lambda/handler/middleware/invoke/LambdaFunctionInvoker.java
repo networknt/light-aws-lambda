@@ -26,8 +26,10 @@ public class LambdaFunctionInvoker implements MiddlewareHandler {
 
     private static LambdaClient client;
     private static final Logger LOG = LoggerFactory.getLogger(LambdaFunctionInvoker.class);
-    private static final String CONFIG_NAME = "lambda-invoker";
-    public static final LambdaInvokerConfig CONFIG = (LambdaInvokerConfig) Config.getInstance().getJsonObjectConfig(CONFIG_NAME, LambdaInvokerConfig.class);
+    public static final String FAILED_TO_INVOKE_LAMBDA = "ERR10086";
+    public static final String EXCHANGE_HAS_FAILED_STATE = "ERR10087";
+
+    public static final LambdaInvokerConfig CONFIG = (LambdaInvokerConfig) Config.getInstance().getJsonObjectConfig(LambdaInvokerConfig.CONFIG_NAME, LambdaInvokerConfig.class);
 
     public LambdaFunctionInvoker() {
         var builder = LambdaClient.builder().region(Region.of(CONFIG.getRegion()));
@@ -40,7 +42,7 @@ public class LambdaFunctionInvoker implements MiddlewareHandler {
 
     @Override
     public Status execute(LightLambdaExchange exchange) throws InterruptedException {
-
+        if(LOG.isTraceEnabled()) LOG.trace("LambdaFunctionInvoker.execute called");
         if (!exchange.hasFailedState()) {
 
             LOG.debug("Invoke Time - Start: {}", System.currentTimeMillis());
@@ -50,10 +52,9 @@ public class LambdaFunctionInvoker implements MiddlewareHandler {
             LOG.debug("Request path: {} -- Request method: {}", path, method);
             var functionName = CONFIG.getFunctions().get(path + "@" + method);
             var res = this.invokeFunction(client, functionName, exchange);
-
             if (res == null) {
-                // TODO failure here
-                return new Status();
+                LOG.error("Failed to invoke lambda function: {}", functionName);
+                return new Status(FAILED_TO_INVOKE_LAMBDA, functionName);
             }
 
             LOG.debug("Invoke Time - Finish: {}", System.currentTimeMillis());
@@ -62,12 +63,9 @@ public class LambdaFunctionInvoker implements MiddlewareHandler {
             return this.successMiddlewareStatus();
 
         } else {
-
-            // TODO failure here
-            return new Status();
+            LOG.error("Exchange has failed state {}", exchange.getState());
+            return new Status(EXCHANGE_HAS_FAILED_STATE, exchange.getState());
         }
-
-
     }
 
     private String invokeFunction(final LambdaClient client, String functionName, final LightLambdaExchange exchange) {

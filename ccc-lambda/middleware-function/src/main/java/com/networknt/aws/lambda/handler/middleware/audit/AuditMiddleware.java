@@ -67,7 +67,7 @@ public class AuditMiddleware implements MiddlewareHandler {
 
     @Override
     public boolean isAsynchronous() {
-        throw new NotImplementedException();
+        return true;
     }
 
 

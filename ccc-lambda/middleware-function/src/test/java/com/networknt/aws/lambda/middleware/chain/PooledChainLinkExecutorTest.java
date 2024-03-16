@@ -4,7 +4,7 @@ import com.networknt.aws.lambda.InvocationResponse;
 import com.networknt.aws.lambda.LambdaContext;
 import com.networknt.aws.lambda.TestUtils;
 import com.networknt.aws.lambda.handler.middleware.LightLambdaExchange;
-import com.networknt.aws.lambda.handler.middleware.chain.Chain;
+import com.networknt.aws.lambda.handler.chain.Chain;
 import com.networknt.aws.lambda.handler.middleware.header.HeaderMiddleware;
 import com.networknt.header.HeaderConfig;
 import org.junit.jupiter.api.Assertions;

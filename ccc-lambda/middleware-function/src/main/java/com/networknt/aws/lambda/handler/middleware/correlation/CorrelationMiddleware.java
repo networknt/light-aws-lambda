@@ -96,7 +96,7 @@ public class CorrelationMiddleware implements MiddlewareHandler {
 
     @Override
     public boolean isAsynchronous() {
-        throw new NotImplementedException();
+        return true;
     }
 
 

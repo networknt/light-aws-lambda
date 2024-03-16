@@ -1,4 +1,4 @@
-package com.networknt.aws.lambda.handler.middleware.chain;
+package com.networknt.aws.lambda.handler.chain;
 
 import org.slf4j.MDC;
 

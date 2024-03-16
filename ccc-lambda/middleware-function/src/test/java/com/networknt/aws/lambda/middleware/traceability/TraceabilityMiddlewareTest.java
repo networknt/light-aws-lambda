@@ -8,7 +8,7 @@ import com.networknt.aws.lambda.TestUtils;
 import com.networknt.aws.lambda.handler.middleware.LightLambdaExchange;
 import com.networknt.aws.lambda.handler.middleware.traceability.TraceabilityMiddleware;
 import com.networknt.aws.lambda.middleware.MiddlewareTestBase;
-import com.networknt.aws.lambda.handler.middleware.chain.Chain;
+import com.networknt.aws.lambda.handler.chain.Chain;
 import com.networknt.aws.lambda.utility.HeaderKey;
 import org.junit.jupiter.api.Assertions;
 import org.junit.jupiter.api.Test;

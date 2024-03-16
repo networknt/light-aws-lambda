@@ -1,6 +1,6 @@
 package com.networknt.aws.lambda.handler;
 
-import com.networknt.aws.lambda.handler.middleware.chain.Chain;
+import com.networknt.aws.lambda.handler.chain.Chain;
 import com.networknt.config.Config;
 import com.networknt.handler.config.EndpointSource;
 import com.networknt.handler.config.HandlerConfig;
@@ -19,24 +19,13 @@ public class Handler {
     private static final Logger LOG = LoggerFactory.getLogger(Handler.class);
     // Accessed directly.
     public static HandlerConfig config = HandlerConfig.load();
-    public static final String REQUEST_CHAIN = "request";
-    public static final String RESPONSE_CHAIN = "response";
-
-    // each handler keyed by a name.
+    // handlers defined in the handlers section. each handler keyed by a name.
     static final Map<String, LambdaHandler> handlers = new HashMap<>();
+    // chain name to list of handlers mapping
     static final Map<String, List<LambdaHandler>> handlerListById = new HashMap<>();
-
-    static final Map<String, List<LambdaHandler>> chainCollection = new HashMap<>();
-
-    static List<LambdaHandler> defaultHandlers;
-    // this is the last handler that need to be called when OrchestratorHandler is injected into the beginning of the chain
-    static LambdaHandler lastHandler;
-
-    public static void setLastHandler(LambdaHandler handler) {
-        lastHandler = handler;
-    }
-    private Handler() {
-    }
+    // endpoint to the Chain mapping
+    static final Map<String, Chain> endpointChain = new HashMap<>();
+    static Chain defaultChain;
 
     public static void init() {
         initHandlers();
@@ -46,21 +35,12 @@ public class Handler {
         ModuleRegistry.registerModule(HandlerConfig.CONFIG_NAME, Handler.class.getName(), Config.getNoneDecryptedInstance().getJsonMapConfigNoCache(HandlerConfig.CONFIG_NAME), null);
     }
 
-    public static List<LambdaHandler> getRequestChain() {
-        return handlerListById.get(REQUEST_CHAIN);
-    }
-
-    public static List<LambdaHandler> getResponseChain() {
-        return handlerListById.get(RESPONSE_CHAIN);
-    }
-
     /**
      * Construct the named map of handlers. Note: All handlers in use for this
      * microservice should be listed in this handlers list.
      */
     static void initHandlers() {
         if (config != null && config.getHandlers() != null) {
-
             // initialize handlers
             for (var handler : config.getHandlers()) {
                 // handler is a fully qualified class name with a default constructor.
@@ -87,8 +67,9 @@ public class Handler {
 
                     if (chainItem == null)
                         throw new RuntimeException("Chain " + chainName + " uses Unknown handler: " + chainItemName);
+                    handlerChain.add(chainItem);
                 }
-                chainCollection.put(chainName, handlerChain);
+                handlerListById.put(chainName, handlerChain);
             }
         }
     }
@@ -117,8 +98,7 @@ public class Handler {
     static void initDefaultHandlers() {
 
         if (config != null && config.getDefaultHandlers() != null) {
-            defaultHandlers = getHandlersFromExecList(config.getDefaultHandlers());
-            handlerListById.put("defaultHandlers", defaultHandlers);
+            defaultChain = getHandlersFromExecList(config.getDefaultHandlers());
         }
     }
 
@@ -156,18 +136,9 @@ public class Handler {
     private static void addPathChain(PathChain pathChain) {
         var method = pathChain.getMethod();
 
-        // Use a random integer as the id for a given path.
-        int randInt = new Random().nextInt();
-
-        while (handlerListById.containsKey(Integer.toString(randInt)))
-            randInt = new Random().nextInt();
-
         // Flatten out the execution list from a mix of middleware chains and handlers.
         var handlers = getHandlersFromExecList(pathChain.getExec());
-
-        if (handlers.size() > 0) {
-            handlerListById.put(Integer.toString(randInt), handlers);
-        }
+        endpointChain.put(pathChain.getPath() + "@" + pathChain.getMethod(), handlers);
     }
 
     /**
@@ -177,23 +148,31 @@ public class Handler {
      * @param execs The list of names of chains and handlers.
      * @return A list containing references to the instantiated handlers
      */
-    private static List<LambdaHandler> getHandlersFromExecList(List<String> execs) {
-        var handlersFromExecList = new ArrayList<LambdaHandler>();
+    private static Chain getHandlersFromExecList(List<String> execs) {
+        var handlersFromExecList = new Chain(false);
 
         if (execs != null) {
 
             for (var exec : execs) {
                 var handlerList = handlerListById.get(exec);
 
-                if (handlerList == null)
-                    throw new RuntimeException("Unknown handler or chain: " + exec);
-
-                for (LambdaHandler handler : handlerList) {
-                    if (handler.isEnabled())
-                        handlersFromExecList.add(handler);
+                if (handlerList == null) {
+                    // not a chain, try to resolve it as a handler
+                    LambdaHandler handler = handlers.get(exec);
+                    if (handler != null) {
+                        if(handler.isEnabled()) handlersFromExecList.addChainable(handler);
+                    } else {
+                        throw new RuntimeException("Unknown handler or chain: " + exec);
+                    }
+                } else {
+                    for (LambdaHandler handler : handlerList) {
+                        if (handler.isEnabled())
+                            handlersFromExecList.addChainable(handler);
+                    }
                 }
             }
         }
+        handlersFromExecList.setupGroupedChain();
         return handlersFromExecList;
     }
 

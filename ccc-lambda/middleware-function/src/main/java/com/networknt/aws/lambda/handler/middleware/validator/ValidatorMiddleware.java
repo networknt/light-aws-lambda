@@ -148,7 +148,7 @@ public class ValidatorMiddleware implements MiddlewareHandler {
 
     @Override
     public boolean isAsynchronous() {
-        throw new NotImplementedException();
+        return false;
     }
 
 }

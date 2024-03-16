@@ -118,7 +118,7 @@ public class OpenApiMiddleware implements MiddlewareHandler {
 
     @Override
     public boolean isAsynchronous() {
-        throw new NotImplementedException();
+        return false;
     }
 
 }

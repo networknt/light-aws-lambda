@@ -1,6 +1,6 @@
 package com.networknt.aws.lambda.middleware.chain;
 
-import com.networknt.aws.lambda.handler.middleware.chain.Chain;
+import com.networknt.aws.lambda.handler.chain.Chain;
 import org.junit.jupiter.api.Assertions;
 import org.junit.jupiter.api.Test;
 

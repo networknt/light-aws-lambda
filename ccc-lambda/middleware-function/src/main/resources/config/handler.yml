@@ -86,49 +86,6 @@ chains:
 additionalChains: ${handler.additionalChains:}
 
 paths:
-
-  - path: '/*'
-    method: 'GET'
-    exec:
-      - request
-      - invoke
-      - response
-
-  - path: '/*'
-    method: 'POST'
-    exec:
-      - request
-      - invoke
-      - response
-
-  - path: '/*'
-    method: 'PUT'
-    exec:
-      - request
-      - invoke
-      - LambdaHandler
-
-  - path: '/*'
-    method: 'DELETE'
-    exec:
-      - request
-      - invoke
-      - response
-
-  - path: '/*'
-    method: 'PATCH'
-    exec:
-      - request
-      - invoke
-      - response
-
-  - path: '/*'
-    method: 'OPTIONS'
-    exec:
-      - request
-      - invoke
-      - response
-
   - path: '/health'
     method: 'GET'
     exec:
@@ -187,3 +144,7 @@ paths:
 #      - favicon
 
 additionalPaths: ${handler.additionalPaths:}
+defaultHandlers:
+  - request
+  - invoke
+  - response

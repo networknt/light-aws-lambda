@@ -2,11 +2,14 @@ package com.networknt.aws.lambda.handler.middleware.invoke;
 
 import com.amazonaws.services.lambda.runtime.events.APIGatewayProxyResponseEvent;
 import com.fasterxml.jackson.core.JsonProcessingException;
+import com.networknt.audit.AuditConfig;
 import com.networknt.aws.lambda.handler.MiddlewareHandler;
 import com.networknt.aws.lambda.handler.middleware.LightLambdaExchange;
+import com.networknt.aws.lambda.handler.middleware.audit.AuditMiddleware;
 import com.networknt.config.Config;
 import com.networknt.config.JsonMapper;
 import com.networknt.status.Status;
+import com.networknt.utility.ModuleRegistry;
 import com.networknt.utility.StringUtils;
 import org.apache.commons.lang3.NotImplementedException;
 import org.slf4j.Logger;
@@ -100,12 +103,17 @@ public class LambdaFunctionInvoker implements MiddlewareHandler {
 
     @Override
     public boolean isEnabled() {
-        throw new NotImplementedException();
+        return CONFIG.isEnabled();
     }
 
     @Override
     public void register() {
-        throw new NotImplementedException();
+        ModuleRegistry.registerModule(
+                LambdaInvokerConfig.CONFIG_NAME,
+                LambdaFunctionInvoker.class.getName(),
+                Config.getNoneDecryptedInstance().getJsonMapConfigNoCache(LambdaInvokerConfig.CONFIG_NAME),
+                null
+        );
     }
 
     @Override
@@ -125,7 +133,7 @@ public class LambdaFunctionInvoker implements MiddlewareHandler {
 
     @Override
     public boolean isAsynchronous() {
-        throw new NotImplementedException();
+        return false;
     }
 
     @Override

@@ -1,8 +1,7 @@
 package com.networknt.aws.lambda.handler.middleware;
 
 import com.networknt.aws.lambda.handler.LambdaHandler;
-import com.networknt.aws.lambda.handler.MiddlewareHandler;
-import com.networknt.aws.lambda.handler.middleware.chain.ChainLinkCallback;
+import com.networknt.aws.lambda.handler.chain.ChainLinkCallback;
 
 public class MiddlewareRunnable implements Runnable {
 

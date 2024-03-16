@@ -1,21 +1,23 @@
 package com.networknt.aws.lambda.handler.middleware.invoke;
 
-import java.util.List;
 import java.util.Map;
 
 public class LambdaInvokerConfig {
-
+    public static final String CONFIG_NAME = "lambda-invoker";
+    private boolean enabled;
     private String region;
     private String endpointOverride;
     private String logType;
     private String lambdaAppId;
-    private String env;
     private Map<String, String> functions;
-    private boolean metricsInjection;
-    private String metricsName;
-    private List<String> requestChain;
-    private List<String> responseChain;
-    private boolean enableDynamoDbCache;
+
+    public boolean isEnabled() {
+        return enabled;
+    }
+
+    public void setEnabled(boolean enabled) {
+        this.enabled = enabled;
+    }
 
     public String getRegion() {
         return region;

@@ -1,28 +1,19 @@
 package com.networknt.aws.lambda.proxy;
 
-import com.fasterxml.jackson.core.JsonProcessingException;
 import com.amazonaws.services.lambda.runtime.Context;
 import com.amazonaws.services.lambda.runtime.events.APIGatewayProxyRequestEvent;
 import com.amazonaws.services.lambda.runtime.events.APIGatewayProxyResponseEvent;
 import com.networknt.aws.lambda.handler.Handler;
 import com.networknt.aws.lambda.handler.LambdaFunctionEntry;
 import com.networknt.aws.lambda.handler.middleware.LightLambdaExchange;
-import com.networknt.aws.lambda.handler.middleware.chain.Chain;
+import com.networknt.aws.lambda.handler.chain.Chain;
 import com.networknt.config.Config;
-import com.networknt.config.JsonMapper;
-import com.networknt.utility.StringUtils;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
-import software.amazon.awssdk.core.SdkBytes;
-import software.amazon.awssdk.regions.Region;
-import software.amazon.awssdk.services.lambda.LambdaClient;
-import software.amazon.awssdk.services.lambda.model.InvokeRequest;
-import software.amazon.awssdk.services.lambda.model.LambdaException;
 
 import java.io.IOException;
 import java.io.InputStream;
 import java.io.OutputStream;
-import java.net.URI;
 
 
 /**

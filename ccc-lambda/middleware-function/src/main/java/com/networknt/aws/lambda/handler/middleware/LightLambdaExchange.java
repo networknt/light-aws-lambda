@@ -10,6 +10,8 @@ import com.networknt.status.Status;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
+import java.io.InputStream;
+import java.io.OutputStream;
 import java.util.Collections;
 import java.util.HashMap;
 import java.util.Map;
@@ -24,7 +26,9 @@ public final class LightLambdaExchange {
 
     // TODO change these request, response members to a more generic type to handle other more edge cases (i.e. lambda stream request/response)
     private APIGatewayProxyRequestEvent request;
+    private InputStream streamRequest;
     private APIGatewayProxyResponseEvent response;
+    private OutputStream streamResponse;
     private final Context context;
     private final Map<Attachable<?>, Object> requestAttachments = Collections.synchronizedMap(new HashMap<>());
     private final Map<Attachable<?>, Object> responseAttachments = Collections.synchronizedMap(new HashMap<>());

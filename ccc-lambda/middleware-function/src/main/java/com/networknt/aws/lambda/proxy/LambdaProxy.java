@@ -1,22 +1,16 @@
 package com.networknt.aws.lambda.proxy;
 
 import com.amazonaws.services.lambda.runtime.Context;
+import com.amazonaws.services.lambda.runtime.RequestHandler;
 import com.amazonaws.services.lambda.runtime.events.APIGatewayProxyRequestEvent;
 import com.amazonaws.services.lambda.runtime.events.APIGatewayProxyResponseEvent;
 import com.networknt.aws.lambda.handler.Handler;
-import com.networknt.aws.lambda.handler.LambdaFunctionEntry;
 import com.networknt.aws.lambda.handler.middleware.LightLambdaExchange;
 import com.networknt.aws.lambda.handler.chain.Chain;
-import com.networknt.aws.lambda.handler.middleware.validator.ValidatorMiddleware;
 import com.networknt.config.Config;
-import com.networknt.openapi.ValidatorConfig;
 import com.networknt.utility.ModuleRegistry;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
-
-import java.io.IOException;
-import java.io.InputStream;
-import java.io.OutputStream;
 
 
 /**
@@ -26,7 +20,7 @@ import java.io.OutputStream;
  *
  * @author Steve Hu
  */
-public class LambdaProxy implements LambdaFunctionEntry {
+public class LambdaProxy implements RequestHandler<APIGatewayProxyRequestEvent, APIGatewayProxyResponseEvent> {
 
     private static final Logger LOG = LoggerFactory.getLogger(LambdaProxy.class);
     private static final String CONFIG_NAME = "lambda-proxy";

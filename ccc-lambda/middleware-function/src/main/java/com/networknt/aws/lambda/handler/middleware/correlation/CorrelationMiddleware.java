@@ -24,6 +24,7 @@ public class CorrelationMiddleware implements MiddlewareHandler {
     private static final LightLambdaExchange.Attachable<CorrelationMiddleware> CORRELATION_ATTACHMENT_KEY = LightLambdaExchange.Attachable.createMiddlewareAttachable(CorrelationMiddleware.class);
 
     public CorrelationMiddleware() {
+        if (LOG.isInfoEnabled()) LOG.info("CorrelationHandler is construct.");
     }
 
     @Override

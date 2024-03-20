@@ -31,7 +31,7 @@ public class AuditMiddleware implements MiddlewareHandler {
     private DateTimeFormatter DATE_TIME_FORMATTER;
 
     public AuditMiddleware() {
-        if (LOG.isInfoEnabled()) LOG.info("AuditHandler is loaded.");
+        if (LOG.isInfoEnabled()) LOG.info("AuditHandler is constructed.");
         CONFIG = AuditConfig.load();
         // get the serviceId from the proxy config
         LambdaProxyConfig proxyConfig = (LambdaProxyConfig) Config.getInstance().getJsonObjectConfig(LambdaProxyConfig.CONFIG_NAME, LambdaProxyConfig.class);
@@ -51,6 +51,7 @@ public class AuditMiddleware implements MiddlewareHandler {
     public Status execute(LightLambdaExchange exchange) throws InterruptedException {
         if(LOG.isDebugEnabled()) LOG.debug("AuditMiddleware.execute starts.");
         // as there is no way to write a separate audit log file in Lambda, we will skip this handler.
+        if(LOG.isDebugEnabled()) LOG.debug("AuditMiddleware.execute ends.");
         return successMiddlewareStatus();
     }
 
@@ -81,7 +82,7 @@ public class AuditMiddleware implements MiddlewareHandler {
 
     @Override
     public boolean isContinueOnFailure() {
-        throw new NotImplementedException();
+        return false;
     }
 
     @Override
@@ -91,7 +92,7 @@ public class AuditMiddleware implements MiddlewareHandler {
 
     @Override
     public boolean isAsynchronous() {
-        return true;
+        return false;
     }
 
 

@@ -29,6 +29,7 @@ public class ServerInfoHandler implements LambdaHandler {
 
     @Override
     public Status execute(LightLambdaExchange exchange) throws InterruptedException {
+        if (logger.isTraceEnabled()) logger.trace("ServerInfoHandler.handleRequest starts.");
         Map<String, String> headers = Map.of("Content-Type", "application/json");
         if (config.isEnableServerInfo()) {
             Map<String, Object> infoMap = ServerInfoUtil.getServerInfo(config);
@@ -50,6 +51,7 @@ public class ServerInfoHandler implements LambdaHandler {
             exchange.setResponse(res);
 
         }
+        if (logger.isTraceEnabled()) logger.trace("ServerInfoHandler.handleRequest ends.");
         return this.successMiddlewareStatus();
     }
 

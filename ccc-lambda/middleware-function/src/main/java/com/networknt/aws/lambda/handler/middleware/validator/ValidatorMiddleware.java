@@ -29,6 +29,7 @@ public class ValidatorMiddleware implements MiddlewareHandler {
     private static final ValidatorConfig CONFIG = ValidatorConfig.load();
 
     public ValidatorMiddleware() {
+        if (LOG.isInfoEnabled()) LOG.info("ValidatorMiddleware is constructed");
     }
 
     @Override

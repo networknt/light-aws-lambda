@@ -32,6 +32,7 @@ public class OpenApiMiddleware implements MiddlewareHandler {
     public static OpenApiHelper helper;
 
     public OpenApiMiddleware() {
+        if (LOG.isInfoEnabled()) LOG.info("OpenApiMiddleware is constructed");
         Map<String, Object> inject = Config.getInstance().getJsonMapConfig(SPEC_INJECT);
         Map<String, Object> openapi = Config.getInstance().getJsonMapConfigNoCache(CONFIG_NAME);
         OpenApiHelper.merge(openapi, inject);

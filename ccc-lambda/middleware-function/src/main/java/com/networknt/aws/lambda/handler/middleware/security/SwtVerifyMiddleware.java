@@ -13,6 +13,7 @@ public class SwtVerifyMiddleware implements MiddlewareHandler {
     private static final SecurityConfig CONFIG = SecurityConfig.load(SecurityConfig.CONFIG_NAME);
 
     public SwtVerifyMiddleware() {
+        if(LOG.isInfoEnabled()) LOG.info("SwtVerifyMiddleware is constructed");
     }
 
     @Override

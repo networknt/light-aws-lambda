@@ -14,6 +14,7 @@ public class LimitMiddleware implements MiddlewareHandler {
     private static final  LimitConfig CONFIG = LimitConfig.load();
 
     public LimitMiddleware() {
+        if (LOG.isInfoEnabled()) LOG.info("LimitMiddleware is constructed");
     }
 
     @Override

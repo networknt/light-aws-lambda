@@ -32,6 +32,7 @@ public class LambdaFunctionInvoker implements MiddlewareHandler {
     public static final LambdaInvokerConfig CONFIG = (LambdaInvokerConfig) Config.getInstance().getJsonObjectConfig(LambdaInvokerConfig.CONFIG_NAME, LambdaInvokerConfig.class);
 
     public LambdaFunctionInvoker() {
+        if (LOG.isInfoEnabled()) LOG.info("LambdaFunctionInvoker is constructed");
         var builder = LambdaClient.builder().region(Region.of(CONFIG.getRegion()));
 
         if (!StringUtils.isEmpty(CONFIG.getEndpointOverride()))
@@ -42,7 +43,7 @@ public class LambdaFunctionInvoker implements MiddlewareHandler {
 
     @Override
     public Status execute(LightLambdaExchange exchange) throws InterruptedException {
-        if(LOG.isTraceEnabled()) LOG.trace("LambdaFunctionInvoker.execute called");
+        if(LOG.isTraceEnabled()) LOG.trace("LambdaFunctionInvoker.execute starts.");
         if (!exchange.hasFailedState()) {
 
             LOG.debug("Invoke Time - Start: {}", System.currentTimeMillis());
@@ -60,8 +61,8 @@ public class LambdaFunctionInvoker implements MiddlewareHandler {
             LOG.debug("Invoke Time - Finish: {}", System.currentTimeMillis());
             var responseEvent = JsonMapper.fromJson(res, APIGatewayProxyResponseEvent.class);
             exchange.setResponse(responseEvent);
+            if(LOG.isTraceEnabled()) LOG.trace("LambdaFunctionInvoker.execute ends.");
             return this.successMiddlewareStatus();
-
         } else {
             LOG.error("Exchange has failed state {}", exchange.getState());
             return new Status(EXCHANGE_HAS_FAILED_STATE, exchange.getState());

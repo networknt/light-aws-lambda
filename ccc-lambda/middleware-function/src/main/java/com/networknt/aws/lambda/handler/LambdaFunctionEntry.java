@@ -10,6 +10,6 @@ import com.amazonaws.services.lambda.runtime.events.APIGatewayProxyResponseEvent
  * It extends the RequestHandler interface from the AWS Lambda Java SDK with some
  * common static methods and constants.
  */
-public interface LambdaFunctionEntry extends RequestHandler<APIGatewayProxyRequestEvent, APIGatewayProxyResponseEvent>, RequestStreamHandler {
+public interface LambdaFunctionEntry extends RequestHandler<APIGatewayProxyRequestEvent, APIGatewayProxyResponseEvent> {
 
 }

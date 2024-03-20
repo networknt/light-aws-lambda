@@ -2,9 +2,12 @@ package com.networknt.aws.lambda.handler.middleware.security;
 
 import com.networknt.aws.lambda.handler.MiddlewareHandler;
 import com.networknt.aws.lambda.handler.middleware.LightLambdaExchange;
+import com.networknt.aws.lambda.handler.middleware.header.HeaderMiddleware;
 import com.networknt.aws.lambda.handler.middleware.specification.OpenApiMiddleware;
 import com.networknt.aws.lambda.utility.HeaderKey;
+import com.networknt.config.Config;
 import com.networknt.exception.ExpiredTokenException;
+import com.networknt.header.HeaderConfig;
 import com.networknt.oas.model.Operation;
 import com.networknt.oas.model.SecurityParameter;
 import com.networknt.oas.model.SecurityRequirement;
@@ -12,6 +15,7 @@ import com.networknt.openapi.OpenApiOperation;
 import com.networknt.security.SecurityConfig;
 import com.networknt.status.Status;
 import com.networknt.utility.Constants;
+import com.networknt.utility.ModuleRegistry;
 import org.apache.commons.lang3.NotImplementedException;
 import org.jose4j.jwt.JwtClaims;
 import org.jose4j.jwt.MalformedClaimException;
@@ -40,6 +44,7 @@ public class JwtVerifyMiddleware implements MiddlewareHandler {
     static final String STATUS_METHOD_NOT_ALLOWED = "ERR10008";
     static final String STATUS_OPENAPI_OPERATION_MISSED = "ERR10085";
     public JwtVerifyMiddleware() {
+        if(LOG.isInfoEnabled()) LOG.info("JwtVerifyMiddleware is constructed");
         jwtVerifier = new JwtVerifier(config);
         jwtVerifier.initJwkMap();
     }
@@ -390,7 +395,12 @@ public class JwtVerifyMiddleware implements MiddlewareHandler {
 
     @Override
     public void register() {
-        throw new NotImplementedException();
+        ModuleRegistry.registerModule(
+                SecurityConfig.CONFIG_NAME,
+                JwtVerifyMiddleware.class.getName(),
+                Config.getNoneDecryptedInstance().getJsonMapConfigNoCache(SecurityConfig.CONFIG_NAME),
+                null
+        );
     }
 
     @Override
@@ -410,6 +420,6 @@ public class JwtVerifyMiddleware implements MiddlewareHandler {
 
     @Override
     public boolean isAsynchronous() {
-        throw new NotImplementedException();
+        return false;
     }
 }

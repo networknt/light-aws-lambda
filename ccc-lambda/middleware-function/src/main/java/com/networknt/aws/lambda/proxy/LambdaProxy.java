@@ -33,6 +33,7 @@ public class LambdaProxy implements LambdaFunctionEntry {
     public static final LambdaProxyConfig CONFIG = (LambdaProxyConfig) Config.getInstance().getJsonObjectConfig(CONFIG_NAME, LambdaProxyConfig.class);
 
     public LambdaProxy() {
+        if (LOG.isInfoEnabled()) LOG.info("LambdaProxy is constructed");
         Handler.init();
         ModuleRegistry.registerModule(
                 LambdaProxyConfig.CONFIG_NAME,
@@ -58,8 +59,4 @@ public class LambdaProxy implements LambdaFunctionEntry {
         return response;
     }
 
-    @Override
-    public void handleRequest(InputStream inputStream, OutputStream outputStream, Context context) throws IOException {
-
-    }
 }

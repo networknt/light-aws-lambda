@@ -60,6 +60,7 @@ public class HealthCheckHandler implements LambdaHandler {
             if(logger.isTraceEnabled()) logger.trace("HealthCheckHandler.handleRequest ends.");
         }
         exchange.setResponse(responseEvent);
+        if(logger.isTraceEnabled()) logger.trace("HealthCheckHandler.handleRequest ends.");
         return this.successMiddlewareStatus();
     }
 

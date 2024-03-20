@@ -13,6 +13,7 @@ public class UnifiedSecurityMiddleware implements MiddlewareHandler {
     private static final SecurityConfig CONFIG = SecurityConfig.load(SecurityConfig.CONFIG_NAME);
 
     public UnifiedSecurityMiddleware() {
+        if(LOG.isInfoEnabled()) LOG.info("UnifiedSecurityMiddleware is constructed");
     }
 
     @Override

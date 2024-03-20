@@ -4,8 +4,12 @@ import com.amazonaws.services.lambda.runtime.events.APIGatewayProxyRequestEvent;
 import com.amazonaws.services.lambda.runtime.events.APIGatewayProxyResponseEvent;
 import com.networknt.aws.lambda.handler.MiddlewareHandler;
 import com.networknt.aws.lambda.handler.middleware.LightLambdaExchange;
+import com.networknt.aws.lambda.handler.middleware.correlation.CorrelationMiddleware;
+import com.networknt.config.Config;
+import com.networknt.correlation.CorrelationConfig;
 import com.networknt.header.HeaderConfig;
 import com.networknt.status.Status;
+import com.networknt.utility.ModuleRegistry;
 import org.apache.commons.lang3.NotImplementedException;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -40,6 +44,7 @@ public class HeaderMiddleware implements MiddlewareHandler {
             if(LOG.isTraceEnabled()) LOG.trace("HeaderMiddleware is not enabled.");
             return disabledMiddlewareStatus();
         }
+        if(LOG.isTraceEnabled()) LOG.trace("HeaderMiddleware.executeMiddleware ends.");
         return this.handleHeaders(exchange);
     }
 
@@ -149,7 +154,12 @@ public class HeaderMiddleware implements MiddlewareHandler {
 
     @Override
     public void register() {
-        throw new NotImplementedException();
+        ModuleRegistry.registerModule(
+                HeaderConfig.CONFIG_NAME,
+                HeaderMiddleware.class.getName(),
+                Config.getNoneDecryptedInstance().getJsonMapConfigNoCache(HeaderConfig.CONFIG_NAME),
+                null
+        );
     }
 
     @Override
@@ -169,7 +179,7 @@ public class HeaderMiddleware implements MiddlewareHandler {
 
     @Override
     public boolean isAsynchronous() {
-        return true;
+        return false;
     }
 
 }

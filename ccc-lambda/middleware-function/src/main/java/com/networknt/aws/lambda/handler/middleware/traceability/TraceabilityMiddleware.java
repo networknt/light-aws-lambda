@@ -20,11 +20,11 @@ public class TraceabilityMiddleware implements MiddlewareHandler {
     public static final LightLambdaExchange.Attachable<TraceabilityMiddleware> TRACEABILITY_ATTACHMENT_KEY = LightLambdaExchange.Attachable.createMiddlewareAttachable(TraceabilityMiddleware.class);
 
     public TraceabilityMiddleware() {
+        if (LOG.isInfoEnabled()) LOG.info("TraceabilityMiddleware is constructed");
     }
 
     @Override
     public Status execute(final LightLambdaExchange exchange) throws InterruptedException {
-
         if (!CONFIG.isEnabled())
             return disabledMiddlewareStatus();
 
@@ -82,6 +82,6 @@ public class TraceabilityMiddleware implements MiddlewareHandler {
 
     @Override
     public boolean isAsynchronous() {
-        return true;
+        return false;
     }
 }

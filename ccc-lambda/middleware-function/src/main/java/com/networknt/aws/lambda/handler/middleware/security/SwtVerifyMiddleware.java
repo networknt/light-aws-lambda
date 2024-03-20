@@ -29,7 +29,7 @@ public class SwtVerifyMiddleware implements MiddlewareHandler {
 
     @Override
     public boolean isEnabled() {
-        throw new NotImplementedException();
+        return CONFIG.isEnableVerifySwt();
     }
 
     @Override

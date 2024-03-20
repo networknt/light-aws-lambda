@@ -390,7 +390,7 @@ public class JwtVerifyMiddleware implements MiddlewareHandler {
 
     @Override
     public boolean isEnabled() {
-        throw new NotImplementedException();
+        return config.isEnableVerifyJwt();
     }
 
     @Override

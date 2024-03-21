@@ -7,6 +7,7 @@ import com.networknt.config.Config;
 import com.networknt.oas.model.Operation;
 import com.networknt.oas.model.Path;
 import com.networknt.openapi.*;
+import com.networknt.service.SingletonServiceFactory;
 import com.networknt.status.Status;
 import com.networknt.utility.Constants;
 import com.networknt.utility.ModuleRegistry;
@@ -35,6 +36,7 @@ public class OpenApiMiddleware implements MiddlewareHandler {
         if (LOG.isInfoEnabled()) LOG.info("OpenApiMiddleware is constructed");
         Map<String, Object> inject = Config.getInstance().getJsonMapConfig(SPEC_INJECT);
         Map<String, Object> openapi = Config.getInstance().getJsonMapConfigNoCache(CONFIG_NAME);
+        validateSpec(openapi, inject, "openapi.yaml");
         OpenApiHelper.merge(openapi, inject);
         try {
             helper = new OpenApiHelper(Config.getInstance().getMapper().writeValueAsString(openapi));
@@ -81,6 +83,26 @@ public class OpenApiMiddleware implements MiddlewareHandler {
 
         return successMiddlewareStatus();
     }
+
+    /**
+     * Validates the injectMap and openapiMap.Throws an exception if not valid.
+     *
+     * @param openapiMap - openapiSpec
+     * @param openapiInjectMap - inject map
+     * @param specName - name of the openapiSpec
+     */
+    private void validateSpec(Map<String, Object> openapiMap, Map<String, Object> openapiInjectMap, String specName) {
+        InjectableSpecValidator validator = SingletonServiceFactory.getBean(InjectableSpecValidator.class);
+        if (validator == null) {
+            validator = new DefaultInjectableSpecValidator();
+        }
+
+        if (!validator.isValid(openapiMap, openapiInjectMap)) {
+            LOG.error("the original spec {} and injected spec has error, please check the validator {}", specName, validator.getClass().getName());
+            throw new RuntimeException("inject spec error for " + specName);
+        }
+    }
+
 
     @Override
     public void getCachedConfigurations() {

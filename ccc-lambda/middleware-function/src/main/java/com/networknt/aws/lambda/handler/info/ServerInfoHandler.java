@@ -49,7 +49,7 @@ public class ServerInfoHandler implements LambdaHandler {
                     .withHeaders(headers)
                     .withBody(status.toString());
             exchange.setResponse(res);
-
+            return status;
         }
         if (logger.isTraceEnabled()) logger.trace("ServerInfoHandler.handleRequest ends.");
         return this.successMiddlewareStatus();

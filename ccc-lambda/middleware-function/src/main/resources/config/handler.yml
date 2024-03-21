@@ -57,7 +57,6 @@ handlers:
   - com.networknt.aws.lambda.handler.info.ServerInfoHandler@info
   - com.networknt.aws.lambda.handler.logger.LoggerGetHandler@getLogger
   - com.networknt.aws.lambda.handler.logger.LoggerSetHandler@setLogger
-  - com.networknt.aws.lambda.handler.logger.LoggerGetContentHandler@getContent
   # - com.networknt.aws.lambda.admin.ModuleRegistryGetHandler@modules
   # - com.networknt.aws.lambda.admin.ConfigReloadHandler@configReload
 
@@ -86,7 +85,7 @@ additionalChains: ${handler.additionalChains:}
 
 paths:
   - path: '/health'
-    method: 'GET'
+    method: 'get'
     exec:
       - health
 
@@ -115,11 +114,6 @@ paths:
       - admin
       - setLogger
 
-  - path: '/adm/logger/content'
-    method: 'GET'
-    exec:
-      - admin
-      - getContent
 #  - path: '/adm/modules'
 #    method: 'get'
 #    exec:

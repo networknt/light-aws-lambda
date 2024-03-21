@@ -43,7 +43,7 @@ public class LambdaProxy implements RequestHandler<APIGatewayProxyRequestEvent, 
         var requestPath = apiGatewayProxyRequestEvent.getPath();
         var requestMethod = apiGatewayProxyRequestEvent.getHttpMethod();
         LOG.debug("Request path: {} -- Request method: {}", requestPath, requestMethod);
-        Chain chain = Handler.getChain(requestPath + "@" + requestMethod);
+        Chain chain = Handler.getChain(requestPath + "@" + requestMethod.toLowerCase());
         if(chain == null) chain = Handler.getDefaultChain();
         final var exchange = new LightLambdaExchange(context, chain);
         exchange.setRequest(apiGatewayProxyRequestEvent);

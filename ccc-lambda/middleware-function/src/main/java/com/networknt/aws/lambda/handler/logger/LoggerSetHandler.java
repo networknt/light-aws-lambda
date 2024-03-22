@@ -28,12 +28,6 @@ public class LoggerSetHandler implements LambdaHandler {
     public LoggerSetHandler() {
         if(logger.isInfoEnabled()) logger.info("LoggerSetHandler is constructed");
         config = LoggerConfig.load();
-
-        ModuleRegistry.registerModule(
-                LoggerConfig.CONFIG_NAME,
-                LoggerSetHandler.class.getName(),
-                Config.getNoneDecryptedInstance().getJsonMapConfigNoCache(LoggerConfig.CONFIG_NAME),
-                null);
     }
 
     @Override

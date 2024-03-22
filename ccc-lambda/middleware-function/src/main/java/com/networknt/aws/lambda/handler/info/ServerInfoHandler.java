@@ -24,7 +24,6 @@ public class ServerInfoHandler implements LambdaHandler {
     public ServerInfoHandler() {
         logger.info("ServerInfoHandler is constructed");
         config = ServerInfoConfig.load();
-        ModuleRegistry.registerModule(ServerInfoConfig.CONFIG_NAME, ServerInfoHandler.class.getName(), Config.getNoneDecryptedInstance().getJsonMapConfigNoCache(ServerInfoConfig.CONFIG_NAME), null);
     }
 
     @Override

@@ -181,13 +181,11 @@ public class Handler {
      *
      * @param handler Object
      */
-    private static void registerMiddlewareHandler(Object handler) {
-
-        if (handler instanceof MiddlewareHandler) {
-
-            // register the middleware handler if it is enabled.
-            if (((MiddlewareHandler) handler).isEnabled())
-                ((MiddlewareHandler) handler).register();
+    private static void registerLambdaHandler(Object handler) {
+        if (handler instanceof LambdaHandler) {
+            // register the lambda handler if it is enabled.
+            if (((LambdaHandler) handler).isEnabled())
+                ((LambdaHandler) handler).register();
         }
     }
 
@@ -221,7 +219,7 @@ public class Handler {
 
         else throw new RuntimeException("Unsupported type of handler provided: " + handlerOrProviderObject);
 
-        registerMiddlewareHandler(resolvedHandler);
+        registerLambdaHandler(resolvedHandler);
         handlers.put(namedClass.first, resolvedHandler);
     }
 

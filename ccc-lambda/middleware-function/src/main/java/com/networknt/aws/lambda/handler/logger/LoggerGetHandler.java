@@ -26,11 +26,6 @@ public class LoggerGetHandler implements LambdaHandler {
     public LoggerGetHandler() {
         if(logger.isInfoEnabled()) logger.info("LoggerGetHandler is constructed");
         config = LoggerConfig.load();
-        ModuleRegistry.registerModule(
-                LoggerConfig.CONFIG_NAME,
-                LoggerGetHandler.class.getName(),
-                Config.getNoneDecryptedInstance().getJsonMapConfigNoCache(LoggerConfig.CONFIG_NAME),
-                null);
     }
 
     @Override

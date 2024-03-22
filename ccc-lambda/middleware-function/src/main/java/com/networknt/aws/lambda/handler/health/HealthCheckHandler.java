@@ -19,11 +19,11 @@ public class HealthCheckHandler implements LambdaHandler {
     public static final String HEALTH_RESULT_ERROR = "ERROR";
 
     static final Logger logger = LoggerFactory.getLogger(HealthCheckHandler.class);
-    static HealthConfig config = HealthConfig.load();
+    static HealthConfig config;
 
     public HealthCheckHandler() {
         logger.info("HealthCheckHandler is constructed");
-        ModuleRegistry.registerModule(HealthConfig.CONFIG_NAME, HealthCheckHandler.class.getName(), Config.getNoneDecryptedInstance().getJsonMapConfigNoCache(HealthConfig.CONFIG_NAME), null);
+        config = HealthConfig.load();
     }
 
     /**

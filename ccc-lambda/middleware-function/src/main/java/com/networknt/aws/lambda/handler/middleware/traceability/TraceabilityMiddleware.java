@@ -14,13 +14,13 @@ import org.slf4j.LoggerFactory;
 import org.slf4j.MDC;
 
 public class TraceabilityMiddleware implements MiddlewareHandler {
-
     private static final Logger LOG = LoggerFactory.getLogger(TraceabilityMiddleware.class);
-    private static final TraceabilityConfig CONFIG = TraceabilityConfig.load();
     public static final LightLambdaExchange.Attachable<TraceabilityMiddleware> TRACEABILITY_ATTACHMENT_KEY = LightLambdaExchange.Attachable.createMiddlewareAttachable(TraceabilityMiddleware.class);
+    private static TraceabilityConfig CONFIG;
 
     public TraceabilityMiddleware() {
         if (LOG.isInfoEnabled()) LOG.info("TraceabilityMiddleware is constructed");
+        CONFIG = TraceabilityConfig.load();
     }
 
     @Override
@@ -56,7 +56,6 @@ public class TraceabilityMiddleware implements MiddlewareHandler {
 
     @Override
     public void register() {
-        //throw new NotImplementedException();
         ModuleRegistry.registerModule(
                 TraceabilityConfig.CONFIG_NAME,
                 TraceabilityMiddleware.class.getName(),

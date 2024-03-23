@@ -26,10 +26,11 @@ public class ValidatorMiddleware implements MiddlewareHandler {
     private static final String CONTENT_TYPE_MISMATCH = "ERR10015";
     private static OpenApiValidator OPENAPI_VALIDATOR;
 
-    private static final ValidatorConfig CONFIG = ValidatorConfig.load();
+    private static ValidatorConfig CONFIG;
 
     public ValidatorMiddleware() {
         if (LOG.isInfoEnabled()) LOG.info("ValidatorMiddleware is constructed");
+        CONFIG = ValidatorConfig.load();
     }
 
     @Override

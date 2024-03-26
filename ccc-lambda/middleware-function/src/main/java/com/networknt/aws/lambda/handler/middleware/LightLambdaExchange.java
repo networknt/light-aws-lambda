@@ -149,13 +149,16 @@ public final class LightLambdaExchange {
      * @return - return formatted response event.
      */
     public APIGatewayProxyResponseEvent getResponse() {
-        if (stateHasAnyFlags(FLAG_REQUEST_HAS_FAILURE))
-            return ExceptionUtil.convert(this.executor.getChainResults());
+        if(this.response != null) {
+            return this.response;
+        } else {
+            if (stateHasAnyFlags(FLAG_REQUEST_HAS_FAILURE))
+                return ExceptionUtil.convert(this.executor.getChainResults());
 
-        if (stateHasAnyFlags(FLAG_RESPONSE_HAS_FAILURE))
-            return ExceptionUtil.convert(this.executor.getChainResults());
-
-        return this.response;
+            if (stateHasAnyFlags(FLAG_RESPONSE_HAS_FAILURE))
+                return ExceptionUtil.convert(this.executor.getChainResults());
+        }
+        return null;
     }
 
     public Context getContext() {

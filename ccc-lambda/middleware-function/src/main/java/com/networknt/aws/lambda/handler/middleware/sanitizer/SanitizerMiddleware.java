@@ -1,8 +1,10 @@
 package com.networknt.aws.lambda.handler.middleware.sanitizer;
 
+import com.fasterxml.jackson.core.type.TypeReference;
 import com.networknt.aws.lambda.handler.MiddlewareHandler;
 import com.networknt.aws.lambda.handler.middleware.LightLambdaExchange;
 import com.networknt.config.Config;
+import com.networknt.config.JsonMapper;
 import com.networknt.sanitizer.SanitizerConfig;
 import com.networknt.status.Status;
 import com.networknt.utility.ModuleRegistry;
@@ -56,17 +58,20 @@ public class SanitizerMiddleware implements MiddlewareHandler {
         }
 
         if (CONFIG.isBodyEnabled() && ("POST".equalsIgnoreCase(method) || "PUT".equalsIgnoreCase(method) || "PATCH".equalsIgnoreCase(method))) {
-            // assume that body parser is installed before this middleware and body is parsed as a map.
-            // we are talking about JSON api now.
-            Object body = exchange.getRequest().getBody();
-            if (body != null) {
-                if(body instanceof List) {
-                    bodyEncoder.encodeList((List<Map<String, Object>>)body);
-                } else if (body instanceof Map){
-                    // assume it is a map here.
-                    bodyEncoder.encodeNode((Map<String, Object>)body);
+            String body = exchange.getRequest().getBody();
+            if (!body.isEmpty()) {
+                body = body.trim();
+                if (body.startsWith("{")) {
+                    Map<String, Object> bodyMap = JsonMapper.string2Map(body);
+                    bodyEncoder.encodeNode(bodyMap);
+                    exchange.getRequest().setBody(JsonMapper.toJson(bodyMap));
+                } else if (body.startsWith("[")) {
+                    List bodyList = JsonMapper.string2List(body);
+                    bodyEncoder.encodeList(bodyList);
+                    exchange.getRequest().setBody(JsonMapper.toJson(bodyList));
                 } else {
                     // Body is not in JSON format or form data, skip...
+                    if(LOG.isDebugEnabled()) LOG.debug("Skip sanitization as the body is not in JSON format");
                 }
             }
         }

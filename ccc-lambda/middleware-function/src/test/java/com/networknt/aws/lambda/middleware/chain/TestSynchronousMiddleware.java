@@ -1,23 +1,22 @@
 package com.networknt.aws.lambda.middleware.chain;
 
-import com.networknt.aws.lambda.middleware.LambdaMiddleware;
-import com.networknt.aws.lambda.middleware.LightLambdaExchange;
+import com.networknt.aws.lambda.handler.MiddlewareHandler;
+import com.networknt.aws.lambda.handler.middleware.LightLambdaExchange;
 import com.networknt.status.Status;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import java.util.concurrent.ThreadLocalRandom;
 
-public class TestSynchronousMiddleware extends LambdaMiddleware {
+public class TestSynchronousMiddleware implements MiddlewareHandler {
 
     private static final Logger LOG = LoggerFactory.getLogger(TestSynchronousMiddleware.class);
 
     public TestSynchronousMiddleware() {
-        super(true, false, false);
     }
 
     @Override
-    protected Status executeMiddleware(final LightLambdaExchange exchange) throws InterruptedException {
+    public Status execute(final LightLambdaExchange exchange) throws InterruptedException {
         LOG.info("I am executing Synchronously");
 
         int randomSlept = ThreadLocalRandom.current().nextInt(5, 15);
@@ -31,7 +30,7 @@ public class TestSynchronousMiddleware extends LambdaMiddleware {
         }
 
         LOG.info("I am done executing Synchronously, doing callback");
-        return LambdaMiddleware.successMiddlewareStatus();
+        return this.successMiddlewareStatus();
     }
 
     @Override
@@ -42,5 +41,30 @@ public class TestSynchronousMiddleware extends LambdaMiddleware {
     @Override
     public boolean isEnabled() {
         return true;
+    }
+
+    @Override
+    public void register() {
+
+    }
+
+    @Override
+    public void reload() {
+
+    }
+
+    @Override
+    public boolean isContinueOnFailure() {
+        return false;
+    }
+
+    @Override
+    public boolean isAudited() {
+        return true;
+    }
+
+    @Override
+    public boolean isAsynchronous() {
+        return false;
     }
 }

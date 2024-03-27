@@ -153,9 +153,7 @@ public class DynamoDbCacheManager implements CacheManager {
                 .withTableName(tableName)
                 .withKeySchema(keySchema)
                 .withAttributeDefinitions(attributeDefinitions)
-                .withProvisionedThroughput(new ProvisionedThroughput()
-                        .withReadCapacityUnits(5L)
-                        .withWriteCapacityUnits(6L));
+                .withProvisionedThroughput(new ProvisionedThroughput(0L,0L));
 
         Table table = this.dynamoDB.createTable(createTableRequest);
         try {

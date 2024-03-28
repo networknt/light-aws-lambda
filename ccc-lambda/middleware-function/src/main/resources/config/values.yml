@@ -61,3 +61,10 @@ client.tokenKeyServerUrl: https://networknt.oktapreview.com
 client.tokenKeyUri: /oauth2/aus66u5cybTrCsbZs1d6/v1/keys
 client.tokenKeyEnableHttp2: false
 # client.tokenKeyAudience: dev.canada.referenceapi.networknt.oktapreview.com
+
+# sanitizer.yml
+sanitizer.enabled: true
+
+# limit.yml
+limit.enabled: true
+limit.rateLimit: 10/m 10000/d

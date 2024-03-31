@@ -1,5 +1,17 @@
 # Change Log
 
+## [2.1.33](https://github.com/networknt/light-aws-lambda/tree/2.1.33) (2024-03-31)
+
+
+**Merged pull requests:**
+
+
+- fixes \#116 move the test config to the values.yml in the src [\#117](https://github.com/networknt/light-aws-lambda/pull/117) ([stevehu](https://github.com/stevehu))
+- Issue88 [\#113](https://github.com/networknt/light-aws-lambda/pull/113) ([stevehu](https://github.com/stevehu))
+- fixes \#111 update the project name in native-image-linux.sh [\#112](https://github.com/networknt/light-aws-lambda/pull/112) ([stevehu](https://github.com/stevehu))
+- fixes \#109 upgrade aws libraries [\#110](https://github.com/networknt/light-aws-lambda/pull/110) ([stevehu](https://github.com/stevehu))
+
+
 ## [2.1.32](https://github.com/networknt/light-aws-lambda/tree/2.1.32) (2024-02-27)
 
 

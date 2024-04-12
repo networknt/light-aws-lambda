@@ -19,7 +19,7 @@
         <version.lambda-core>1.2.3</version.lambda-core>
         <version.lambda-events>3.11.4</version.lambda-events>
         <version.lambda-iam>1.12.667</version.lambda-iam>
-        <version.jose4j>0.9.3</version.jose4j>
+        <version.jose4j>0.9.6</version.jose4j>
         <version.logback>1.4.14</version.logback>
         <version.junit>5.7.0</version.junit>
         <version.maven-shade>3.2.4</version.maven-shade>

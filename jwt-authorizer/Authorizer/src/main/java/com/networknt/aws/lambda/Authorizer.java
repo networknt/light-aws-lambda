@@ -5,6 +5,7 @@ import com.amazonaws.services.lambda.runtime.RequestHandler;
 import com.amazonaws.services.lambda.runtime.events.APIGatewayProxyRequestEvent;
 import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.databind.ObjectMapper;
+import com.networknt.config.JsonMapper;
 import com.networknt.utility.Constants;
 import com.networknt.utility.StringUtils;
 import org.jose4j.jwt.JwtClaims;
@@ -19,18 +20,13 @@ import static com.networknt.aws.lambda.AuthPolicy.PolicyDocument.getAllowOnePoli
 import static com.networknt.aws.lambda.AuthPolicy.PolicyDocument.getDenyOnePolicy;
 
 public class Authorizer implements RequestHandler<APIGatewayProxyRequestEvent, AuthPolicy> {
-    private static Logger logger = LoggerFactory.getLogger(Authorizer.class);
+    private static final Logger logger = LoggerFactory.getLogger(Authorizer.class);
 
     ObjectMapper objectMapper = new ObjectMapper();
     Map<String, Map<String, Object>> config = Configuration.getInstance().getConfig();
 
     public AuthPolicy handleRequest(APIGatewayProxyRequestEvent request, Context context) {
-        try {
-            logger.debug(objectMapper.writerWithDefaultPrettyPrinter().writeValueAsString(request));
-        } catch (JsonProcessingException e) {
-            e.printStackTrace();
-        }
-
+        logger.debug(JsonMapper.toJson(request));
         APIGatewayProxyRequestEvent.ProxyRequestContext proxyContext = request.getRequestContext();
         String region = System.getenv("AWS_REGION");  // use the env to get the region for REQUEST authorizer.
         String accountId = proxyContext.getAccountId();

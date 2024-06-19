@@ -20,7 +20,11 @@ import io.undertow.util.HttpString;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import software.amazon.awssdk.core.SdkBytes;
+import software.amazon.awssdk.core.client.config.ClientOverrideConfiguration;
+import software.amazon.awssdk.http.async.SdkAsyncHttpClient;
+import software.amazon.awssdk.http.nio.netty.NettyNioAsyncHttpClient;
 import software.amazon.awssdk.regions.Region;
+import software.amazon.awssdk.services.lambda.LambdaAsyncClient;
 import software.amazon.awssdk.services.lambda.LambdaClient;
 import software.amazon.awssdk.services.lambda.LambdaClientBuilder;
 import software.amazon.awssdk.services.lambda.model.InvokeRequest;
@@ -28,9 +32,12 @@ import software.amazon.awssdk.services.lambda.model.InvokeResponse;
 import software.amazon.awssdk.services.lambda.model.LambdaException;
 
 import java.net.URI;
+import java.time.Duration;
 import java.util.Deque;
 import java.util.HashMap;
 import java.util.Map;
+import java.util.concurrent.CompletableFuture;
+import java.util.concurrent.ExecutionException;
 
 public class LambdaFunctionHandler implements LightHttpHandler {
     private static final Logger logger = LoggerFactory.getLogger(LambdaFunctionHandler.class);
@@ -39,15 +46,29 @@ public class LambdaFunctionHandler implements LightHttpHandler {
     private static final String EMPTY_LAMBDA_RESPONSE = "ERR10064";
     private static AbstractMetricsHandler metricsHandler;
 
-    private static LambdaClient client;
+    private static LambdaAsyncClient client;
 
     public LambdaFunctionHandler() {
         config = LambdaInvokerConfig.load();
-        LambdaClientBuilder builder = LambdaClient.builder().region(Region.of(config.getRegion()));
+        SdkAsyncHttpClient asyncHttpClient = NettyNioAsyncHttpClient.builder()
+                .readTimeout(Duration.ofMillis(config.getApiCallAttemptTimeout()))
+                .writeTimeout(Duration.ofMillis(config.getApiCallAttemptTimeout()))
+                .connectionTimeout(Duration.ofMillis(config.getApiCallAttemptTimeout()))
+                .build();
+        ClientOverrideConfiguration overrideConfig = ClientOverrideConfiguration.builder()
+                .apiCallTimeout(Duration.ofMillis(config.getApiCallTimeout()))
+                .apiCallAttemptTimeout(Duration.ofSeconds(config.getApiCallAttemptTimeout()))
+                .build();
+
+        var builder = LambdaAsyncClient.builder().region(Region.of(config.getRegion()))
+                .httpClient(asyncHttpClient)
+                .overrideConfiguration(overrideConfig);
+
         if(!StringUtils.isEmpty(config.getEndpointOverride())) {
             builder.endpointOverride(URI.create(config.getEndpointOverride()));
         }
         client = builder.build();
+
         if(config.isMetricsInjection()) {
             // get the metrics handler from the handler chain for metrics registration. If we cannot get the
             // metrics handler, then an error message will be logged.
@@ -91,9 +112,9 @@ public class LambdaFunctionHandler implements LightHttpHandler {
         requestEvent.setQueryStringParameters(queryStringParameters);
         requestEvent.setBody(body == null ? null : body);
         String requestBody = JsonMapper.objectMapper.writeValueAsString(requestEvent);
-        if(logger.isTraceEnabled()) logger.trace("requestBody = " + requestBody);
+        if(logger.isTraceEnabled()) logger.trace("requestBody = {}", requestBody);
         String res = invokeFunction(client, functionName, requestBody);
-        if(logger.isDebugEnabled()) logger.debug("response = " + res);
+        if(logger.isDebugEnabled()) logger.debug("response = {}", res);
         if(res == null) {
             setExchangeStatus(exchange, EMPTY_LAMBDA_RESPONSE, functionName);
             if(config.isMetricsInjection() && metricsHandler != null) metricsHandler.injectMetrics(exchange, startTime, config.getMetricsName(), endpoint);
@@ -106,7 +127,7 @@ public class LambdaFunctionHandler implements LightHttpHandler {
         if(config.isMetricsInjection() && metricsHandler != null) metricsHandler.injectMetrics(exchange, startTime, config.getMetricsName(), endpoint);
     }
 
-    private String invokeFunction(LambdaClient awsLambda, String functionName, String requestBody)  {
+    private String invokeFunction(LambdaAsyncClient client, String functionName, String requestBody)  {
         String response = null;
         try {
             //Need a SdkBytes instance for the payload
@@ -118,20 +139,20 @@ public class LambdaFunctionHandler implements LightHttpHandler {
                     .logType(config.getLogType())
                     .payload(payload)
                     .build();
-
-            //Invoke the Lambda function
-            InvokeResponse res = awsLambda.invoke(request);
-            if(logger.isDebugEnabled()) {
-                logger.debug("lambda call function error:" + res.functionError());
-                logger.debug("lambda logger result:" + res.logResult());
-                logger.debug("lambda call status:" + res.statusCode());
-            }
-
-            response = res.payload().asUtf8String() ;
-        } catch(LambdaException e) {
+            CompletableFuture<String> futureResponse = client.invoke(request)
+                    .thenApply(res -> {
+                        if(logger.isTraceEnabled()) logger.trace("LambdaFunctionHandler.invokeFunction response: {}", res);
+                        return res.payload().asUtf8String();
+                    })
+                    .exceptionally(e -> {
+                        logger.error("Error invoking lambda function: {}", functionName, e);
+                        return null;
+                    });
+            return futureResponse.get();
+        } catch(InterruptedException | ExecutionException e) {
             logger.error("LambdaException", e);
         }
-        return response;
+        return null;
     }
 
     private Map<String, String> convertHeaders(HeaderMap headerMap) {
@@ -176,11 +197,25 @@ public class LambdaFunctionHandler implements LightHttpHandler {
 
     public static void reload() {
         config.reload();
-        LambdaClientBuilder builder = LambdaClient.builder().region(Region.of(config.getRegion()));
+        SdkAsyncHttpClient asyncHttpClient = NettyNioAsyncHttpClient.builder()
+                .readTimeout(Duration.ofMillis(config.getApiCallAttemptTimeout()))
+                .writeTimeout(Duration.ofMillis(config.getApiCallAttemptTimeout()))
+                .connectionTimeout(Duration.ofMillis(config.getApiCallAttemptTimeout()))
+                .build();
+        ClientOverrideConfiguration overrideConfig = ClientOverrideConfiguration.builder()
+                .apiCallTimeout(Duration.ofMillis(config.getApiCallTimeout()))
+                .apiCallAttemptTimeout(Duration.ofSeconds(config.getApiCallAttemptTimeout()))
+                .build();
+
+        var builder = LambdaAsyncClient.builder().region(Region.of(config.getRegion()))
+                .httpClient(asyncHttpClient)
+                .overrideConfiguration(overrideConfig);
+
         if(!StringUtils.isEmpty(config.getEndpointOverride())) {
             builder.endpointOverride(URI.create(config.getEndpointOverride()));
         }
         client = builder.build();
+
         if(config.isMetricsInjection()) {
             // get the metrics handler from the handler chain for metrics registration. If we cannot get the
             // metrics handler, then an error message will be logged.

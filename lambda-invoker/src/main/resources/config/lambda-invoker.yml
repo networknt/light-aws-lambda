@@ -3,6 +3,10 @@ region: ${lambda-invoker.region:us-east-1}
 # endpoint override if for lambda function deployed in virtual private cloud. Here is an example.
 # https://vpce-0012C939329d982-tk8ps.lambda.ca-central-1.vpce.amazonaws.com
 endpointOverride: ${lambda-invoker.endpointOverride:}
+# Api call timeout in milliseconds. This sets the amount of time for the entire execution, including all retry attempts.
+apiCallTimeout: ${lambda-invoker.apiCallTimeout:60000}
+# Api call attempt timeout in milliseconds. This sets the amount of time for each individual attempt.
+apiCallAttemptTimeout: ${lambda-invoker.apiCallAttemptTimeout:20000}
 # The LogType of the execution log of Lambda. Set Tail to include and None to not include.
 logType: ${lambda-invoker.logType:Tail}
 # mapping of the endpoints to Lambda functions. Define a list of functions in values.yml file.

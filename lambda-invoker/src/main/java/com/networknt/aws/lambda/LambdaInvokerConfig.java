@@ -16,6 +16,8 @@ public class LambdaInvokerConfig {
     public static final String CONFIG_NAME = "lambda-invoker";
     private static final String REGION = "region";
     private static final String ENDPOINT_OVERRIDE = "endpointOverride";
+    private static final String API_CALL_TIMEOUT = "apiCallTimeout";
+    private static final String API_CALL_ATTEMPT_TIMEOUT = "apiCallAttemptTimeout";
     private static final String LOG_TYPE = "logType";
     private static final String FUNCTIONS = "functions";
     private static final String METRICS_INJECTION = "metricsInjection";
@@ -23,6 +25,8 @@ public class LambdaInvokerConfig {
 
     private String region;
     private String endpointOverride;
+    private int apiCallTimeout;
+    private int apiCallAttemptTimeout;
     private String logType;
     private Map<String, String> functions;
     private boolean metricsInjection;
@@ -42,6 +46,22 @@ public class LambdaInvokerConfig {
 
     public void setEndpointOverride(String endpointOverride) {
         this.endpointOverride = endpointOverride;
+    }
+
+    public int getApiCallTimeout() {
+        return apiCallTimeout;
+    }
+
+    public void setApiCallTimeout(int apiCallTimeout) {
+        this.apiCallTimeout = apiCallTimeout;
+    }
+
+    public int getApiCallAttemptTimeout() {
+        return apiCallAttemptTimeout;
+    }
+
+    public void setApiCallAttemptTimeout(int apiCallAttemptTimeout) {
+        this.apiCallAttemptTimeout = apiCallAttemptTimeout;
     }
 
     public String getLogType() {
@@ -120,13 +140,21 @@ public class LambdaInvokerConfig {
         if (object != null) {
             endpointOverride = ((String) object);
         }
+        object = mappedConfig.get(API_CALL_TIMEOUT);
+        if (object != null) {
+            apiCallTimeout = Config.loadIntegerValue(API_CALL_TIMEOUT, object);
+        }
+        object = mappedConfig.get(API_CALL_ATTEMPT_TIMEOUT);
+        if (object != null) {
+            apiCallAttemptTimeout = Config.loadIntegerValue(API_CALL_ATTEMPT_TIMEOUT, object);
+        }
         object = mappedConfig.get(LOG_TYPE);
         if (object != null) {
             logType = ((String) object);
         }
         object = getMappedConfig().get(METRICS_INJECTION);
-        if(object != null && (Boolean) object) {
-            metricsInjection = true;
+        if(object != null) {
+            metricsInjection = Config.loadBooleanValue(METRICS_INJECTION, object);
         }
         object = getMappedConfig().get(METRICS_NAME);
         if(object != null ) {
@@ -164,6 +192,5 @@ public class LambdaInvokerConfig {
                 throw new ConfigException("functions must be a string string map.");
             }
         }
-
     }
 }

@@ -1,5 +1,17 @@
 # Change Log
 
+## [2.1.34](https://github.com/networknt/light-aws-lambda/tree/2.1.34) (2024-06-22)
+
+
+**Merged pull requests:**
+
+
+- fixes \#125 upgrade aws lambda dependencies [\#126](https://github.com/networknt/light-aws-lambda/pull/126) ([stevehu](https://github.com/stevehu))
+- fixes \#123 Make the Lambda client timeout configurable [\#124](https://github.com/networknt/light-aws-lambda/pull/124) ([stevehu](https://github.com/stevehu))
+- fixes \#119 move ccc-lambda to light-lambda-native [\#120](https://github.com/networknt/light-aws-lambda/pull/120) ([stevehu](https://github.com/stevehu))
+- [pre-commit.ci] pre-commit autoupdate [\#118](https://github.com/networknt/light-aws-lambda/pull/118) ([pre-commit-ci](https://github.com/apps/pre-commit-ci))
+
+
 ## [2.1.33](https://github.com/networknt/light-aws-lambda/tree/2.1.33) (2024-03-31)
 
 

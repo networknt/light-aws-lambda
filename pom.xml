@@ -112,7 +112,7 @@
         <version.powermock>2.0.0</version.powermock>
         <version.undertow>2.3.14.Final</version.undertow>
         <versions.maven-version>2.4</versions.maven-version>
-        <version.json-schema-validator>1.0.65</version.json-schema-validator>
+        <version.json-schema-validator>1.5.0</version.json-schema-validator>
         <version.openapi-schema-validation>2.0.4</version.openapi-schema-validation>
         <version.maven-javadoc>3.4.1</version.maven-javadoc>
     </properties>

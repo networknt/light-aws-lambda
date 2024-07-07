@@ -25,14 +25,14 @@
         <relativePath>../pom.xml</relativePath>
     </parent>
 
-    <artifactId>lambda-validator</artifactId>
+    <artifactId>schema-validator</artifactId>
     <packaging>jar</packaging>
-    <description>Validate the lambda funcation request against the OpenAPI specification</description>
+    <description>A utility of json-schema-valdiator that is used to validate request and response based on the OpenAPI specification.</description>
 
     <dependencies>
         <dependency>
             <groupId>com.networknt</groupId>
-            <artifactId>utility</artifactId>
+            <artifactId>lambda-utility</artifactId>
         </dependency>
         <dependency>
             <groupId>com.networknt</groupId>
@@ -44,7 +44,7 @@
         </dependency>
         <dependency>
             <groupId>com.networknt</groupId>
-            <artifactId>schema-validator</artifactId>
+            <artifactId>validator-config</artifactId>
         </dependency>
         <dependency>
             <groupId>com.networknt</groupId>

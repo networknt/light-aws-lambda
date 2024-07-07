@@ -113,16 +113,17 @@
         <version.undertow>2.3.14.Final</version.undertow>
         <versions.maven-version>2.4</versions.maven-version>
         <version.json-schema-validator>1.5.0</version.json-schema-validator>
-        <version.openapi-schema-validation>2.0.4</version.openapi-schema-validation>
         <version.maven-javadoc>3.4.1</version.maven-javadoc>
     </properties>
 
     <modules>
         <module>slf4j-logback</module>
         <module>env-config</module>
+        <module>lambda-utility</module>
         <module>request-handler</module>
         <module>custom-runtime</module>
         <module>scope-verifier</module>
+        <module>schema-validator</module>
         <module>lambda-validator</module>
         <module>lambda-invoker</module>
         <module>lambda-interceptor</module>
@@ -140,6 +141,11 @@
             <dependency>
                 <groupId>com.networknt</groupId>
                 <artifactId>env-config</artifactId>
+                <version>${project.version}</version>
+            </dependency>
+            <dependency>
+                <groupId>com.networknt</groupId>
+                <artifactId>lambda-utility</artifactId>
                 <version>${project.version}</version>
             </dependency>
             <dependency>
@@ -183,9 +189,9 @@
                 <version>${version.json-schema-validator}</version>
             </dependency>
             <dependency>
-                <groupId>com.mservicetech</groupId>
-                <artifactId>openapi-schema-validation</artifactId>
-                <version>${version.openapi-schema-validation}</version>
+                <groupId>com.networknt</groupId>
+                <artifactId>schema-validator</artifactId>
+                <version>${project.version}</version>
             </dependency>
             <dependency>
                 <groupId>com.networknt</groupId>
@@ -225,6 +231,16 @@
             <dependency>
                 <groupId>com.networknt</groupId>
                 <artifactId>metrics</artifactId>
+                <version>${project.version}</version>
+            </dependency>
+            <dependency>
+                <groupId>com.networknt</groupId>
+                <artifactId>status</artifactId>
+                <version>${project.version}</version>
+            </dependency>
+            <dependency>
+                <groupId>com.networknt</groupId>
+                <artifactId>validator-config</artifactId>
                 <version>${project.version}</version>
             </dependency>
 

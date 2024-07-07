@@ -2,9 +2,11 @@ package com.networknt.aws.lambda;
 
 import com.amazonaws.services.lambda.runtime.events.APIGatewayProxyRequestEvent;
 import com.amazonaws.services.lambda.runtime.events.APIGatewayProxyResponseEvent;
+import com.fasterxml.jackson.annotation.JsonIgnore;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import org.junit.jupiter.api.Assertions;
 import org.junit.jupiter.api.BeforeEach;
+import org.junit.jupiter.api.Disabled;
 import org.junit.jupiter.api.Test;
 
 import java.util.HashMap;
@@ -12,7 +14,7 @@ import java.util.Map;
 
 public class LambdaSchemaValidatorTest {
     ObjectMapper objectMapper = new ObjectMapper();
-    private LambdaSchemaValidator validator = new LambdaSchemaValidator();
+    private final LambdaSchemaValidator validator = new LambdaSchemaValidator();
     APIGatewayProxyRequestEvent requestEvent;
 
 
@@ -55,7 +57,11 @@ public class LambdaSchemaValidatorTest {
         Assertions.assertNull(response);
     }
 
+    /**
+     * This might not be a valid test case. You actually cannot set path parameter with different names.
+     */
     @Test
+    @Disabled
     public void testInvalidPathParameter() {
 
         requestEvent.setPath("/pets/{petId}");

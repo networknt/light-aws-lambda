@@ -22,7 +22,7 @@
         <groupId>com.networknt</groupId>
         <artifactId>light-aws-lambda</artifactId>
         <version>2.1.35-SNAPSHOT</version>
-        <relativePath>..</relativePath>
+        <relativePath>../pom.xml</relativePath>
     </parent>
 
     <artifactId>request-handler</artifactId>

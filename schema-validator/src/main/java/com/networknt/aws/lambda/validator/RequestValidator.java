@@ -12,6 +12,7 @@ import com.networknt.oas.model.impl.SchemaImpl;
 import com.networknt.openapi.NormalisedPath;
 import com.networknt.openapi.OpenApiOperation;
 import com.networknt.openapi.ValidatorConfig;
+import com.networknt.schema.PathType;
 import com.networknt.schema.SchemaValidatorsConfig;
 import com.networknt.status.Status;
 import com.networknt.utility.MapUtil;
@@ -87,9 +88,11 @@ public class RequestValidator {
             }
             return null;
         }
-        SchemaValidatorsConfig config = new SchemaValidatorsConfig();
-        config.setTypeLoose(false);
-        config.setHandleNullableField(validatorConfig.isHandleNullableField());
+        SchemaValidatorsConfig config = SchemaValidatorsConfig.builder()
+                .typeLoose(false)
+                .pathType(PathType.JSON_POINTER)
+                .nullableKeywordEnabled(validatorConfig.isHandleNullableField())
+                .build();
         // the body can be converted to JsonNode here. If not, an error is returned.
         JsonNode requestNode = null;
         requestBody = requestBody.trim();
@@ -146,7 +149,7 @@ public class RequestValidator {
                     LOG.info("Path parameter cannot be decoded, it will be used directly");
                 }
 
-                return schemaValidator.validate(new TextNode(paramValue), Overlay.toJson((SchemaImpl)(parameter.get().getSchema())));
+                return schemaValidator.validate(new TextNode(paramValue), Overlay.toJson((SchemaImpl)(parameter.get().getSchema())), paramName);
             }
         }
         return status;
@@ -181,7 +184,7 @@ public class RequestValidator {
                 return new Status(VALIDATOR_REQUEST_PARAMETER_QUERY_MISSING, queryParameter.getName(), openApiOperation.getPathString().original());
             }
         } else {
-            return schemaValidator.validate(new TextNode(queryParameterValue), Overlay.toJson((SchemaImpl)queryParameter.getSchema()));
+            return schemaValidator.validate(new TextNode(queryParameterValue), Overlay.toJson((SchemaImpl)queryParameter.getSchema()), queryParameter.getName());
         }
         return null;
     }
@@ -235,7 +238,7 @@ public class RequestValidator {
                 return new Status(VALIDATOR_REQUEST_PARAMETER_HEADER_MISSING, headerParameter.getName(), openApiOperation.getPathString().original());
             }
         } else {
-            return headerParameter.getSchema() != null ? schemaValidator.validate(new TextNode(headerValue.get()), Overlay.toJson((SchemaImpl)headerParameter.getSchema())) : null;
+            return headerParameter.getSchema() != null ? schemaValidator.validate(new TextNode(headerValue.get()), Overlay.toJson((SchemaImpl)headerParameter.getSchema()), headerParameter.getName()) : null;
         }
         return null;
     }
@@ -251,7 +254,7 @@ public class RequestValidator {
                     if (null==deserializedValue) {
                         validationResult.addSkipped(p);
                     }else {
-                        Status s = schemaValidator.validate(new TextNode(deserializedValue), Overlay.toJson((SchemaImpl)(p.getSchema())));
+                        Status s = schemaValidator.validate(new TextNode(deserializedValue), Overlay.toJson((SchemaImpl)(p.getSchema())), p.getName());
                         validationResult.addStatus(s);
                     }
                 });

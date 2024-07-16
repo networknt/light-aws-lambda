@@ -63,8 +63,10 @@ public class SchemaValidator {
     public SchemaValidator(final OpenApi3 api) {
         this.api = api;
         this.jsonNode = Overlay.toJson((OpenApi3Impl)api).get("components");
-        this.defaultConfig = new SchemaValidatorsConfig();
-        this.defaultConfig.setTypeLoose(true);
+        this.defaultConfig = SchemaValidatorsConfig.builder()
+                .typeLoose(true)
+                .pathType(PathType.JSON_POINTER)
+                .build();
     }
 
     /**
@@ -93,8 +95,12 @@ public class SchemaValidator {
         return doValidate(value, schema, config, instanceLocation);
     }
 
-    public Status validate(final JsonNode value, final JsonNode schema) {
-        return doValidate(value, schema, defaultConfig, null);
+    public Status validate(final JsonNode value, final JsonNode schema, String at) {
+        JsonNodePath instanceLocation = new JsonNodePath(defaultConfig.getPathType());
+        if (at != null) {
+            instanceLocation = instanceLocation.append(at);
+        }
+        return validate(value, schema, defaultConfig, instanceLocation);
     }
 
     public Status validate(final JsonNode value, final JsonNode schema, JsonNodePath instanceLocation) {

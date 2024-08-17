@@ -1,5 +1,13 @@
 # Change Log
 
+## [2.1.35](https://github.com/networknt/light-aws-lambda/tree/2.1.35) (2024-08-17)
+
+
+**Merged pull requests:**
+
+
+- fixes \#129 validator error doesnot have the name for the header, path… [\#130](https://github.com/networknt/light-aws-lambda/pull/130) ([stevehu](https://github.com/stevehu))
+- fixes \#127 add lambda-utility and schema-validator to share with native [\#128](https://github.com/networknt/light-aws-lambda/pull/128) ([stevehu](https://github.com/stevehu))
 ## [2.1.34](https://github.com/networknt/light-aws-lambda/tree/2.1.34) (2024-06-22)
 
 

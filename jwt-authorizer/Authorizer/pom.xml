@@ -20,7 +20,7 @@
         <version.lambda-events>3.11.6</version.lambda-events>
         <version.lambda-iam>1.12.745</version.lambda-iam>
         <version.jose4j>0.9.6</version.jose4j>
-        <version.logback>1.5.6</version.logback>
+        <version.logback>1.5.12</version.logback>
         <version.junit>5.7.0</version.junit>
         <version.maven-shade>3.2.4</version.maven-shade>
         <version.maven-jar>3.2.0</version.maven-jar>

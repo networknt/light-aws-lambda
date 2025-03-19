@@ -3,7 +3,6 @@ package com.networknt.aws.lambda;
 import com.amazonaws.services.lambda.runtime.Context;
 import com.amazonaws.services.lambda.runtime.RequestHandler;
 import com.amazonaws.services.lambda.runtime.events.APIGatewayProxyRequestEvent;
-import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.networknt.config.JsonMapper;
 import com.networknt.utility.Constants;
@@ -55,11 +54,11 @@ public class Authorizer implements RequestHandler<APIGatewayProxyRequestEvent, A
             // handle the primary token.
             String clientId = claims.getStringClaimValue(Constants.CLIENT_ID_STRING);
             // try to get the cid as some OAuth tokens name it as cid like Okta.
-            if(clientId == null) clientId = claims.getStringClaimValue(Constants.CID_STRING);
+            if(clientId == null) clientId = claims.getStringClaimValue(Constants.CID);
             ctx.put(Constants.CLIENT_ID_STRING, clientId);
             String userId = claims.getStringClaimValue(Constants.USER_ID_STRING);
             // try to get the uid as some OAuth tokens name it as uid like Okta.
-            if(userId == null) userId = claims.getStringClaimValue(Constants.UID_STRING);
+            if(userId == null) userId = claims.getStringClaimValue(Constants.UID);
             if(userId != null) {
                 ctx.put(Constants.USER_ID_STRING, userId);
                 principalId = userId;

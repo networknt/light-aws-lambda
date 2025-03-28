@@ -7,26 +7,31 @@ import java.lang.reflect.Field;
 import java.util.HashMap;
 import java.util.Map;
 
+import org.junit.jupiter.api.AfterEach;
+import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Disabled;
 import org.junit.jupiter.api.Test;
 
 
 public class AuthorizerTest {
   ObjectMapper objectMapper = new ObjectMapper();
+  private String originalAwsRegion; // To store the original value
 
-  public static void setEnv(String key, String value) {
-    try {
-      Map<String, String> env = System.getenv();
-      Class<?> cl = env.getClass();
-      Field field = cl.getDeclaredField("m");
-      field.setAccessible(true);
-      Map<String, String> writableEnv = (Map<String, String>) field.get(env);
-      writableEnv.put(key, value);
-    } catch (Exception e) {
-      throw new IllegalStateException("Failed to set environment variable", e);
-    }
+  @BeforeEach
+  void storeOriginalSystemProperties() {
+    // Store original value before each test (if any)
+    originalAwsRegion = System.getProperty("aws.region");
   }
 
+  @AfterEach
+  void restoreOriginalSystemProperties() {
+    // Restore original value after each test
+    if (originalAwsRegion != null) {
+      System.setProperty("aws.region", originalAwsRegion);
+    } else {
+      System.clearProperty("aws.region");
+    }
+  }
   /**
    * Both primary token and scope token are available and valid.
    */
@@ -39,7 +44,6 @@ public class AuthorizerTest {
     headers.put("X-Scope-Token", "Bearer eyJraWQiOiIxMDAiLCJhbGciOiJSUzI1NiJ9.eyJpc3MiOiJ1cm46Y29tOm5ldHdvcmtudDpvYXV0aDI6djEiLCJhdWQiOiJ1cm46Y29tLm5ldHdvcmtudCIsImV4cCI6MTkyNjY4ODQyOCwianRpIjoibnZ5dVFpelNYelN5eUlYdGxsdDdDQSIsImlhdCI6MTYxMTMyODQyOCwibmJmIjoxNjExMzI4MzA4LCJ2ZXJzaW9uIjoiMS4wIiwiY2xpZW50X2lkIjoiZjdkNDIzNDgtYzY0Ny00ZWZiLWE1MmQtNGM1Nzg3NDIxZTczIiwic2NwIjpbInByb3h5LnIiLCJwcm94eS53Il19.sMfKXuWF-C3fqs0hl7Z2RRiwteUto4XoXgsXfDk5lCE8Hkg1PSA_fvmx7-ag1Pau-ra4iBbD5VK-epPxQSXfGDozPTuDy1MRR6iSH8uljeGWF8BcwYaIXmDB92-RAf09hl1kqpza6s2ivHpgNjA5H-cK13jy2xDNoM6bbNi8VR5mFphw6FpZWZPegrvCOwgUPRJN8Gs_BfQNOhShMpT9_DjQu_UnTTqraf3qw-jZksBQ2txrbHcpi_qF3iF6SgZlMqA31bG-lEbZ5AIpf0kji58pVD96r7wxIoENzrexc7mEt_S64De_lCJJh2plD86gjmR0wHU2Of4e6jFNEDD3Ng");
     request.setHeaders(headers);
     APIGatewayProxyRequestEvent.ProxyRequestContext context = new APIGatewayProxyRequestEvent.ProxyRequestContext();
-    setEnv("AWS_REGION", "us-east-1");
     context.setAccountId("1234567890");
     context.setStage("Prod");
     context.setApiId("gy415nuibc");

@@ -22,6 +22,9 @@ public class LambdaInvokerConfig {
     private static final String FUNCTIONS = "functions";
     private static final String METRICS_INJECTION = "metricsInjection";
     private static final String METRICS_NAME = "metricsName";
+    private static final String MAX_CONCURRENCY = "maxConcurrency";
+    private static final String MAX_PENDING_CONNECTION_ACQUIRES = "maxPendingConnectionAcquires";
+    private static final String CONNECTION_ACQUISITION_TIMEOUT = "connectionAcquisitionTimeout";
 
     private String region;
     private String endpointOverride;
@@ -31,6 +34,9 @@ public class LambdaInvokerConfig {
     private Map<String, String> functions;
     private boolean metricsInjection;
     private String metricsName;
+    private int maxConcurrency;
+    private int maxPendingConnectionAcquires;
+    private int connectionAcquisitionTimeout;
 
     public String getRegion() {
         return region;
@@ -96,6 +102,30 @@ public class LambdaInvokerConfig {
         this.metricsName = metricsName;
     }
 
+    public int getMaxConcurrency() {
+        return maxConcurrency;
+    }
+
+    public void setMaxConcurrency(int maxConcurrency) {
+        this.maxConcurrency = maxConcurrency;
+    }
+
+    public int getMaxPendingConnectionAcquires() {
+        return maxPendingConnectionAcquires;
+    }
+
+    public void setMaxPendingConnectionAcquires(int maxPendingConnectionAcquires) {
+        this.maxPendingConnectionAcquires = maxPendingConnectionAcquires;
+    }
+
+    public int getConnectionAcquisitionTimeout() {
+        return connectionAcquisitionTimeout;
+    }
+
+    public void setConnectionAcquisitionTimeout(int connectionAcquisitionTimeout) {
+        this.connectionAcquisitionTimeout = connectionAcquisitionTimeout;
+    }
+
     private final Config config;
     private Map<String, Object> mappedConfig;
 
@@ -114,6 +144,7 @@ public class LambdaInvokerConfig {
         setConfigData();
         setConfigMap();
     }
+
     public static LambdaInvokerConfig load() {
         return new LambdaInvokerConfig();
     }
@@ -127,6 +158,7 @@ public class LambdaInvokerConfig {
         setConfigData();
         setConfigMap();
     }
+
     public Map<String, Object> getMappedConfig() {
         return mappedConfig;
     }
@@ -159,6 +191,18 @@ public class LambdaInvokerConfig {
         object = getMappedConfig().get(METRICS_NAME);
         if(object != null ) {
             metricsName = (String)object;
+        }
+        object = mappedConfig.get(MAX_CONCURRENCY);
+        if (object != null) {
+            maxConcurrency = Config.loadIntegerValue(MAX_CONCURRENCY, object);
+        }
+        object = mappedConfig.get(MAX_PENDING_CONNECTION_ACQUIRES);
+        if (object != null) {
+            maxPendingConnectionAcquires = Config.loadIntegerValue(MAX_PENDING_CONNECTION_ACQUIRES, object);
+        }
+        object = mappedConfig.get(CONNECTION_ACQUISITION_TIMEOUT);
+        if (object != null) {
+            connectionAcquisitionTimeout = Config.loadIntegerValue(CONNECTION_ACQUISITION_TIMEOUT, object);
         }
     }
 

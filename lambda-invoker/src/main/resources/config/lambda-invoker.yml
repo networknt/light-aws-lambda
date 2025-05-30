@@ -7,6 +7,12 @@ endpointOverride: ${lambda-invoker.endpointOverride:}
 apiCallTimeout: ${lambda-invoker.apiCallTimeout:60000}
 # Api call attempt timeout in milliseconds. This sets the amount of time for each individual attempt.
 apiCallAttemptTimeout: ${lambda-invoker.apiCallAttemptTimeout:20000}
+# The maximum number of concurrent requests that can be made to Lambda. Default is 50.
+maxConcurrency: ${lambda-invoker.maxConcurrency:50}
+# The maximum number of pending acquires allowed. Default is 10000.
+maxPendingConnectionAcquires: ${lambda-invoker.maxPendingConnectionAcquires:10000}
+# The amount of time to wait when acquiring a connection from the pool before timing out in seconds. Default is 10 seconds.
+connectionAcquisitionTimeout: ${lambda-invoker.connectionAcquisitionTimeout:10}
 # The LogType of the execution log of Lambda. Set Tail to include and None to not include.
 logType: ${lambda-invoker.logType:Tail}
 # mapping of the endpoints to Lambda functions. Define a list of functions in values.yml file.

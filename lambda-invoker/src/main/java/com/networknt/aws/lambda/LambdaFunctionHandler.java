@@ -2,7 +2,6 @@ package com.networknt.aws.lambda;
 
 import com.amazonaws.services.lambda.runtime.events.APIGatewayProxyRequestEvent;
 import com.amazonaws.services.lambda.runtime.events.APIGatewayProxyResponseEvent;
-import com.networknt.body.BodyHandler;
 import com.networknt.config.Config;
 import com.networknt.config.JsonMapper;
 import com.networknt.handler.Handler;
@@ -25,11 +24,7 @@ import software.amazon.awssdk.http.async.SdkAsyncHttpClient;
 import software.amazon.awssdk.http.nio.netty.NettyNioAsyncHttpClient;
 import software.amazon.awssdk.regions.Region;
 import software.amazon.awssdk.services.lambda.LambdaAsyncClient;
-import software.amazon.awssdk.services.lambda.LambdaClient;
-import software.amazon.awssdk.services.lambda.LambdaClientBuilder;
 import software.amazon.awssdk.services.lambda.model.InvokeRequest;
-import software.amazon.awssdk.services.lambda.model.InvokeResponse;
-import software.amazon.awssdk.services.lambda.model.LambdaException;
 
 import java.net.URI;
 import java.time.Duration;
@@ -54,6 +49,9 @@ public class LambdaFunctionHandler implements LightHttpHandler {
                 .readTimeout(Duration.ofMillis(config.getApiCallAttemptTimeout()))
                 .writeTimeout(Duration.ofMillis(config.getApiCallAttemptTimeout()))
                 .connectionTimeout(Duration.ofMillis(config.getApiCallAttemptTimeout()))
+                .maxConcurrency(config.getMaxConcurrency())
+                .maxPendingConnectionAcquires(config.getMaxPendingConnectionAcquires())
+                .connectionAcquisitionTimeout(Duration.ofSeconds(config.getConnectionAcquisitionTimeout()))
                 .build();
         ClientOverrideConfiguration overrideConfig = ClientOverrideConfiguration.builder()
                 .apiCallTimeout(Duration.ofMillis(config.getApiCallTimeout()))

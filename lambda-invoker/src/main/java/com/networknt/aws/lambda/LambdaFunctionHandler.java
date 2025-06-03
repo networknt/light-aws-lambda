@@ -23,6 +23,7 @@ import software.amazon.awssdk.core.client.config.ClientOverrideConfiguration;
 import software.amazon.awssdk.http.async.SdkAsyncHttpClient;
 import software.amazon.awssdk.http.nio.netty.NettyNioAsyncHttpClient;
 import software.amazon.awssdk.regions.Region;
+import software.amazon.awssdk.retries.DefaultRetryStrategy;
 import software.amazon.awssdk.services.lambda.LambdaAsyncClient;
 import software.amazon.awssdk.services.lambda.model.InvokeRequest;
 
@@ -57,6 +58,14 @@ public class LambdaFunctionHandler implements LightHttpHandler {
                 .apiCallTimeout(Duration.ofMillis(config.getApiCallTimeout()))
                 .apiCallAttemptTimeout(Duration.ofSeconds(config.getApiCallAttemptTimeout()))
                 .build();
+
+        if(config.getMaxRetries() > 0) {
+            overrideConfig = overrideConfig.toBuilder()
+                    .retryStrategy(DefaultRetryStrategy.standardStrategyBuilder()
+                            .maxAttempts(config.getMaxRetries())
+                            .build())
+                    .build();
+        }
 
         var builder = LambdaAsyncClient.builder().region(Region.of(config.getRegion()))
                 .httpClient(asyncHttpClient)

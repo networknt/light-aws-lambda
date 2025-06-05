@@ -1,5 +1,14 @@
 # Change Log
 
+## [2.2.2](https://github.com/networknt/light-aws-lambda/tree/2.2.2) (2025-06-05)
+
+
+**Merged pull requests:**
+
+
+- fixes \#141 add maxRetries to the configuration for lambda invoker [\#142](https://github.com/networknt/light-aws-lambda/pull/142) ([stevehu](https://github.com/stevehu))
+- fixes \#139 add three connection related configuration properties [\#140](https://github.com/networknt/light-aws-lambda/pull/140) ([stevehu](https://github.com/stevehu))
+- fixes \#135 update authorizer test case to set system property for aws… [\#136](https://github.com/networknt/light-aws-lambda/pull/136) ([stevehu](https://github.com/stevehu))
 ## [2.2.1](https://github.com/networknt/light-aws-lambda/tree/2.2.1) (2025-03-22)
 
 

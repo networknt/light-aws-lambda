@@ -21,13 +21,14 @@
     <parent>
         <groupId>com.networknt</groupId>
         <artifactId>light-aws-lambda</artifactId>
-        <version>2.2.2</version>
+        <version>2.2.3-SNAPSHOT</version>
         <relativePath>../pom.xml</relativePath>
     </parent>
 
     <artifactId>schema-validator</artifactId>
     <packaging>jar</packaging>
-    <description>A utility of json-schema-valdiator that is used to validate request and response based on the OpenAPI specification.</description>
+    <name>schema-validator</name>
+    <description>A utility of json-schema-validator that is used to validate request and response based on the OpenAPI specification.</description>
 
     <dependencies>
         <dependency>

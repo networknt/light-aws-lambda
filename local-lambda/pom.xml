@@ -7,12 +7,13 @@
     <parent>
         <groupId>com.networknt</groupId>
         <artifactId>light-aws-lambda</artifactId>
-        <version>2.2.2</version>
-        <relativePath>..</relativePath>
+        <version>2.2.3-SNAPSHOT</version>
+        <relativePath>../pom.xml</relativePath>
     </parent>
 
     <artifactId>local-lambda</artifactId>
     <packaging>jar</packaging>
+    <name>local-lambda</name>
     <description>A local lambda function that is used for local testing for ccc-lambda</description>
 
     <dependencies>

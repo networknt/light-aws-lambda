@@ -22,6 +22,7 @@ public class LambdaInvokerConfig {
     private static final String FUNCTIONS = "functions";
     private static final String METRICS_INJECTION = "metricsInjection";
     private static final String METRICS_NAME = "metricsName";
+    private static final String MAX_RETRIES = "maxRetries";
     private static final String MAX_CONCURRENCY = "maxConcurrency";
     private static final String MAX_PENDING_CONNECTION_ACQUIRES = "maxPendingConnectionAcquires";
     private static final String CONNECTION_ACQUISITION_TIMEOUT = "connectionAcquisitionTimeout";
@@ -34,6 +35,7 @@ public class LambdaInvokerConfig {
     private Map<String, String> functions;
     private boolean metricsInjection;
     private String metricsName;
+    private int maxRetries;
     private int maxConcurrency;
     private int maxPendingConnectionAcquires;
     private int connectionAcquisitionTimeout;
@@ -100,6 +102,14 @@ public class LambdaInvokerConfig {
 
     public void setMetricsName(String metricsName) {
         this.metricsName = metricsName;
+    }
+
+    public int getMaxRetries() {
+        return maxRetries;
+    }
+
+    public void setMaxRetries(int maxRetries) {
+        this.maxRetries = maxRetries;
     }
 
     public int getMaxConcurrency() {
@@ -191,6 +201,10 @@ public class LambdaInvokerConfig {
         object = getMappedConfig().get(METRICS_NAME);
         if(object != null ) {
             metricsName = (String)object;
+        }
+        object = mappedConfig.get(MAX_RETRIES);
+        if (object != null) {
+            maxRetries = Config.loadIntegerValue(MAX_RETRIES, object);
         }
         object = mappedConfig.get(MAX_CONCURRENCY);
         if (object != null) {

@@ -27,7 +27,8 @@
 
     <artifactId>lambda-validator</artifactId>
     <packaging>jar</packaging>
-    <description>Validate the lambda funcation request against the OpenAPI specification</description>
+    <name>lambda-validator</name>
+    <description>Validate the lambda function request against the OpenAPI specification</description>
 
     <dependencies>
         <dependency>

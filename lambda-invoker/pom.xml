@@ -27,6 +27,7 @@
 
     <artifactId>lambda-invoker</artifactId>
     <packaging>jar</packaging>
+    <name>lambda-invoker</name>
     <description>A LightHttpHandler implementation to invoke a lambda function directly from light-proxy</description>
 
     <dependencies>

@@ -27,6 +27,7 @@
 
     <artifactId>slf4j-logback</artifactId>
     <packaging>jar</packaging>
+    <name>slf4j-logback</name>
     <description>Logging with SLF4J and Logback to AWS CloudWatch with customized appender for Lambda function</description>
 
     <dependencies>

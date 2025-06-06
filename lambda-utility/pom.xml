@@ -27,6 +27,7 @@
 
     <artifactId>lambda-utility</artifactId>
     <packaging>jar</packaging>
+    <name>lambda-utility</name>
     <description>Lambda function utility module</description>
 
     <dependencies>

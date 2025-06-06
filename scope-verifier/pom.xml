@@ -27,6 +27,7 @@
 
     <artifactId>scope-verifier</artifactId>
     <packaging>jar</packaging>
+    <name>scope-verifier</name>
     <description>Verify the scopes from the request header against the OpenAPI specification</description>
 
     <dependencies>

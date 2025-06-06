@@ -27,6 +27,7 @@
 
     <artifactId>lambda-interceptor</artifactId>
     <packaging>jar</packaging>
+    <name>lambda-interceptor</name>
     <description>The interceptor to pre-process request and post-process response when light-proxy is used</description>
 
     <dependencies>

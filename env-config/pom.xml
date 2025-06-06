@@ -27,6 +27,7 @@
 
     <artifactId>env-config</artifactId>
     <packaging>jar</packaging>
+    <name>env-config</name>
     <description>Environmental Config for Lambda for seldom changed properties</description>
 
     <dependencies>

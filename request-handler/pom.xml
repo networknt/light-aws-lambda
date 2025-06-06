@@ -27,6 +27,7 @@
 
     <artifactId>request-handler</artifactId>
     <packaging>jar</packaging>
+    <name>request-handler</name>
     <description>The interceptor to pre-process request and post-process response when AWS API Gateway is used</description>
 
     <dependencies>

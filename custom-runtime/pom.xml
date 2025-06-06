@@ -27,6 +27,7 @@
 
     <artifactId>custom-runtime</artifactId>
     <packaging>jar</packaging>
+    <name>custom-runtime</name>
     <description>A custom runtime for GraalVM native image to improve code start performance</description>
 
     <dependencies>

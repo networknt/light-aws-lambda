@@ -7,8 +7,9 @@ endpointOverride: ${lambda-invoker.endpointOverride:}
 apiCallTimeout: ${lambda-invoker.apiCallTimeout:60000}
 # Api call attempt timeout in milliseconds. This sets the amount of time for each individual attempt.
 apiCallAttemptTimeout: ${lambda-invoker.apiCallAttemptTimeout:20000}
-# The maximum number of retries for the Lambda function invocation. Default is 3. Set to 0 to disable retries.
-maxRetries: ${lambda-invoker.maxRetries:3}
+# The maximum number of retries for the Lambda function invocation. Default is 2, which equals to 3 max attempts.
+# Set to 0 to disable retries so that the Lambda function is invoked only once.
+maxRetries: ${lambda-invoker.maxRetries:2}
 # The maximum number of concurrent requests that can be made to Lambda. Default is 50.
 maxConcurrency: ${lambda-invoker.maxConcurrency:50}
 # The maximum number of pending acquires allowed. Default is 10000.

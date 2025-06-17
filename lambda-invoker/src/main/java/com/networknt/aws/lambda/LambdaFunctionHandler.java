@@ -62,8 +62,12 @@ public class LambdaFunctionHandler implements LightHttpHandler {
         if(config.getMaxRetries() > 0) {
             overrideConfig = overrideConfig.toBuilder()
                     .retryStrategy(DefaultRetryStrategy.standardStrategyBuilder()
-                            .maxAttempts(config.getMaxRetries())
-                            .build())
+                    .maxAttempts(config.getMaxRetries() + 1) // +1 because the first attempt is not counted as a retry
+                    .build())
+                    .build();
+        } else {
+            overrideConfig = overrideConfig.toBuilder()
+                    .retryStrategy(DefaultRetryStrategy.doNotRetry())
                     .build();
         }
 

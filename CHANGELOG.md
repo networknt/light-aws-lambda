@@ -1,5 +1,14 @@
 # Change Log
 
+## [2.3.0](https://github.com/networknt/light-aws-lambda/tree/2.3.0) (2025-06-25)
+
+
+**Merged pull requests:**
+
+
+- fixes \#143 Correct the logic for max retries in the handler and confi… [\#144](https://github.com/networknt/light-aws-lambda/pull/144) ([stevehu](https://github.com/stevehu))
+
+
 ## [2.2.2](https://github.com/networknt/light-aws-lambda/tree/2.2.2) (2025-06-05)
 
 

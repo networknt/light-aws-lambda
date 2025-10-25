@@ -3,13 +3,26 @@ package com.networknt.aws.lambda;
 import com.fasterxml.jackson.core.type.TypeReference;
 import com.networknt.config.Config;
 import com.networknt.config.ConfigException;
-import com.networknt.config.JsonMapper;
+import com.networknt.config.schema.ConfigSchema;
+import com.networknt.config.schema.OutputFormat;
+import com.networknt.config.schema.StringField;
+import com.networknt.config.schema.IntegerField;
+import com.networknt.config.schema.BooleanField;
+import com.networknt.config.schema.MapField;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
+import java.util.Collections;
 import java.util.HashMap;
 import java.util.Map;
 
+// <<< REQUIRED ANNOTATION FOR SCHEMA GENERATION >>>
+@ConfigSchema(
+        configKey = "lambda-invoker",
+        configName = "lambda-invoker",
+        configDescription = "Configuration for AWS Lambda function invocation client.",
+        outputFormats = {OutputFormat.JSON_SCHEMA, OutputFormat.YAML}
+)
 public class LambdaInvokerConfig {
     private static final Logger logger = LoggerFactory.getLogger(LambdaInvokerConfig.class);
 
@@ -27,18 +40,158 @@ public class LambdaInvokerConfig {
     private static final String MAX_PENDING_CONNECTION_ACQUIRES = "maxPendingConnectionAcquires";
     private static final String CONNECTION_ACQUISITION_TIMEOUT = "connectionAcquisitionTimeout";
 
+    // --- Annotated Fields ---
+    private final Config config;
+    private Map<String, Object> mappedConfig;
+
+    @StringField(
+            configFieldName = REGION,
+            externalizedKeyName = REGION,
+            description = "The aws region that is used to create the LambdaClient.",
+            externalized = true,
+            defaultValue = "us-east-1"
+    )
     private String region;
+
+    @StringField(
+            configFieldName = ENDPOINT_OVERRIDE,
+            externalizedKeyName = ENDPOINT_OVERRIDE,
+            description = "endpoint override if for lambda function deployed in virtual private cloud. Here is an example.\n" +
+                    "https://vpce-0012C939329d982-tk8ps.lambda.ca-central-1.vpce.amazonaws.com\n",
+            externalized = true
+    )
     private String endpointOverride;
+
+    @IntegerField(
+            configFieldName = API_CALL_TIMEOUT,
+            externalizedKeyName = API_CALL_TIMEOUT,
+            description = "Api call timeout in milliseconds. This sets the amount of time for the entire execution, including all retry attempts.",
+            externalized = true,
+            defaultValue = "60000"
+    )
     private int apiCallTimeout;
+
+    @IntegerField(
+            configFieldName = API_CALL_ATTEMPT_TIMEOUT,
+            externalizedKeyName = API_CALL_ATTEMPT_TIMEOUT,
+            description = "Api call attempt timeout in milliseconds. This sets the amount of time for each individual attempt.",
+            externalized = true,
+            defaultValue = "20000"
+    )
     private int apiCallAttemptTimeout;
-    private String logType;
-    private Map<String, String> functions;
-    private boolean metricsInjection;
-    private String metricsName;
+
+    @IntegerField(
+            configFieldName = MAX_RETRIES,
+            externalizedKeyName = MAX_RETRIES,
+            description = "The maximum number of retries for the Lambda function invocation. Default is 2, which equals to 3 max attempts.\n" +
+                    "Set to 0 to disable retries so that the Lambda function is invoked only once.\n",
+            externalized = true,
+            defaultValue = "2"
+    )
     private int maxRetries;
+
+    @IntegerField(
+            configFieldName = MAX_CONCURRENCY,
+            externalizedKeyName = MAX_CONCURRENCY,
+            description = "The maximum number of concurrent requests that can be made to Lambda. Default is 50.",
+            externalized = true,
+            defaultValue = "50"
+    )
     private int maxConcurrency;
+
+    @IntegerField(
+            configFieldName = MAX_PENDING_CONNECTION_ACQUIRES,
+            externalizedKeyName = MAX_PENDING_CONNECTION_ACQUIRES,
+            description = "The maximum number of pending acquires allowed. Default is 10000.",
+            externalized = true,
+            defaultValue = "10000"
+    )
     private int maxPendingConnectionAcquires;
+
+    @IntegerField(
+            configFieldName = CONNECTION_ACQUISITION_TIMEOUT,
+            externalizedKeyName = CONNECTION_ACQUISITION_TIMEOUT,
+            description = "The amount of time to wait when acquiring a connection from the pool before timing out in seconds. Default is 10 seconds.",
+            externalized = true,
+            defaultValue = "10"
+    )
     private int connectionAcquisitionTimeout;
+
+    @StringField(
+            configFieldName = LOG_TYPE,
+            externalizedKeyName = LOG_TYPE,
+            description = "The LogType of the execution log of Lambda. Set Tail to include and None to not include.",
+            externalized = true,
+            defaultValue = "Tail"
+    )
+    private String logType;
+
+    @MapField(
+            configFieldName = FUNCTIONS,
+            externalizedKeyName = FUNCTIONS,
+            description = "Mapping of the endpoints to Lambda functions (Map of String to String).",
+            valueType = String.class,
+            externalized = true
+    )
+    private Map<String, String> functions; // Keep as Map<String, String>
+
+    @BooleanField(
+            configFieldName = METRICS_INJECTION,
+            externalizedKeyName = METRICS_INJECTION,
+            description = "When LambdaFunctionHandler is used in the light-gateway, it can collect the metrics info for the total\n" +
+                    "response time of the downstream Lambda functions. With this value injected, users can quickly determine\n" +
+                    "how much time the light-gateway handlers spend and how much time the downstream Lambda function spends,\n" +
+                    "including the network latency. By default, it is false, and metrics will not be collected and injected\n" +
+                    "into the metrics handler configured in the request/response chain.\n",
+            externalized = true,
+            defaultValue = "false"
+    )
+    private boolean metricsInjection;
+
+    @StringField(
+            configFieldName = METRICS_NAME,
+            externalizedKeyName = METRICS_NAME,
+            description = "When the metrics info is injected into the metrics handler, we need to pass a metric name to it so that\n" +
+                    "the metrics info can be categorized in a tree structure under the name. By default, it is lambda-response,\n" +
+                    "and users can change it.\n",
+            externalized = true,
+            defaultValue = "lambda-response"
+    )
+    private String metricsName;
+
+
+    // --- Constructor and Loading Logic ---
+
+    public LambdaInvokerConfig() {
+        this(CONFIG_NAME);
+    }
+
+    private LambdaInvokerConfig(String configName) {
+        config = Config.getInstance();
+        mappedConfig = config.getJsonMapConfigNoCache(configName);
+        setConfigData();
+        setConfigMap();
+    }
+
+    public static LambdaInvokerConfig load() {
+        return new LambdaInvokerConfig();
+    }
+
+    public static LambdaInvokerConfig load(String configName) {
+        return new LambdaInvokerConfig(configName);
+    }
+
+    void reload() {
+        mappedConfig = config.getJsonMapConfigNoCache(CONFIG_NAME);
+        setConfigData();
+        setConfigMap();
+    }
+
+    public Map<String, Object> getMappedConfig() {
+        return mappedConfig;
+    }
+
+    // --- Getters and Setters (Original Methods) ---
 
     public String getRegion() {
         return region;
@@ -136,98 +289,56 @@ public class LambdaInvokerConfig {
         this.connectionAcquisitionTimeout = connectionAcquisitionTimeout;
     }
 
-    private final Config config;
-    private Map<String, Object> mappedConfig;
-
-    public LambdaInvokerConfig() {
-        this(CONFIG_NAME);
-    }
-
-    /**
-     * Please note that this constructor is only for testing to load different config files
-     * to test different configurations.
-     * @param configName String
-     */
-    private LambdaInvokerConfig(String configName) {
-        config = Config.getInstance();
-        mappedConfig = config.getJsonMapConfigNoCache(configName);
-        setConfigData();
-        setConfigMap();
-    }
-
-    public static LambdaInvokerConfig load() {
-        return new LambdaInvokerConfig();
-    }
-
-    public static LambdaInvokerConfig load(String configName) {
-        return new LambdaInvokerConfig(configName);
-    }
-
-    void reload() {
-        mappedConfig = config.getJsonMapConfigNoCache(CONFIG_NAME);
-        setConfigData();
-        setConfigMap();
-    }
-
-    public Map<String, Object> getMappedConfig() {
-        return mappedConfig;
-    }
+    // --- Private Config Loader ---
 
     private void setConfigData() {
+        // Load simple annotated fields using standard Config loader/mapper logic
         Object object = mappedConfig.get(REGION);
-        if (object != null) {
-            region = ((String)object);
-        }
+        if (object != null) region = (String)object;
+
         object = mappedConfig.get(ENDPOINT_OVERRIDE);
-        if (object != null) {
-            endpointOverride = ((String) object);
-        }
+        if (object != null) endpointOverride = (String) object;
+
         object = mappedConfig.get(API_CALL_TIMEOUT);
-        if (object != null) {
-            apiCallTimeout = Config.loadIntegerValue(API_CALL_TIMEOUT, object);
-        }
+        if (object != null) apiCallTimeout = Config.loadIntegerValue(API_CALL_TIMEOUT, object);
+
         object = mappedConfig.get(API_CALL_ATTEMPT_TIMEOUT);
-        if (object != null) {
-            apiCallAttemptTimeout = Config.loadIntegerValue(API_CALL_ATTEMPT_TIMEOUT, object);
-        }
+        if (object != null) apiCallAttemptTimeout = Config.loadIntegerValue(API_CALL_ATTEMPT_TIMEOUT, object);
+
         object = mappedConfig.get(LOG_TYPE);
-        if (object != null) {
-            logType = ((String) object);
-        }
-        object = getMappedConfig().get(METRICS_INJECTION);
-        if(object != null) {
-            metricsInjection = Config.loadBooleanValue(METRICS_INJECTION, object);
-        }
-        object = getMappedConfig().get(METRICS_NAME);
-        if(object != null ) {
-            metricsName = (String)object;
-        }
+        if (object != null) logType = (String) object;
+
+        object = mappedConfig.get(METRICS_INJECTION);
+        if(object != null) metricsInjection = Config.loadBooleanValue(METRICS_INJECTION, object);
+
+        object = mappedConfig.get(METRICS_NAME);
+        if(object != null ) metricsName = (String)object;
+
         object = mappedConfig.get(MAX_RETRIES);
-        if (object != null) {
-            maxRetries = Config.loadIntegerValue(MAX_RETRIES, object);
-        }
+        if (object != null) maxRetries = Config.loadIntegerValue(MAX_RETRIES, object);
+
         object = mappedConfig.get(MAX_CONCURRENCY);
-        if (object != null) {
-            maxConcurrency = Config.loadIntegerValue(MAX_CONCURRENCY, object);
-        }
+        if (object != null) maxConcurrency = Config.loadIntegerValue(MAX_CONCURRENCY, object);
+
         object = mappedConfig.get(MAX_PENDING_CONNECTION_ACQUIRES);
-        if (object != null) {
-            maxPendingConnectionAcquires = Config.loadIntegerValue(MAX_PENDING_CONNECTION_ACQUIRES, object);
-        }
+        if (object != null) maxPendingConnectionAcquires = Config.loadIntegerValue(MAX_PENDING_CONNECTION_ACQUIRES, object);
+
         object = mappedConfig.get(CONNECTION_ACQUISITION_TIMEOUT);
-        if (object != null) {
-            connectionAcquisitionTimeout = Config.loadIntegerValue(CONNECTION_ACQUISITION_TIMEOUT, object);
-        }
+        if (object != null) connectionAcquisitionTimeout = Config.loadIntegerValue(CONNECTION_ACQUISITION_TIMEOUT, object);
     }
+
+    // --- Custom SetConfigMap Logic (Preserves complex string/map parsing) ---
 
     private void setConfigMap() {
         if (mappedConfig.get(FUNCTIONS) != null) {
             Object object = mappedConfig.get(FUNCTIONS);
             functions = new HashMap<>();
+
             if(object instanceof String) {
                 String s = (String)object;
                 s = s.trim();
                 if(logger.isTraceEnabled()) logger.trace("functions s = " + s);
+
                 if(s.startsWith("{")) {
                     // json format
                     try {
@@ -236,19 +347,27 @@ public class LambdaInvokerConfig {
                         throw new ConfigException("could not parse the functions json with a map of string and string.");
                     }
                 } else {
-                    // comma separated
+                    // comma separated key:value pairs
                     String[] pairs = s.split(",");
                     for (int i = 0; i < pairs.length; i++) {
                         String pair = pairs[i];
                         String[] keyValue = pair.split(":");
-                        functions.put(keyValue[0], keyValue[1]);
+                        if (keyValue.length == 2) {
+                            functions.put(keyValue[0].trim(), keyValue[1].trim());
+                        } else {
+                            throw new ConfigException("functions entry must be in key:value format: " + pair);
+                        }
                     }
                 }
             } else if (object instanceof Map) {
-                functions = (Map)object;
+                // If loaded as a map (standard YAML or JSON format), assign it
+                functions = (Map<String, String>)object;
             } else {
                 throw new ConfigException("functions must be a string string map.");
             }
+        } else {
+            // Initialize to empty map if not configured
+            functions = Collections.emptyMap();
         }
     }
 }

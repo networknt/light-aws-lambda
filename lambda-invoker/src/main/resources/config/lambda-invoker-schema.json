@@ -1,0 +1,61 @@
+{
+  "$schema" : "http://json-schema.org/draft-07/schema#",
+  "type" : "object",
+  "required" : [ "region", "endpointOverride", "apiCallTimeout", "apiCallAttemptTimeout", "maxRetries", "maxConcurrency", "maxPendingConnectionAcquires", "connectionAcquisitionTimeout", "logType", "functions", "metricsInjection", "metricsName" ],
+  "properties" : {
+    "region" : {
+      "type" : "string",
+      "description" : "The aws region that is used to create the LambdaClient.",
+      "default" : "us-east-1"
+    },
+    "endpointOverride" : {
+      "type" : "string",
+      "description" : "endpoint override if for lambda function deployed in virtual private cloud. Here is an example.\nhttps://vpce-0012C939329d982-tk8ps.lambda.ca-central-1.vpce.amazonaws.com\n"
+    },
+    "apiCallTimeout" : {
+      "type" : "integer",
+      "description" : "Api call timeout in milliseconds. This sets the amount of time for the entire execution, including all retry attempts."
+    },
+    "apiCallAttemptTimeout" : {
+      "type" : "integer",
+      "description" : "Api call attempt timeout in milliseconds. This sets the amount of time for each individual attempt."
+    },
+    "maxRetries" : {
+      "type" : "integer",
+      "description" : "The maximum number of retries for the Lambda function invocation. Default is 2, which equals to 3 max attempts.\nSet to 0 to disable retries so that the Lambda function is invoked only once.\n"
+    },
+    "maxConcurrency" : {
+      "type" : "integer",
+      "description" : "The maximum number of concurrent requests that can be made to Lambda. Default is 50."
+    },
+    "maxPendingConnectionAcquires" : {
+      "type" : "integer",
+      "description" : "The maximum number of pending acquires allowed. Default is 10000."
+    },
+    "connectionAcquisitionTimeout" : {
+      "type" : "integer",
+      "description" : "The amount of time to wait when acquiring a connection from the pool before timing out in seconds. Default is 10 seconds."
+    },
+    "logType" : {
+      "type" : "string",
+      "description" : "The LogType of the execution log of Lambda. Set Tail to include and None to not include.",
+      "default" : "Tail"
+    },
+    "functions" : {
+      "type" : "object",
+      "description" : "Mapping of the endpoints to Lambda functions (Map of String to String).",
+      "additionalProperties" : {
+        "type" : "string"
+      }
+    },
+    "metricsInjection" : {
+      "type" : "boolean",
+      "description" : "When LambdaFunctionHandler is used in the light-gateway, it can collect the metrics info for the total\nresponse time of the downstream Lambda functions. With this value injected, users can quickly determine\nhow much time the light-gateway handlers spend and how much time the downstream Lambda function spends,\nincluding the network latency. By default, it is false, and metrics will not be collected and injected\ninto the metrics handler configured in the request/response chain.\n"
+    },
+    "metricsName" : {
+      "type" : "string",
+      "description" : "When the metrics info is injected into the metrics handler, we need to pass a metric name to it so that\nthe metrics info can be categorized in a tree structure under the name. By default, it is lambda-response,\nand users can change it.\n",
+      "default" : "lambda-response"
+    }
+  }
+}

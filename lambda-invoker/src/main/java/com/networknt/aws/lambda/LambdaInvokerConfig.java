@@ -48,7 +48,6 @@ public class LambdaInvokerConfig {
             configFieldName = REGION,
             externalizedKeyName = REGION,
             description = "The aws region that is used to create the LambdaClient.",
-            externalized = true,
             defaultValue = "us-east-1"
     )
     private String region;
@@ -57,8 +56,7 @@ public class LambdaInvokerConfig {
             configFieldName = ENDPOINT_OVERRIDE,
             externalizedKeyName = ENDPOINT_OVERRIDE,
             description = "endpoint override if for lambda function deployed in virtual private cloud. Here is an example.\n" +
-                    "https://vpce-0012C939329d982-tk8ps.lambda.ca-central-1.vpce.amazonaws.com\n",
-            externalized = true
+                    "https://vpce-0012C939329d982-tk8ps.lambda.ca-central-1.vpce.amazonaws.com\n"
     )
     private String endpointOverride;
 
@@ -66,7 +64,6 @@ public class LambdaInvokerConfig {
             configFieldName = API_CALL_TIMEOUT,
             externalizedKeyName = API_CALL_TIMEOUT,
             description = "Api call timeout in milliseconds. This sets the amount of time for the entire execution, including all retry attempts.",
-            externalized = true,
             defaultValue = "60000"
     )
     private int apiCallTimeout;
@@ -75,7 +72,6 @@ public class LambdaInvokerConfig {
             configFieldName = API_CALL_ATTEMPT_TIMEOUT,
             externalizedKeyName = API_CALL_ATTEMPT_TIMEOUT,
             description = "Api call attempt timeout in milliseconds. This sets the amount of time for each individual attempt.",
-            externalized = true,
             defaultValue = "20000"
     )
     private int apiCallAttemptTimeout;
@@ -85,7 +81,6 @@ public class LambdaInvokerConfig {
             externalizedKeyName = MAX_RETRIES,
             description = "The maximum number of retries for the Lambda function invocation. Default is 2, which equals to 3 max attempts.\n" +
                     "Set to 0 to disable retries so that the Lambda function is invoked only once.\n",
-            externalized = true,
             defaultValue = "2"
     )
     private int maxRetries;
@@ -94,7 +89,6 @@ public class LambdaInvokerConfig {
             configFieldName = MAX_CONCURRENCY,
             externalizedKeyName = MAX_CONCURRENCY,
             description = "The maximum number of concurrent requests that can be made to Lambda. Default is 50.",
-            externalized = true,
             defaultValue = "50"
     )
     private int maxConcurrency;
@@ -103,7 +97,6 @@ public class LambdaInvokerConfig {
             configFieldName = MAX_PENDING_CONNECTION_ACQUIRES,
             externalizedKeyName = MAX_PENDING_CONNECTION_ACQUIRES,
             description = "The maximum number of pending acquires allowed. Default is 10000.",
-            externalized = true,
             defaultValue = "10000"
     )
     private int maxPendingConnectionAcquires;
@@ -112,7 +105,6 @@ public class LambdaInvokerConfig {
             configFieldName = CONNECTION_ACQUISITION_TIMEOUT,
             externalizedKeyName = CONNECTION_ACQUISITION_TIMEOUT,
             description = "The amount of time to wait when acquiring a connection from the pool before timing out in seconds. Default is 10 seconds.",
-            externalized = true,
             defaultValue = "10"
     )
     private int connectionAcquisitionTimeout;
@@ -121,7 +113,6 @@ public class LambdaInvokerConfig {
             configFieldName = LOG_TYPE,
             externalizedKeyName = LOG_TYPE,
             description = "The LogType of the execution log of Lambda. Set Tail to include and None to not include.",
-            externalized = true,
             defaultValue = "Tail"
     )
     private String logType;
@@ -130,8 +121,7 @@ public class LambdaInvokerConfig {
             configFieldName = FUNCTIONS,
             externalizedKeyName = FUNCTIONS,
             description = "Mapping of the endpoints to Lambda functions (Map of String to String).",
-            valueType = String.class,
-            externalized = true
+            valueType = String.class
     )
     private Map<String, String> functions; // Keep as Map<String, String>
 
@@ -143,7 +133,6 @@ public class LambdaInvokerConfig {
                     "how much time the light-gateway handlers spend and how much time the downstream Lambda function spends,\n" +
                     "including the network latency. By default, it is false, and metrics will not be collected and injected\n" +
                     "into the metrics handler configured in the request/response chain.\n",
-            externalized = true,
             defaultValue = "false"
     )
     private boolean metricsInjection;
@@ -154,7 +143,6 @@ public class LambdaInvokerConfig {
             description = "When the metrics info is injected into the metrics handler, we need to pass a metric name to it so that\n" +
                     "the metrics info can be categorized in a tree structure under the name. By default, it is lambda-response,\n" +
                     "and users can change it.\n",
-            externalized = true,
             defaultValue = "lambda-response"
     )
     private String metricsName;

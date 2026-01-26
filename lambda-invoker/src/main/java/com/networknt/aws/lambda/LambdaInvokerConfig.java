@@ -16,7 +16,6 @@ import com.networknt.server.ModuleRegistry;
 import java.util.Collections;
 import java.util.HashMap;
 import java.util.Map;
-import java.util.concurrent.ConcurrentHashMap;
 
 // <<< REQUIRED ANNOTATION FOR SCHEMA GENERATION >>>
 @ConfigSchema(
@@ -43,9 +42,8 @@ public class LambdaInvokerConfig {
     private static final String CONNECTION_ACQUISITION_TIMEOUT = "connectionAcquisitionTimeout";
 
     // --- Annotated Fields ---
-    private final Config config;
-    private Map<String, Object> mappedConfig;
-    private static final Map<String, LambdaInvokerConfig> instances = new ConcurrentHashMap<>();
+    private final Map<String, Object> mappedConfig;
+    private static LambdaInvokerConfig instance;
 
     @StringField(
             configFieldName = REGION,
@@ -158,8 +156,7 @@ public class LambdaInvokerConfig {
     }
 
     private LambdaInvokerConfig(String configName) {
-        config = Config.getInstance();
-        mappedConfig = config.getJsonMapConfigNoCache(configName);
+        mappedConfig = Config.getInstance().getJsonMapConfig(configName);
         setConfigData();
         setConfigMap();
     }
@@ -169,37 +166,25 @@ public class LambdaInvokerConfig {
     }
 
     public static LambdaInvokerConfig load(String configName) {
-        LambdaInvokerConfig instance = instances.get(configName);
-        if (instance != null) {
-            return instance;
-        }
-        synchronized (LambdaInvokerConfig.class) {
-            instance = instances.get(configName);
-            if (instance != null) {
+        if (CONFIG_NAME.equals(configName)) {
+            Map<String, Object> mappedConfig = Config.getInstance().getJsonMapConfig(configName);
+            if (instance != null && instance.getMappedConfig() == mappedConfig) {
                 return instance;
             }
-            instance = new LambdaInvokerConfig(configName);
-            instances.put(configName, instance);
-            if (CONFIG_NAME.equals(configName)) {
+            synchronized (LambdaInvokerConfig.class) {
+                mappedConfig = Config.getInstance().getJsonMapConfig(configName);
+                if (instance != null && instance.getMappedConfig() == mappedConfig) {
+                    return instance;
+                }
+                instance = new LambdaInvokerConfig(configName);
                 ModuleRegistry.registerModule(CONFIG_NAME, LambdaInvokerConfig.class.getName(), Config.getNoneDecryptedInstance().getJsonMapConfigNoCache(CONFIG_NAME), null);
-            }
-            return instance;
-        }
-    }
-
-    public static void reload() {
-        reload(CONFIG_NAME);
-    }
-
-    public static void reload(String configName) {
-        synchronized (LambdaInvokerConfig.class) {
-            LambdaInvokerConfig instance = new LambdaInvokerConfig(configName);
-            instances.put(configName, instance);
-            if (CONFIG_NAME.equals(configName)) {
-                ModuleRegistry.registerModule(CONFIG_NAME, LambdaInvokerConfig.class.getName(), Config.getNoneDecryptedInstance().getJsonMapConfigNoCache(CONFIG_NAME), null);
+                return instance;
             }
         }
+        return new LambdaInvokerConfig(configName);
     }
+
+
 
     public Map<String, Object> getMappedConfig() {
         return mappedConfig;

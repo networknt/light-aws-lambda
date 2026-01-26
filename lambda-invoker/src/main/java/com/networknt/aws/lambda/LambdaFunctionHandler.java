@@ -2,7 +2,6 @@ package com.networknt.aws.lambda;
 
 import com.amazonaws.services.lambda.runtime.events.APIGatewayProxyRequestEvent;
 import com.amazonaws.services.lambda.runtime.events.APIGatewayProxyResponseEvent;
-import com.networknt.config.Config;
 import com.networknt.config.JsonMapper;
 import com.networknt.handler.Handler;
 import com.networknt.handler.LightHttpHandler;
@@ -36,17 +35,16 @@ import java.util.concurrent.ExecutionException;
 
 public class LambdaFunctionHandler implements LightHttpHandler {
     private static final Logger logger = LoggerFactory.getLogger(LambdaFunctionHandler.class);
-    private LambdaInvokerConfig config;
     private static final String MISSING_ENDPOINT_FUNCTION = "ERR10063";
     private static final String EMPTY_LAMBDA_RESPONSE = "ERR10064";
     private static AbstractMetricsHandler metricsHandler;
 
+    private LambdaInvokerConfig config;
     private LambdaAsyncClient client;
 
     public LambdaFunctionHandler() {
-        config = LambdaInvokerConfig.load();
-        this.client = initClient();
-
+        LambdaInvokerConfig config = LambdaInvokerConfig.load();
+        this.client = initClient(config);
         if(config.isMetricsInjection()) {
             // get the metrics handler from the handler chain for metrics registration. If we cannot get the
             // metrics handler, then an error message will be logged.
@@ -59,7 +57,7 @@ public class LambdaFunctionHandler implements LightHttpHandler {
         if(logger.isInfoEnabled()) logger.info("LambdaFunctionHandler is loaded.");
     }
 
-    private LambdaAsyncClient initClient() {
+    private LambdaAsyncClient initClient(LambdaInvokerConfig config) {
         SdkAsyncHttpClient asyncHttpClient = NettyNioAsyncHttpClient.builder()
                 .readTimeout(Duration.ofMillis(config.getApiCallAttemptTimeout()))
                 .writeTimeout(Duration.ofMillis(config.getApiCallAttemptTimeout()))
@@ -97,6 +95,25 @@ public class LambdaFunctionHandler implements LightHttpHandler {
 
     @Override
     public void handleRequest(HttpServerExchange exchange) throws Exception {
+        LambdaInvokerConfig newConfig = LambdaInvokerConfig.load();
+        if(newConfig != config) {
+            synchronized (this) {
+                newConfig = LambdaInvokerConfig.load();
+                if(newConfig != config) {
+                    config = newConfig;
+                    client = initClient(config);
+                    if(config.isMetricsInjection()) {
+                        // get the metrics handler from the handler chain for metrics registration. If we cannot get the
+                        // metrics handler, then an error message will be logged.
+                        Map<String, HttpHandler> handlers = Handler.getHandlers();
+                        metricsHandler = (AbstractMetricsHandler) handlers.get(MetricsConfig.CONFIG_NAME);
+                        if(metricsHandler == null) {
+                            logger.error("An instance of MetricsHandler is not configured in the handler.yml.");
+                        }
+                    }
+                }
+            }
+        }
         long startTime = System.nanoTime();
         String httpMethod = exchange.getRequestMethod().toString();
         String requestPath = exchange.getRequestPath();
@@ -105,10 +122,10 @@ public class LambdaFunctionHandler implements LightHttpHandler {
         Map<String, String> pathParameters = convertPathParameters(exchange.getPathParameters());
         String body = exchange.getAttachment(AttachmentConstants.REQUEST_BODY_STRING);
         if(logger.isTraceEnabled()) {
-            logger.trace("requestPath = " + requestPath + " httpMethod = " + httpMethod + " body = " + body);
-            logger.trace("headers = " + JsonMapper.toJson(headers));
-            logger.trace("queryParameters = " + JsonMapper.toJson(queryStringParameters));
-            logger.trace("pathParameters = " + JsonMapper.toJson(pathParameters));
+            logger.trace("requestPath = {} httpMethod = {} body = {}", requestPath, httpMethod, body);
+            logger.trace("headers = {}", JsonMapper.toJson(headers));
+            logger.trace("queryParameters = {}", JsonMapper.toJson(queryStringParameters));
+            logger.trace("pathParameters = {}", JsonMapper.toJson(pathParameters));
         }
         String endpoint = (String)exchange.getAttachment(AttachmentConstants.AUDIT_INFO).get(Constants.ENDPOINT_STRING);
         String functionName = config.getFunctions().get(endpoint);
@@ -123,7 +140,7 @@ public class LambdaFunctionHandler implements LightHttpHandler {
         requestEvent.setHeaders(headers);
         requestEvent.setPathParameters(pathParameters);
         requestEvent.setQueryStringParameters(queryStringParameters);
-        requestEvent.setBody(body == null ? null : body);
+        requestEvent.setBody(body);
         String requestBody = JsonMapper.objectMapper.writeValueAsString(requestEvent);
         if(logger.isTraceEnabled()) logger.trace("requestBody = {}", requestBody);
         String res = invokeFunction(client, functionName, requestBody);
@@ -206,22 +223,5 @@ public class LambdaFunctionHandler implements LightHttpHandler {
                 exchange.getResponseHeaders().put(new HttpString(key), headers.get(key));
             }
         }
-    }
-
-    public void reload() {
-        LambdaInvokerConfig.reload();
-        config = LambdaInvokerConfig.load();
-        this.client = initClient();
-
-        if(config.isMetricsInjection()) {
-            // get the metrics handler from the handler chain for metrics registration. If we cannot get the
-            // metrics handler, then an error message will be logged.
-            Map<String, HttpHandler> handlers = Handler.getHandlers();
-            metricsHandler = (AbstractMetricsHandler) handlers.get(MetricsConfig.CONFIG_NAME);
-            if(metricsHandler == null) {
-                logger.error("An instance of MetricsHandler is not configured in the handler.yml.");
-            }
-        }
-        if(logger.isInfoEnabled()) logger.info("LambdaFunctionHandler is reloaded.");
     }
 }

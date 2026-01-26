@@ -12,9 +12,11 @@ import com.networknt.config.schema.MapField;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
+import com.networknt.server.ModuleRegistry;
 import java.util.Collections;
 import java.util.HashMap;
 import java.util.Map;
+import java.util.concurrent.ConcurrentHashMap;
 
 // <<< REQUIRED ANNOTATION FOR SCHEMA GENERATION >>>
 @ConfigSchema(
@@ -43,6 +45,7 @@ public class LambdaInvokerConfig {
     // --- Annotated Fields ---
     private final Config config;
     private Map<String, Object> mappedConfig;
+    private static final Map<String, LambdaInvokerConfig> instances = new ConcurrentHashMap<>();
 
     @StringField(
             configFieldName = REGION,
@@ -162,17 +165,40 @@ public class LambdaInvokerConfig {
     }
 
     public static LambdaInvokerConfig load() {
-        return new LambdaInvokerConfig();
+        return load(CONFIG_NAME);
     }
 
     public static LambdaInvokerConfig load(String configName) {
-        return new LambdaInvokerConfig(configName);
+        LambdaInvokerConfig instance = instances.get(configName);
+        if (instance != null) {
+            return instance;
+        }
+        synchronized (LambdaInvokerConfig.class) {
+            instance = instances.get(configName);
+            if (instance != null) {
+                return instance;
+            }
+            instance = new LambdaInvokerConfig(configName);
+            instances.put(configName, instance);
+            if (CONFIG_NAME.equals(configName)) {
+                ModuleRegistry.registerModule(CONFIG_NAME, LambdaInvokerConfig.class.getName(), Config.getNoneDecryptedInstance().getJsonMapConfigNoCache(CONFIG_NAME), null);
+            }
+            return instance;
+        }
     }
 
-    void reload() {
-        mappedConfig = config.getJsonMapConfigNoCache(CONFIG_NAME);
-        setConfigData();
-        setConfigMap();
+    public static void reload() {
+        reload(CONFIG_NAME);
+    }
+
+    public static void reload(String configName) {
+        synchronized (LambdaInvokerConfig.class) {
+            LambdaInvokerConfig instance = new LambdaInvokerConfig(configName);
+            instances.put(configName, instance);
+            if (CONFIG_NAME.equals(configName)) {
+                ModuleRegistry.registerModule(CONFIG_NAME, LambdaInvokerConfig.class.getName(), Config.getNoneDecryptedInstance().getJsonMapConfigNoCache(CONFIG_NAME), null);
+            }
+        }
     }
 
     public Map<String, Object> getMappedConfig() {

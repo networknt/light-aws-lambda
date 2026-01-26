@@ -10,7 +10,6 @@ import com.networknt.httpstring.AttachmentConstants;
 import com.networknt.metrics.AbstractMetricsHandler;
 import com.networknt.metrics.MetricsConfig;
 import com.networknt.utility.Constants;
-import com.networknt.utility.ModuleRegistry;
 import com.networknt.utility.StringUtils;
 import io.undertow.server.HttpHandler;
 import io.undertow.server.HttpServerExchange;
@@ -37,15 +36,30 @@ import java.util.concurrent.ExecutionException;
 
 public class LambdaFunctionHandler implements LightHttpHandler {
     private static final Logger logger = LoggerFactory.getLogger(LambdaFunctionHandler.class);
-    private static LambdaInvokerConfig config;
+    private LambdaInvokerConfig config;
     private static final String MISSING_ENDPOINT_FUNCTION = "ERR10063";
     private static final String EMPTY_LAMBDA_RESPONSE = "ERR10064";
     private static AbstractMetricsHandler metricsHandler;
 
-    private static LambdaAsyncClient client;
+    private LambdaAsyncClient client;
 
     public LambdaFunctionHandler() {
         config = LambdaInvokerConfig.load();
+        this.client = initClient();
+
+        if(config.isMetricsInjection()) {
+            // get the metrics handler from the handler chain for metrics registration. If we cannot get the
+            // metrics handler, then an error message will be logged.
+            Map<String, HttpHandler> handlers = Handler.getHandlers();
+            metricsHandler = (AbstractMetricsHandler) handlers.get(MetricsConfig.CONFIG_NAME);
+            if(metricsHandler == null) {
+                logger.error("An instance of MetricsHandler is not configured in the handler.yml.");
+            }
+        }
+        if(logger.isInfoEnabled()) logger.info("LambdaFunctionHandler is loaded.");
+    }
+
+    private LambdaAsyncClient initClient() {
         SdkAsyncHttpClient asyncHttpClient = NettyNioAsyncHttpClient.builder()
                 .readTimeout(Duration.ofMillis(config.getApiCallAttemptTimeout()))
                 .writeTimeout(Duration.ofMillis(config.getApiCallAttemptTimeout()))
@@ -56,14 +70,14 @@ public class LambdaFunctionHandler implements LightHttpHandler {
                 .build();
         ClientOverrideConfiguration overrideConfig = ClientOverrideConfiguration.builder()
                 .apiCallTimeout(Duration.ofMillis(config.getApiCallTimeout()))
-                .apiCallAttemptTimeout(Duration.ofSeconds(config.getApiCallAttemptTimeout()))
+                .apiCallAttemptTimeout(Duration.ofMillis(config.getApiCallAttemptTimeout()))
                 .build();
 
         if(config.getMaxRetries() > 0) {
             overrideConfig = overrideConfig.toBuilder()
                     .retryStrategy(DefaultRetryStrategy.standardStrategyBuilder()
-                    .maxAttempts(config.getMaxRetries() + 1) // +1 because the first attempt is not counted as a retry
-                    .build())
+                            .maxAttempts(config.getMaxRetries() + 1) // +1 because the first attempt is not counted as a retry
+                            .build())
                     .build();
         } else {
             overrideConfig = overrideConfig.toBuilder()
@@ -78,19 +92,7 @@ public class LambdaFunctionHandler implements LightHttpHandler {
         if(!StringUtils.isEmpty(config.getEndpointOverride())) {
             builder.endpointOverride(URI.create(config.getEndpointOverride()));
         }
-        client = builder.build();
-
-        if(config.isMetricsInjection()) {
-            // get the metrics handler from the handler chain for metrics registration. If we cannot get the
-            // metrics handler, then an error message will be logged.
-            Map<String, HttpHandler> handlers = Handler.getHandlers();
-            metricsHandler = (AbstractMetricsHandler) handlers.get(MetricsConfig.CONFIG_NAME);
-            if(metricsHandler == null) {
-                logger.error("An instance of MetricsHandler is not configured in the handler.yml.");
-            }
-        }
-        ModuleRegistry.registerModule(LambdaInvokerConfig.CONFIG_NAME, LambdaFunctionHandler.class.getName(), Config.getNoneDecryptedInstance().getJsonMapConfigNoCache(LambdaInvokerConfig.CONFIG_NAME), null);
-        if(logger.isInfoEnabled()) logger.info("LambdaFunctionHandler is loaded.");
+        return builder.build();
     }
 
     @Override
@@ -206,26 +208,10 @@ public class LambdaFunctionHandler implements LightHttpHandler {
         }
     }
 
-    public static void reload() {
-        config.reload();
-        SdkAsyncHttpClient asyncHttpClient = NettyNioAsyncHttpClient.builder()
-                .readTimeout(Duration.ofMillis(config.getApiCallAttemptTimeout()))
-                .writeTimeout(Duration.ofMillis(config.getApiCallAttemptTimeout()))
-                .connectionTimeout(Duration.ofMillis(config.getApiCallAttemptTimeout()))
-                .build();
-        ClientOverrideConfiguration overrideConfig = ClientOverrideConfiguration.builder()
-                .apiCallTimeout(Duration.ofMillis(config.getApiCallTimeout()))
-                .apiCallAttemptTimeout(Duration.ofSeconds(config.getApiCallAttemptTimeout()))
-                .build();
-
-        var builder = LambdaAsyncClient.builder().region(Region.of(config.getRegion()))
-                .httpClient(asyncHttpClient)
-                .overrideConfiguration(overrideConfig);
-
-        if(!StringUtils.isEmpty(config.getEndpointOverride())) {
-            builder.endpointOverride(URI.create(config.getEndpointOverride()));
-        }
-        client = builder.build();
+    public void reload() {
+        LambdaInvokerConfig.reload();
+        config = LambdaInvokerConfig.load();
+        this.client = initClient();
 
         if(config.isMetricsInjection()) {
             // get the metrics handler from the handler chain for metrics registration. If we cannot get the
@@ -236,7 +222,6 @@ public class LambdaFunctionHandler implements LightHttpHandler {
                 logger.error("An instance of MetricsHandler is not configured in the handler.yml.");
             }
         }
-        ModuleRegistry.registerModule(LambdaInvokerConfig.CONFIG_NAME, LambdaFunctionHandler.class.getName(), Config.getNoneDecryptedInstance().getJsonMapConfigNoCache(LambdaInvokerConfig.CONFIG_NAME), null);
-        if(logger.isInfoEnabled()) logger.info("LambdaFunctionHandler is loaded.");
+        if(logger.isInfoEnabled()) logger.info("LambdaFunctionHandler is reloaded.");
     }
 }

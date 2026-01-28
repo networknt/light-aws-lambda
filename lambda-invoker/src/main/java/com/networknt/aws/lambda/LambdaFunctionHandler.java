@@ -101,6 +101,13 @@ public class LambdaFunctionHandler implements LightHttpHandler {
                 newConfig = LambdaInvokerConfig.load();
                 if(newConfig != config) {
                     config = newConfig;
+                    if(client != null) {
+                        try {
+                            client.close();
+                        } catch (Exception e) {
+                            logger.error("Failed to close the existing LambdaAsyncClient", e);
+                        }
+                    }
                     client = initClient(config);
                     if(config.isMetricsInjection()) {
                         // get the metrics handler from the handler chain for metrics registration. If we cannot get the

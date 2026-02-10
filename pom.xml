@@ -103,7 +103,7 @@
         <version.slf4j>2.0.17</version.slf4j>
         <version.lambda-core>1.4.0</version.lambda-core>
         <version.lambda-events>3.16.1</version.lambda-events>
-        <version.lambda-awssdk>2.41.18</version.lambda-awssdk>
+        <version.lambda-awssdk>2.41.24</version.lambda-awssdk>
         <version.jose4j>0.9.6</version.jose4j>
         <version.snakeyaml>2.4</version.snakeyaml>
         <version.commons-text>1.15.0</version.commons-text>

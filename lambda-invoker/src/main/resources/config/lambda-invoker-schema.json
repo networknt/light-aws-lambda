@@ -14,27 +14,39 @@
     },
     "apiCallTimeout" : {
       "type" : "integer",
-      "description" : "Api call timeout in milliseconds. This sets the amount of time for the entire execution, including all retry attempts."
+      "description" : "Api call timeout in milliseconds. This sets the amount of time for the entire execution, including all retry attempts.",
+      "default" : 60000,
+      "format" : "int32"
     },
     "apiCallAttemptTimeout" : {
       "type" : "integer",
-      "description" : "Api call attempt timeout in milliseconds. This sets the amount of time for each individual attempt."
+      "description" : "Api call attempt timeout in milliseconds. This sets the amount of time for each individual attempt.",
+      "default" : 20000,
+      "format" : "int32"
     },
     "maxRetries" : {
       "type" : "integer",
-      "description" : "The maximum number of retries for the Lambda function invocation. Default is 2, which equals to 3 max attempts.\nSet to 0 to disable retries so that the Lambda function is invoked only once.\n"
+      "description" : "The maximum number of retries for the Lambda function invocation. Default is 2, which equals to 3 max attempts.\nSet to 0 to disable retries so that the Lambda function is invoked only once.\n",
+      "default" : 2,
+      "format" : "int32"
     },
     "maxConcurrency" : {
       "type" : "integer",
-      "description" : "The maximum number of concurrent requests that can be made to Lambda. Default is 50."
+      "description" : "The maximum number of concurrent requests that can be made to Lambda. Default is 50.",
+      "default" : 50,
+      "format" : "int32"
     },
     "maxPendingConnectionAcquires" : {
       "type" : "integer",
-      "description" : "The maximum number of pending acquires allowed. Default is 10000."
+      "description" : "The maximum number of pending acquires allowed. Default is 10000.",
+      "default" : 10000,
+      "format" : "int32"
     },
     "connectionAcquisitionTimeout" : {
       "type" : "integer",
-      "description" : "The amount of time to wait when acquiring a connection from the pool before timing out in seconds. Default is 10 seconds."
+      "description" : "The amount of time to wait when acquiring a connection from the pool before timing out in seconds. Default is 10 seconds.",
+      "default" : 10,
+      "format" : "int32"
     },
     "logType" : {
       "type" : "string",
@@ -50,7 +62,8 @@
     },
     "metricsInjection" : {
       "type" : "boolean",
-      "description" : "When LambdaFunctionHandler is used in the light-gateway, it can collect the metrics info for the total\nresponse time of the downstream Lambda functions. With this value injected, users can quickly determine\nhow much time the light-gateway handlers spend and how much time the downstream Lambda function spends,\nincluding the network latency. By default, it is false, and metrics will not be collected and injected\ninto the metrics handler configured in the request/response chain.\n"
+      "description" : "When LambdaFunctionHandler is used in the light-gateway, it can collect the metrics info for the total\nresponse time of the downstream Lambda functions. With this value injected, users can quickly determine\nhow much time the light-gateway handlers spend and how much time the downstream Lambda function spends,\nincluding the network latency. By default, it is false, and metrics will not be collected and injected\ninto the metrics handler configured in the request/response chain.\n",
+      "default" : false
     },
     "metricsName" : {
       "type" : "string",

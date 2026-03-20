@@ -1,0 +1,2 @@
+stsEnabled: true
+roleArn: arn:aws:iam::123456789012:role/TestRole

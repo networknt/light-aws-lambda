@@ -199,6 +199,7 @@ public class LambdaInvokerConfig {
         mappedConfig = Config.getInstance().getJsonMapConfig(configName);
         setConfigData();
         setConfigMap();
+        validate();
     }
 
     public static LambdaInvokerConfig load() {
@@ -451,6 +452,12 @@ public class LambdaInvokerConfig {
         } else {
             // Initialize to empty map if not configured
             functions = Collections.emptyMap();
+        }
+    }
+
+    private void validate() {
+        if (stsEnabled && (roleArn == null || roleArn.trim().isEmpty())) {
+            throw new ConfigException(ROLE_ARN + " must be configured when " + STS_ENABLED + " is true.");
         }
     }
 }

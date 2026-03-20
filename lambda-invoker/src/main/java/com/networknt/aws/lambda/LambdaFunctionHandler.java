@@ -47,6 +47,12 @@ public class LambdaFunctionHandler implements LightHttpHandler {
     private StsAssumeRoleCredentialsProvider stsCredentialsProvider;
     private StsClient stsClient;
 
+    // Package-private constructor for testing - avoids loading config from file and metrics chain setup
+    LambdaFunctionHandler(LambdaInvokerConfig config) {
+        this.config = config;
+        this.client = initClient(config);
+    }
+
     public LambdaFunctionHandler() {
         LambdaInvokerConfig config = LambdaInvokerConfig.load();
         this.config = config;

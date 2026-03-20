@@ -128,13 +128,22 @@ public class LambdaFunctionHandler implements LightHttpHandler {
      * @return the STS Credentials object containing temporary access key, secret key, session token, and expiration
      */
     private Credentials assumeRole(LambdaInvokerConfig config) {
+        // Validate roleArn is set when STS is enabled
+        if(StringUtils.isEmpty(config.getRoleArn())) {
+            throw new IllegalArgumentException("roleArn must be configured when stsEnabled is true");
+        }
+        // Validate durationSeconds is within the allowed STS bounds (900–43200 seconds)
+        int durationSeconds = config.getDurationSeconds();
+        if(durationSeconds < 900 || durationSeconds > 43200) {
+            throw new IllegalArgumentException("durationSeconds must be between 900 and 43200 (inclusive), but was: " + durationSeconds);
+        }
         try (StsClient stsClient = StsClient.builder()
                 .region(Region.of(config.getRegion()))
                 .build()) {
             AssumeRoleRequest assumeRoleRequest = AssumeRoleRequest.builder()
                     .roleArn(config.getRoleArn())
                     .roleSessionName(config.getRoleSessionName())
-                    .durationSeconds(config.getDurationSeconds())
+                    .durationSeconds(durationSeconds)
                     .build();
             AssumeRoleResponse response = stsClient.assumeRole(assumeRoleRequest);
             if(logger.isInfoEnabled()) {

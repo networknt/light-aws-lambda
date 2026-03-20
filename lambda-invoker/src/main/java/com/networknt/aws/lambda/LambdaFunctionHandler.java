@@ -144,26 +144,26 @@ public class LambdaFunctionHandler implements LightHttpHandler {
         } catch (Exception e) {
             logger.error("Failed to assume role via STS: {}", config.getRoleArn(), e);
             throw new RuntimeException("Failed to assume role via STS", e);
-        }
-    }
-
-    /**
-     * Check if the cached STS credentials are about to expire and refresh them if needed.
-     * This method is called before each Lambda invocation when STS is enabled.
-     */
-    private void refreshCredentialsIfNeeded() {
+    private synchronized void refreshCredentialsIfNeeded() {
         if(!config.isStsEnabled() || credentialsExpiration == null) {
             return;
         }
         Instant now = Instant.now();
         Instant refreshThreshold = credentialsExpiration.minusSeconds(CREDENTIALS_REFRESH_BUFFER_SECONDS);
         if(now.isAfter(refreshThreshold)) {
-            if(logger.isInfoEnabled()) logger.info("STS credentials are about to expire at {}. Refreshing...", credentialsExpiration);
-            synchronized (this) {
-                // Double-check after acquiring lock
-                if(now.isAfter(credentialsExpiration.minusSeconds(CREDENTIALS_REFRESH_BUFFER_SECONDS))) {
-                    client = initClient(config);
+            if(logger.isInfoEnabled()) {
+                logger.info("STS credentials are about to expire at {}. Refreshing...", credentialsExpiration);
+            }
+            // Double-check after acquiring lock (method is synchronized)
+            if(now.isAfter(credentialsExpiration.minusSeconds(CREDENTIALS_REFRESH_BUFFER_SECONDS))) {
+                if(client != null) {
+                    try {
+                        client.close();
+                    } catch (Exception e) {
+                        logger.error("Failed to close the existing LambdaAsyncClient during credential refresh", e);
+                    }
                 }
+                client = initClient(config);
             }
         }
     }

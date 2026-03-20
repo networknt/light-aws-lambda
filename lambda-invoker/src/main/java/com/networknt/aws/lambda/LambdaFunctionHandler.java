@@ -16,6 +16,8 @@ import io.undertow.util.HeaderMap;
 import io.undertow.util.HttpString;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+import software.amazon.awssdk.auth.credentials.AwsSessionCredentials;
+import software.amazon.awssdk.auth.credentials.StaticCredentialsProvider;
 import software.amazon.awssdk.core.SdkBytes;
 import software.amazon.awssdk.core.client.config.ClientOverrideConfiguration;
 import software.amazon.awssdk.http.async.SdkAsyncHttpClient;
@@ -24,9 +26,14 @@ import software.amazon.awssdk.regions.Region;
 import software.amazon.awssdk.retries.DefaultRetryStrategy;
 import software.amazon.awssdk.services.lambda.LambdaAsyncClient;
 import software.amazon.awssdk.services.lambda.model.InvokeRequest;
+import software.amazon.awssdk.services.sts.StsClient;
+import software.amazon.awssdk.services.sts.model.AssumeRoleRequest;
+import software.amazon.awssdk.services.sts.model.AssumeRoleResponse;
+import software.amazon.awssdk.services.sts.model.Credentials;
 
 import java.net.URI;
 import java.time.Duration;
+import java.time.Instant;
 import java.util.Deque;
 import java.util.HashMap;
 import java.util.Map;
@@ -42,8 +49,15 @@ public class LambdaFunctionHandler implements LightHttpHandler {
     private LambdaInvokerConfig config;
     private LambdaAsyncClient client;
 
+    // STS credential cache fields
+    private Credentials stsCredentials;
+    private Instant credentialsExpiration;
+    // Refresh credentials 5 minutes before actual expiration to avoid using expired creds
+    private static final long CREDENTIALS_REFRESH_BUFFER_SECONDS = 300;
+
     public LambdaFunctionHandler() {
         LambdaInvokerConfig config = LambdaInvokerConfig.load();
+        this.config = config;
         this.client = initClient(config);
         if(config.isMetricsInjection()) {
             // get the metrics handler from the handler chain for metrics registration. If we cannot get the
@@ -90,7 +104,75 @@ public class LambdaFunctionHandler implements LightHttpHandler {
         if(!StringUtils.isEmpty(config.getEndpointOverride())) {
             builder.endpointOverride(URI.create(config.getEndpointOverride()));
         }
+
+        // If STS is enabled, obtain temporary credentials via AssumeRole
+        if(config.isStsEnabled()) {
+            if(logger.isInfoEnabled()) logger.info("STS AssumeRole is enabled. Obtaining temporary credentials for role: {}", config.getRoleArn());
+            Credentials credentials = assumeRole(config);
+            stsCredentials = credentials;
+            credentialsExpiration = credentials.expiration();
+            AwsSessionCredentials sessionCredentials = AwsSessionCredentials.create(
+                    credentials.accessKeyId(),
+                    credentials.secretAccessKey(),
+                    credentials.sessionToken()
+            );
+            builder.credentialsProvider(StaticCredentialsProvider.create(sessionCredentials));
+        }
+
         return builder.build();
+    }
+
+    /**
+     * Call STS AssumeRole to obtain temporary credentials.
+     * @param config the lambda invoker config containing roleArn, roleSessionName, and durationSeconds
+     * @return the STS Credentials object containing temporary access key, secret key, session token, and expiration
+     */
+    private Credentials assumeRole(LambdaInvokerConfig config) {
+        try (StsClient stsClient = StsClient.builder()
+                .region(Region.of(config.getRegion()))
+                .build()) {
+            AssumeRoleRequest assumeRoleRequest = AssumeRoleRequest.builder()
+                    .roleArn(config.getRoleArn())
+                    .roleSessionName(config.getRoleSessionName())
+                    .durationSeconds(config.getDurationSeconds())
+                    .build();
+            AssumeRoleResponse response = stsClient.assumeRole(assumeRoleRequest);
+            if(logger.isInfoEnabled()) {
+                logger.info("STS AssumeRole succeeded. Credentials expire at: {}", response.credentials().expiration());
+            }
+            return response.credentials();
+        } catch (Exception e) {
+            logger.error("Failed to assume role via STS: {}", config.getRoleArn(), e);
+            throw new RuntimeException("Failed to assume role via STS", e);
+        }
+    }
+
+    /**
+     * Check if the cached STS credentials are about to expire and refresh them if needed.
+     * This method is called before each Lambda invocation when STS is enabled.
+     */
+    private void refreshCredentialsIfNeeded() {
+        if(!config.isStsEnabled() || credentialsExpiration == null) {
+            return;
+        }
+        Instant now = Instant.now();
+        Instant refreshThreshold = credentialsExpiration.minusSeconds(CREDENTIALS_REFRESH_BUFFER_SECONDS);
+        if(now.isAfter(refreshThreshold)) {
+            if(logger.isInfoEnabled()) logger.info("STS credentials are about to expire at {}. Refreshing...", credentialsExpiration);
+            synchronized (this) {
+                // Double-check after acquiring lock
+                if(now.isAfter(credentialsExpiration.minusSeconds(CREDENTIALS_REFRESH_BUFFER_SECONDS))) {
+                    if(client != null) {
+                        try {
+                            client.close();
+                        } catch (Exception e) {
+                            logger.error("Failed to close the existing LambdaAsyncClient during credential refresh", e);
+                        }
+                    }
+                    client = initClient(config);
+                }
+            }
+        }
     }
 
     @Override
@@ -121,6 +203,9 @@ public class LambdaFunctionHandler implements LightHttpHandler {
                 }
             }
         }
+        // Refresh STS credentials if they are about to expire
+        refreshCredentialsIfNeeded();
+
         long startTime = System.nanoTime();
         String httpMethod = exchange.getRequestMethod().toString();
         String requestPath = exchange.getRequestPath();

@@ -24,6 +24,9 @@ import software.amazon.awssdk.regions.Region;
 import software.amazon.awssdk.retries.DefaultRetryStrategy;
 import software.amazon.awssdk.services.lambda.LambdaAsyncClient;
 import software.amazon.awssdk.services.lambda.model.InvokeRequest;
+import software.amazon.awssdk.services.sts.StsClient;
+import software.amazon.awssdk.services.sts.auth.StsAssumeRoleCredentialsProvider;
+import software.amazon.awssdk.services.sts.model.AssumeRoleRequest;
 
 import java.net.URI;
 import java.time.Duration;
@@ -41,9 +44,18 @@ public class LambdaFunctionHandler implements LightHttpHandler {
 
     private LambdaInvokerConfig config;
     private LambdaAsyncClient client;
+    private StsAssumeRoleCredentialsProvider stsCredentialsProvider;
+    private StsClient stsClient;
+
+    // Package-private constructor for testing - avoids loading config from file and metrics chain setup
+    LambdaFunctionHandler(LambdaInvokerConfig config) {
+        this.config = config;
+        this.client = initClient(config);
+    }
 
     public LambdaFunctionHandler() {
         LambdaInvokerConfig config = LambdaInvokerConfig.load();
+        this.config = config;
         this.client = initClient(config);
         if(config.isMetricsInjection()) {
             // get the metrics handler from the handler chain for metrics registration. If we cannot get the
@@ -90,6 +102,24 @@ public class LambdaFunctionHandler implements LightHttpHandler {
         if(!StringUtils.isEmpty(config.getEndpointOverride())) {
             builder.endpointOverride(URI.create(config.getEndpointOverride()));
         }
+
+        // If STS is enabled, use StsAssumeRoleCredentialsProvider for automatic credential refresh
+        if(config.isStsEnabled()) {
+            if(logger.isInfoEnabled()) logger.info("STS AssumeRole is enabled. Using StsAssumeRoleCredentialsProvider for role: {}", config.getRoleArn());
+            stsClient = StsClient.builder()
+                    .region(Region.of(config.getRegion()))
+                    .build();
+            stsCredentialsProvider = StsAssumeRoleCredentialsProvider.builder()
+                    .stsClient(stsClient)
+                    .refreshRequest(AssumeRoleRequest.builder()
+                            .roleArn(config.getRoleArn())
+                            .roleSessionName(config.getRoleSessionName())
+                            .durationSeconds(config.getDurationSeconds())
+                            .build())
+                    .build();
+            builder.credentialsProvider(stsCredentialsProvider);
+        }
+
         return builder.build();
     }
 
@@ -107,6 +137,22 @@ public class LambdaFunctionHandler implements LightHttpHandler {
                         } catch (Exception e) {
                             logger.error("Failed to close the existing LambdaAsyncClient", e);
                         }
+                    }
+                    if(stsCredentialsProvider != null) {
+                        try {
+                            stsCredentialsProvider.close();
+                        } catch (Exception e) {
+                            logger.error("Failed to close the StsAssumeRoleCredentialsProvider", e);
+                        }
+                        stsCredentialsProvider = null;
+                    }
+                    if(stsClient != null) {
+                        try {
+                            stsClient.close();
+                        } catch (Exception e) {
+                            logger.error("Failed to close the StsClient", e);
+                        }
+                        stsClient = null;
                     }
                     client = initClient(config);
                     if(config.isMetricsInjection()) {

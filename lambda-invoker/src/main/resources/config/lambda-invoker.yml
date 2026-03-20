@@ -31,3 +31,17 @@ metricsInjection: ${lambda-invoker.metricsInjection:false}
 # the metrics info can be categorized in a tree structure under the name. By default, it is lambda-response,
 # and users can change it.
 metricsName: ${lambda-invoker.metricsName:lambda-response}
+# Enable STS AssumeRole to obtain short-lived *assumed-role* credentials for Lambda invocation, rather
+# than calling Lambda directly with long-lived static IAM access keys. AssumeRole itself still requires
+# source credentials from the AWS default credential chain (for example, instance profile, environment
+# variables, or shared configuration files). This is recommended for production environments to follow
+# the principle of least privilege and reduce the exposure of long-lived credentials.
+stsEnabled: ${lambda-invoker.stsEnabled:false}
+# The ARN of the IAM role to assume when stsEnabled is true. For example,
+# arn:aws:iam::123456789012:role/LambdaInvokerRole
+roleArn: ${lambda-invoker.roleArn:}
+# The session name to use when assuming the role. This is used for auditing and tracking in CloudTrail.
+roleSessionName: ${lambda-invoker.roleSessionName:light-gateway-session}
+# The duration in seconds for the temporary credentials. Default is 3600 (1 hour). Minimum is 900 (15 min)
+# and maximum is the role's max session duration setting (up to 43200 / 12 hours).
+durationSeconds: ${lambda-invoker.durationSeconds:3600}

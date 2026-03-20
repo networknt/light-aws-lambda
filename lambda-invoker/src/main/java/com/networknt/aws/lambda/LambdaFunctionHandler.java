@@ -162,13 +162,6 @@ public class LambdaFunctionHandler implements LightHttpHandler {
             synchronized (this) {
                 // Double-check after acquiring lock
                 if(now.isAfter(credentialsExpiration.minusSeconds(CREDENTIALS_REFRESH_BUFFER_SECONDS))) {
-                    if(client != null) {
-                        try {
-                            client.close();
-                        } catch (Exception e) {
-                            logger.error("Failed to close the existing LambdaAsyncClient during credential refresh", e);
-                        }
-                    }
                     client = initClient(config);
                 }
             }

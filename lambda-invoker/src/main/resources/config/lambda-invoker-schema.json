@@ -1,7 +1,7 @@
 {
   "$schema" : "http://json-schema.org/draft-07/schema#",
   "type" : "object",
-  "required" : [ "region", "endpointOverride", "apiCallTimeout", "apiCallAttemptTimeout", "maxRetries", "maxConcurrency", "maxPendingConnectionAcquires", "connectionAcquisitionTimeout", "logType", "functions", "metricsInjection", "metricsName" ],
+  "required" : [ "region", "endpointOverride", "apiCallTimeout", "apiCallAttemptTimeout", "maxRetries", "maxConcurrency", "maxPendingConnectionAcquires", "connectionAcquisitionTimeout", "logType", "functions", "metricsInjection", "metricsName", "stsEnabled", "roleArn", "roleSessionName", "durationSeconds" ],
   "properties" : {
     "region" : {
       "type" : "string",
@@ -69,6 +69,26 @@
       "type" : "string",
       "description" : "When the metrics info is injected into the metrics handler, we need to pass a metric name to it so that\nthe metrics info can be categorized in a tree structure under the name. By default, it is lambda-response,\nand users can change it.\n",
       "default" : "lambda-response"
+    },
+    "stsEnabled" : {
+      "type" : "boolean",
+      "description" : "Enable STS AssumeRole to obtain temporary credentials for Lambda invocation instead of using the\npermanent IAM credentials. When set to true, the handler will call STS AssumeRole with the configured\nroleArn, roleSessionName, and durationSeconds to get short-lived credentials. This is the recommended\napproach for production environments to follow the principle of least privilege.\n",
+      "default" : false
+    },
+    "roleArn" : {
+      "type" : "string",
+      "description" : "The ARN of the IAM role to assume when stsEnabled is true. For example,\narn:aws:iam::123456789012:role/LambdaInvokerRole\n"
+    },
+    "roleSessionName" : {
+      "type" : "string",
+      "description" : "The session name to use when assuming the role. This is used for auditing and tracking in CloudTrail.",
+      "default" : "light-gateway-session"
+    },
+    "durationSeconds" : {
+      "type" : "integer",
+      "description" : "The duration in seconds for the temporary credentials. Default is 3600 (1 hour). Minimum is 900 (15 min)\nand maximum is the role's max session duration setting (up to 43200 / 12 hours).\n",
+      "default" : 3600,
+      "format" : "int32"
     }
   }
 }

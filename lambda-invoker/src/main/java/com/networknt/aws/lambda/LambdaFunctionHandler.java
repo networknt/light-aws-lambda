@@ -55,6 +55,12 @@ public class LambdaFunctionHandler implements LightHttpHandler {
     // Refresh credentials 5 minutes before actual expiration to avoid using expired creds
     private static final long CREDENTIALS_REFRESH_BUFFER_SECONDS = 300;
 
+    // Package-private constructor for testing - avoids loading config from file and metrics chain setup
+    LambdaFunctionHandler(LambdaInvokerConfig config) {
+        this.config = config;
+        this.client = initClient(config);
+    }
+
     public LambdaFunctionHandler() {
         LambdaInvokerConfig config = LambdaInvokerConfig.load();
         this.config = config;
@@ -107,6 +113,7 @@ public class LambdaFunctionHandler implements LightHttpHandler {
 
         // If STS is enabled, obtain temporary credentials via AssumeRole
         if(config.isStsEnabled()) {
+            validateStsConfig(config);
             if(logger.isInfoEnabled()) logger.info("STS AssumeRole is enabled. Obtaining temporary credentials for role: {}", config.getRoleArn());
             Credentials credentials = assumeRole(config);
             stsCredentials = credentials;
@@ -123,11 +130,29 @@ public class LambdaFunctionHandler implements LightHttpHandler {
     }
 
     /**
+     * Validates the STS configuration when stsEnabled is true. Throws {@link IllegalArgumentException}
+     * if required fields are missing or durationSeconds is outside the allowed AWS range [900, 43200].
+     * Package-private to allow direct testing.
+     *
+     * @param config the lambda invoker config to validate
+     */
+    static void validateStsConfig(LambdaInvokerConfig config) {
+        if(StringUtils.isEmpty(config.getRoleArn())) {
+            throw new IllegalArgumentException("roleArn must be configured when stsEnabled is true");
+        }
+        int duration = config.getDurationSeconds();
+        if(duration < 900 || duration > 43200) {
+            throw new IllegalArgumentException(
+                    "durationSeconds must be between 900 and 43200 when stsEnabled is true, but was: " + duration);
+        }
+    }
+
+    /**
      * Call STS AssumeRole to obtain temporary credentials.
      * @param config the lambda invoker config containing roleArn, roleSessionName, and durationSeconds
      * @return the STS Credentials object containing temporary access key, secret key, session token, and expiration
      */
-    private Credentials assumeRole(LambdaInvokerConfig config) {
+    protected Credentials assumeRole(LambdaInvokerConfig config) {
         try (StsClient stsClient = StsClient.builder()
                 .region(Region.of(config.getRegion()))
                 .build()) {

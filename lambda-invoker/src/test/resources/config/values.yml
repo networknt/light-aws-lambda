@@ -1,4 +1,12 @@
 # lambda-invoker.endpointOverride: https://vpce-0012C939329d982-tk8ps.lambda.ca-central-1.vpce.amazonaws.com
+lambda-invoker.region: us-east-1
+lambda-invoker.apiCallTimeout: 60000
+lambda-invoker.apiCallAttemptTimeout: 20000
+lambda-invoker.maxConcurrency: 50
+lambda-invoker.maxPendingConnectionAcquires: 10000
+lambda-invoker.connectionAcquisitionTimeout: 10
+lambda-invoker.logType: Tail
+lambda-invoker.maxRetries: 0
 lambda-invoker.functions:
   /pets@get: PetsGetFunction
   /pets@post: PetsPostFunction

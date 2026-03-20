@@ -50,7 +50,6 @@ public class LambdaFunctionHandler implements LightHttpHandler {
     private LambdaAsyncClient client;
 
     // STS credential cache fields
-    private Credentials stsCredentials;
     private Instant credentialsExpiration;
     // Refresh credentials 5 minutes before actual expiration to avoid using expired creds
     private static final long CREDENTIALS_REFRESH_BUFFER_SECONDS = 300;
@@ -109,7 +108,6 @@ public class LambdaFunctionHandler implements LightHttpHandler {
         if(config.isStsEnabled()) {
             if(logger.isInfoEnabled()) logger.info("STS AssumeRole is enabled. Obtaining temporary credentials for role: {}", config.getRoleArn());
             Credentials credentials = assumeRole(config);
-            stsCredentials = credentials;
             credentialsExpiration = credentials.expiration();
             AwsSessionCredentials sessionCredentials = AwsSessionCredentials.create(
                     credentials.accessKeyId(),

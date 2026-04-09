@@ -37,6 +37,7 @@ import java.util.HashMap;
 import java.util.Map;
 import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.ExecutionException;
+import java.util.concurrent.atomic.AtomicReference;
 
 public class LambdaFunctionHandler implements LightHttpHandler {
     private static final Logger logger = LoggerFactory.getLogger(LambdaFunctionHandler.class);
@@ -45,6 +46,7 @@ public class LambdaFunctionHandler implements LightHttpHandler {
     private static final String STS_TYPE_FUNC_USER = "StsFuncUser";
     private static final String STS_TYPE_WEB_IDENTITY = "StsWebIdentity";
     private static final String BEARER_PREFIX = "BEARER";
+    private final AtomicReference<String> tokenCache = new AtomicReference<String>();
     private static AbstractMetricsHandler metricsHandler;
 
     private LambdaInvokerConfig config;
@@ -130,7 +132,13 @@ public class LambdaFunctionHandler implements LightHttpHandler {
                     .region(Region.of(config.getRegion()))
                     .build();
             stsWebIdentityCredentialsProvider = StsAssumeRoleWithWebIdentityCredentialsProvider.builder()
-                    .stsClient(stsClient) // AssumeRoleWithWebIdentityRequest must be built with req exchange token
+                    .stsClient(stsClient)
+                    .refreshRequest(AssumeRoleWithWebIdentityRequest.builder()
+                            .roleArn(config.getRoleArn())
+                            .roleSessionName(config.getRoleSessionName())
+                            .durationSeconds(config.getDurationSeconds())
+                            // .webIdentityToken(token) // token will be set dynamically for each request in the handleRequest method, so we don't set it here in the builder
+                            .build())
                     .build();
             builder.credentialsProvider(stsWebIdentityCredentialsProvider);
         } else {
@@ -162,6 +170,14 @@ public class LambdaFunctionHandler implements LightHttpHandler {
                             logger.error("Failed to close the StsAssumeRoleCredentialsProvider", e);
                         }
                         stsCredentialsProvider = null;
+                    }
+                    if(stsWebIdentityCredentialsProvider != null) {
+                        try {
+                            stsWebIdentityCredentialsProvider.close();
+                        } catch (Exception e) {
+                            logger.error("Failed to close the StsAssumeRoleCredentialsProvider", e);
+                        }
+                        stsWebIdentityCredentialsProvider = null;
                     }
                     if(stsClient != null) {
                         try {
@@ -214,16 +230,21 @@ public class LambdaFunctionHandler implements LightHttpHandler {
             } else {
                 logger.warn("Authorization header does not start with Bearer. STS AssumeRole with Web Identity may fail");
             }
-            final String token = authorization;
-            if(StringUtils.isEmpty(token)) logger.warn("Empty Authorization token from request. STS AssumeRole with Web Identity may fail");
-            stsWebIdentityCredentialsProvider.toBuilder().applyMutation(builder -> {
-                builder.refreshRequest(AssumeRoleWithWebIdentityRequest.builder()
-                        .roleArn(config.getRoleArn())
-                        .roleSessionName(config.getRoleSessionName())
-                        .durationSeconds(config.getDurationSeconds())
-                        .webIdentityToken(token)
-                        .build());
-            }).build();
+            if (tokenCache != null && authorization.equals(tokenCache.get())) {
+                // incoming ID token reuse
+                if(logger.isDebugEnabled()) logger.debug("Cached token. Will reuse = {}", authorization.substring(0, 10) + "...");
+            } else {
+                // Not cached, rebuild credentials provider with new token and cache it
+                if(logger.isDebugEnabled()) logger.debug("New token. Will refresh credentials provider with new token = {}", authorization.substring(0, 10) + "...");
+                final String token = authorization;
+                if(StringUtils.isEmpty(token)) logger.warn("Empty Authorization token from request. STS AssumeRole with Web Identity may fail");
+                stsWebIdentityCredentialsProvider.toBuilder().applyMutation(builder -> {
+                    builder.refreshRequest(AssumeRoleWithWebIdentityRequest.builder()
+                            .webIdentityToken(token)
+                            .build());
+                }).build();
+                tokenCache.set(token);
+            }
         }
         APIGatewayProxyRequestEvent requestEvent = new APIGatewayProxyRequestEvent();
         requestEvent.setHttpMethod(httpMethod);

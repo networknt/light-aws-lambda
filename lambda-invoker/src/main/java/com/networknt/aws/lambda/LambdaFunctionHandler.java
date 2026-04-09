@@ -26,7 +26,9 @@ import software.amazon.awssdk.services.lambda.LambdaAsyncClient;
 import software.amazon.awssdk.services.lambda.model.InvokeRequest;
 import software.amazon.awssdk.services.sts.StsClient;
 import software.amazon.awssdk.services.sts.auth.StsAssumeRoleCredentialsProvider;
+import software.amazon.awssdk.services.sts.auth.StsAssumeRoleWithWebIdentityCredentialsProvider;
 import software.amazon.awssdk.services.sts.model.AssumeRoleRequest;
+import software.amazon.awssdk.services.sts.model.AssumeRoleWithWebIdentityRequest;
 
 import java.net.URI;
 import java.time.Duration;
@@ -40,11 +42,15 @@ public class LambdaFunctionHandler implements LightHttpHandler {
     private static final Logger logger = LoggerFactory.getLogger(LambdaFunctionHandler.class);
     private static final String MISSING_ENDPOINT_FUNCTION = "ERR10063";
     private static final String EMPTY_LAMBDA_RESPONSE = "ERR10064";
+    private static final String STS_TYPE_FUNC_USER = "StsFuncUser";
+    private static final String STS_TYPE_WEB_IDENTITY = "StsWebIdentity";
+    private static final String BEARER_PREFIX = "BEARER";
     private static AbstractMetricsHandler metricsHandler;
 
     private LambdaInvokerConfig config;
     private LambdaAsyncClient client;
     private StsAssumeRoleCredentialsProvider stsCredentialsProvider;
+    private StsAssumeRoleWithWebIdentityCredentialsProvider stsWebIdentityCredentialsProvider;
     private StsClient stsClient;
 
     // Package-private constructor for testing - avoids loading config from file and metrics chain setup
@@ -103,9 +109,9 @@ public class LambdaFunctionHandler implements LightHttpHandler {
             builder.endpointOverride(URI.create(config.getEndpointOverride()));
         }
 
-        // If STS is enabled, use StsAssumeRoleCredentialsProvider for automatic credential refresh
-        if(config.isStsEnabled()) {
-            if(logger.isInfoEnabled()) logger.info("STS AssumeRole is enabled. Using StsAssumeRoleCredentialsProvider for role: {}", config.getRoleArn());
+        // If any STS type selected, use StsAssumeRoleCredentialsProvider for automatic credential refresh
+        if(STS_TYPE_FUNC_USER.equals(config.getStsType())) {
+            if(logger.isInfoEnabled()) logger.info("STS AssumeRole is set to " + STS_TYPE_FUNC_USER + " for role: {}", config.getRoleArn());
             stsClient = StsClient.builder()
                     .region(Region.of(config.getRegion()))
                     .build();
@@ -118,6 +124,17 @@ public class LambdaFunctionHandler implements LightHttpHandler {
                             .build())
                     .build();
             builder.credentialsProvider(stsCredentialsProvider);
+        } else if(STS_TYPE_WEB_IDENTITY.equals(config.getStsType())) {
+            if(logger.isInfoEnabled()) logger.info("STS AssumeRole is set to " + STS_TYPE_WEB_IDENTITY + " for role: {}", config.getRoleArn());
+            stsClient = StsClient.builder()
+                    .region(Region.of(config.getRegion()))
+                    .build();
+            stsWebIdentityCredentialsProvider = StsAssumeRoleWithWebIdentityCredentialsProvider.builder()
+                    .stsClient(stsClient) // AssumeRoleWithWebIdentityRequest must be built with req exchange token
+                    .build();
+            builder.credentialsProvider(stsWebIdentityCredentialsProvider);
+        } else {
+            if(logger.isInfoEnabled()) logger.info("No STS AssumeRole is set. Using default credential provider chain for LambdaAsyncClient.");
         }
 
         return builder.build();
@@ -186,6 +203,27 @@ public class LambdaFunctionHandler implements LightHttpHandler {
             setExchangeStatus(exchange, MISSING_ENDPOINT_FUNCTION, endpoint);
             if(config.isMetricsInjection() && metricsHandler != null) metricsHandler.injectMetrics(exchange, startTime, config.getMetricsName(), endpoint);
             return;
+        }
+        // set the OAuth 2.0 access token or OpenID Connect ID token that is provided by the identity provider for STS exchange
+        if(STS_TYPE_WEB_IDENTITY.equals(config.getStsType())) {
+            String authorization = headers.get("Authorization");
+            if(authorization.isEmpty()){
+                logger.warn("Missing Authorization header from request. STS AssumeRole with Web Identity may fail");
+            } else if(BEARER_PREFIX.equalsIgnoreCase(authorization.substring(0, 6))) {
+                authorization = authorization.substring(7);
+            } else {
+                logger.warn("Authorization header does not start with Bearer. STS AssumeRole with Web Identity may fail");
+            }
+            final String token = authorization;
+            if(StringUtils.isEmpty(token)) logger.warn("Empty Authorization token from request. STS AssumeRole with Web Identity may fail");
+            stsWebIdentityCredentialsProvider.toBuilder().applyMutation(builder -> {
+                builder.refreshRequest(AssumeRoleWithWebIdentityRequest.builder()
+                        .roleArn(config.getRoleArn())
+                        .roleSessionName(config.getRoleSessionName())
+                        .durationSeconds(config.getDurationSeconds())
+                        .webIdentityToken(token)
+                        .build());
+            }).build();
         }
         APIGatewayProxyRequestEvent requestEvent = new APIGatewayProxyRequestEvent();
         requestEvent.setHttpMethod(httpMethod);

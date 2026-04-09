@@ -247,6 +247,11 @@
             </dependency>
             <dependency>
                 <groupId>com.networknt</groupId>
+                <artifactId>metrics-config</artifactId>
+                <version>${project.version}</version>
+            </dependency>
+            <dependency>
+                <groupId>com.networknt</groupId>
                 <artifactId>status</artifactId>
                 <version>${project.version}</version>
             </dependency>

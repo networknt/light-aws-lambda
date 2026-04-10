@@ -21,14 +21,21 @@ public class LambdaInvokerConfigTest {
     }
 
     @Test
-    public void testStsEnabledWithoutRoleArnThrowsConfigException() {
+    public void testStsTypeWithoutRoleArnThrowsConfigException() {
         assertThrows(ConfigException.class, () -> LambdaInvokerConfig.load("lambda-invoker-sts-no-role"),
-                "ConfigException was not thrown despite stsEnabled=true with blank roleArn");
+                "ConfigException was not thrown despite stsType defined with blank roleArn");
     }
 
     @Test
-    public void testStsEnabledWithRoleArnSucceeds() {
+    public void testStsTypeWithRoleArnSucceeds() {
         LambdaInvokerConfig stsConfig = LambdaInvokerConfig.load("lambda-invoker-sts-with-role");
+        assertNotNull(stsConfig);
+        assertEquals("arn:aws:iam::123456789012:role/TestRole", stsConfig.getRoleArn());
+    }
+
+    @Test
+    public void testStsTypeFuncWithRoleArn() {
+        LambdaInvokerConfig stsConfig = LambdaInvokerConfig.load("lambda-invoker-sts-func");
         assertNotNull(stsConfig);
         assertEquals("arn:aws:iam::123456789012:role/TestRole", stsConfig.getRoleArn());
     }

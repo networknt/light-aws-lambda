@@ -40,7 +40,7 @@ public class LambdaInvokerConfig {
     private static final String MAX_CONCURRENCY = "maxConcurrency";
     private static final String MAX_PENDING_CONNECTION_ACQUIRES = "maxPendingConnectionAcquires";
     private static final String CONNECTION_ACQUISITION_TIMEOUT = "connectionAcquisitionTimeout";
-    private static final String STS_ENABLED = "stsEnabled";
+    private static final String STS_TYPE = "stsType";
     private static final String ROLE_ARN = "roleArn";
     private static final String ROLE_SESSION_NAME = "roleSessionName";
     private static final String DURATION_SECONDS = "durationSeconds";
@@ -152,21 +152,25 @@ public class LambdaInvokerConfig {
     )
     private String metricsName;
 
-    @BooleanField(
-            configFieldName = STS_ENABLED,
-            externalizedKeyName = STS_ENABLED,
+    @StringField(
+            configFieldName = STS_TYPE,
+            externalizedKeyName = STS_TYPE,
             description = "Enable STS AssumeRole to obtain temporary credentials for Lambda invocation instead of using the\n" +
-                    "permanent IAM credentials. When set to true, the handler will call STS AssumeRole with the configured\n" +
-                    "roleArn, roleSessionName, and durationSeconds to get short-lived credentials. This is the recommended\n" +
-                    "approach for production environments to follow the principle of least privilege.\n",
-            defaultValue = "false"
+                    "permanent IAM credentials. Only 2 STS types supported: StsFuncUser and StsWebIdentity.\n" +
+                    "If STS is not to be used set this property as empty. When StsFuncUser is set the handler will\n" +
+                    "use the configured AWS IAM User to assume the given RoleARN. When StsWebIdentity is set the handler will\n" +
+                    "use the request bearer token as the WEB_IDENTITY_TOKEN to be exchanged for STS token.Regardless of the\n" +
+                    "selected type, the handler will call STS AssumeRole with the configured roleArn, roleSessionName, and\n" +
+                    "durationSeconds to get short-lived credentials. Using one of the STS types is the recommended approach\n" +
+                    "for production environments to follow the principle of least privilege.\n",
+            defaultValue = ""
     )
-    private boolean stsEnabled;
+    private String stsType;
 
     @StringField(
             configFieldName = ROLE_ARN,
             externalizedKeyName = ROLE_ARN,
-            description = "The ARN of the IAM role to assume when stsEnabled is true. For example,\n" +
+            description = "The ARN of the IAM role to assume when stsType is not empty. For example,\n" +
                     "arn:aws:iam::123456789012:role/LambdaInvokerRole\n"
     )
     private String roleArn;
@@ -329,12 +333,12 @@ public class LambdaInvokerConfig {
         this.connectionAcquisitionTimeout = connectionAcquisitionTimeout;
     }
 
-    public boolean isStsEnabled() {
-        return stsEnabled;
+    public String getStsType() {
+        return stsType;
     }
 
-    public void setStsEnabled(boolean stsEnabled) {
-        this.stsEnabled = stsEnabled;
+    public void setStsType(String stsType) {
+        this.stsType = stsType;
     }
 
     public String getRoleArn() {
@@ -398,8 +402,8 @@ public class LambdaInvokerConfig {
         object = mappedConfig.get(CONNECTION_ACQUISITION_TIMEOUT);
         if (object != null) connectionAcquisitionTimeout = Config.loadIntegerValue(CONNECTION_ACQUISITION_TIMEOUT, object);
 
-        object = mappedConfig.get(STS_ENABLED);
-        if(object != null) stsEnabled = Config.loadBooleanValue(STS_ENABLED, object);
+        object = mappedConfig.get(STS_TYPE);
+        if (object != null) stsType = (String) object;
 
         object = mappedConfig.get(ROLE_ARN);
         if(object != null) roleArn = (String) object;
@@ -456,8 +460,8 @@ public class LambdaInvokerConfig {
     }
 
     private void validate() {
-        if (stsEnabled && (roleArn == null || roleArn.trim().isEmpty())) {
-            throw new ConfigException(ROLE_ARN + " must be configured when " + STS_ENABLED + " is true.");
+        if ((stsType != null && !stsType.trim().isEmpty()) && (roleArn == null || roleArn.trim().isEmpty())) {
+            throw new ConfigException(ROLE_ARN + " must be configured when " + STS_TYPE + " is not empty.");
         }
     }
 }

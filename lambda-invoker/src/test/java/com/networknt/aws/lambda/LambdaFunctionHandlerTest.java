@@ -129,31 +129,34 @@ class LambdaFunctionHandlerTest {
     }
 
     @Test
-    void testBuildRequestScopedWebIdentityClient_buildsPerRequestClient() {
+    void testUpdateWebIdentityToken_refreshesProviderWithoutRebuildingClient() {
         TestLambdaFunctionHandler handler = new TestLambdaFunctionHandler(webIdentityConfig());
 
-        try (LambdaFunctionHandler.RequestScopedLambdaClient requestClient =
-                     handler.buildRequestScopedWebIdentityClient(webIdentityConfig(), "token-1")) {
-            assertNotNull(requestClient);
-            assertNotNull(requestClient.getClient());
-        }
+        assertTrue(handler.updateWebIdentityToken("token-1"));
+        assertEquals(1, handler.buildLambdaClientCalls);
+        assertNotNull(handler.currentWebIdentityTokenFingerprint());
+        assertNotEquals("token-1", handler.currentWebIdentityTokenFingerprint());
+    }
 
+    @Test
+    void testUpdateWebIdentityToken_reusesProviderWhenTokenUnchanged() {
+        TestLambdaFunctionHandler handler = new TestLambdaFunctionHandler(webIdentityConfig());
+        assertTrue(handler.updateWebIdentityToken("token-1"));
+        String fingerprint = handler.currentWebIdentityTokenFingerprint();
+
+        assertFalse(handler.updateWebIdentityToken("token-1"));
+        assertEquals(fingerprint, handler.currentWebIdentityTokenFingerprint());
         assertEquals(1, handler.buildLambdaClientCalls);
     }
 
     @Test
-    void testBuildRequestScopedWebIdentityClient_buildsNewClientForEachToken() {
+    void testUpdateWebIdentityToken_refreshesProviderWhenTokenChanges() {
         TestLambdaFunctionHandler handler = new TestLambdaFunctionHandler(webIdentityConfig());
+        assertTrue(handler.updateWebIdentityToken("token-1"));
+        String firstFingerprint = handler.currentWebIdentityTokenFingerprint();
 
-        try (LambdaFunctionHandler.RequestScopedLambdaClient first =
-                     handler.buildRequestScopedWebIdentityClient(webIdentityConfig(), "token-1");
-             LambdaFunctionHandler.RequestScopedLambdaClient second =
-                     handler.buildRequestScopedWebIdentityClient(webIdentityConfig(), "token-2")) {
-            assertNotNull(first.getClient());
-            assertNotNull(second.getClient());
-            assertNotSame(first.getClient(), second.getClient());
-        }
-
-        assertEquals(2, handler.buildLambdaClientCalls);
+        assertTrue(handler.updateWebIdentityToken("token-2"));
+        assertNotEquals(firstFingerprint, handler.currentWebIdentityTokenFingerprint());
+        assertEquals(1, handler.buildLambdaClientCalls);
     }
 }

@@ -48,20 +48,53 @@ public class LambdaInvokerConfigTest {
     }
 
     @Test
-    public void testTokenCacheIsolation() {
-        // Verify that a fresh AtomicReference starts with null and can be updated
-        AtomicReference<String> cache = new AtomicReference<>();
-        assertNull(cache.get());
-        cache.set("token1");
-        assertEquals("token1", cache.get());
-        // Replacing with a new token works correctly
-        cache.set("token2");
-        assertEquals("token2", cache.get());
-        // Same token comparison (simulates cached-token path)
-        String incoming = "token2";
-        assertEquals(cache.get(), incoming, "Same token should match cached value");
-        // Different token comparison (simulates refresh path)
-        String newToken = "token3";
-        assertNotEquals(cache.get(), newToken, "Different token should not match cached value");
+    public void testTokenRefreshDecisionWhenAuthorizationMissing() {
+        AtomicReference<String> cache = new AtomicReference<>("token1");
+
+        assertFalse(shouldRefreshStsWebIdentityToken(cache, null),
+                "Missing Authorization should not trigger a refresh");
+        assertEquals("token1", cache.get(), "Cached token should remain unchanged when Authorization is missing");
+    }
+
+    @Test
+    public void testTokenRefreshDecisionWhenTokenUnchanged() {
+        AtomicReference<String> cache = new AtomicReference<>("token2");
+
+        assertFalse(shouldRefreshStsWebIdentityToken(cache, "Bearer token2"),
+                "Same token should use the cached fast-path and avoid refresh");
+        assertEquals("token2", cache.get(), "Cached token should remain unchanged when the token matches");
+    }
+
+    @Test
+    public void testTokenRefreshDecisionWhenTokenChanges() {
+        AtomicReference<String> cache = new AtomicReference<>("token2");
+
+        assertTrue(shouldRefreshStsWebIdentityToken(cache, "Bearer token3"),
+                "Different token should trigger a refresh");
+        assertEquals("token3", cache.get(), "Cached token should be updated after a token change");
+    }
+
+    private static boolean shouldRefreshStsWebIdentityToken(AtomicReference<String> cache, String authorization) {
+        String incomingToken = extractAuthorizationToken(authorization);
+        if (incomingToken == null || incomingToken.isBlank()) {
+            return false;
+        }
+
+        String cachedToken = cache.get();
+        if (incomingToken.equals(cachedToken)) {
+            return false;
+        }
+
+        cache.set(incomingToken);
+        return true;
+    }
+
+    private static String extractAuthorizationToken(String authorization) {
+        if (authorization == null) {
+            return null;
+        }
+
+        String prefix = "Bearer ";
+        return authorization.startsWith(prefix) ? authorization.substring(prefix.length()) : authorization;
     }
 }

@@ -48,14 +48,46 @@ public class LambdaFunctionHandler implements LightHttpHandler {
     private static final String STS_TYPE_FUNC_USER = "StsFuncUser";
     private static final String STS_TYPE_WEB_IDENTITY = "StsWebIdentity";
     private static final String BEARER_PREFIX = "BEARER";
+    private static final String INVALID_WEB_IDENTITY_TOKEN_MESSAGE = "Missing or invalid Bearer token for STS web identity";
     private final AtomicReference<String> tokenCache = new AtomicReference<String>();
     private static AbstractMetricsHandler metricsHandler;
 
     private LambdaInvokerConfig config;
     private LambdaAsyncClient client;
     private StsAssumeRoleCredentialsProvider stsCredentialsProvider;
-    private StsAssumeRoleWithWebIdentityCredentialsProvider stsWebIdentityCredentialsProvider;
     private StsClient stsClient;
+
+    static final class RequestScopedLambdaClient implements AutoCloseable {
+        private final LambdaAsyncClient client;
+        private final StsAssumeRoleWithWebIdentityCredentialsProvider credentialsProvider;
+
+        RequestScopedLambdaClient(LambdaAsyncClient client, StsAssumeRoleWithWebIdentityCredentialsProvider credentialsProvider) {
+            this.client = client;
+            this.credentialsProvider = credentialsProvider;
+        }
+
+        LambdaAsyncClient getClient() {
+            return client;
+        }
+
+        @Override
+        public void close() {
+            if(client != null) {
+                try {
+                    client.close();
+                } catch (Exception e) {
+                    logger.error("Failed to close the request-scoped LambdaAsyncClient", e);
+                }
+            }
+            if(credentialsProvider != null) {
+                try {
+                    credentialsProvider.close();
+                } catch (Exception e) {
+                    logger.error("Failed to close the request-scoped StsAssumeRoleWithWebIdentityCredentialsProvider", e);
+                }
+            }
+        }
+    }
 
     // Package-private constructor for testing - avoids loading config from file and metrics chain setup
     LambdaFunctionHandler(LambdaInvokerConfig config) {
@@ -101,23 +133,15 @@ public class LambdaFunctionHandler implements LightHttpHandler {
             stsClient = StsClient.builder()
                     .region(Region.of(config.getRegion()))
                     .build();
-            stsWebIdentityCredentialsProvider = StsAssumeRoleWithWebIdentityCredentialsProvider.builder()
-                    .stsClient(stsClient)
-                    .refreshRequest(AssumeRoleWithWebIdentityRequest.builder()
-                            .roleArn(config.getRoleArn())
-                            .roleSessionName(config.getRoleSessionName())
-                            .durationSeconds(config.getDurationSeconds())
-                            // .webIdentityToken(token) // token will be set dynamically for each request in the handleRequest method, so we don't set it here in the builder
-                            .build())
-                    .build();
-            credentialsProvider = stsWebIdentityCredentialsProvider;
+            // Request-scoped clients are created in handleRequest after validating the incoming bearer token.
+            return null;
         } else {
             if(logger.isInfoEnabled()) logger.info("No STS AssumeRole is set. Using default credential provider chain for LambdaAsyncClient.");
         }
         return buildLambdaClient(config, credentialsProvider);
     }
 
-    private LambdaAsyncClient buildLambdaClient(LambdaInvokerConfig config, AwsCredentialsProvider credentialsProvider) {
+    LambdaAsyncClient buildLambdaClient(LambdaInvokerConfig config, AwsCredentialsProvider credentialsProvider) {
         SdkAsyncHttpClient asyncHttpClient = NettyNioAsyncHttpClient.builder()
                 .readTimeout(Duration.ofMillis(config.getApiCallAttemptTimeout()))
                 .writeTimeout(Duration.ofMillis(config.getApiCallAttemptTimeout()))
@@ -158,6 +182,29 @@ public class LambdaFunctionHandler implements LightHttpHandler {
         return builder.build();
     }
 
+    RequestScopedLambdaClient buildRequestScopedWebIdentityClient(LambdaInvokerConfig config, String token) {
+        StsAssumeRoleWithWebIdentityCredentialsProvider credentialsProvider =
+                StsAssumeRoleWithWebIdentityCredentialsProvider.builder()
+                        .stsClient(stsClient)
+                        .refreshRequest(AssumeRoleWithWebIdentityRequest.builder()
+                                .roleArn(config.getRoleArn())
+                                .roleSessionName(config.getRoleSessionName())
+                                .durationSeconds(config.getDurationSeconds())
+                                .webIdentityToken(token)
+                                .build())
+                        .build();
+        try {
+            return new RequestScopedLambdaClient(buildLambdaClient(config, credentialsProvider), credentialsProvider);
+        } catch (RuntimeException e) {
+            try {
+                credentialsProvider.close();
+            } catch (Exception closeException) {
+                logger.error("Failed to close the request-scoped StsAssumeRoleWithWebIdentityCredentialsProvider after client creation failure", closeException);
+            }
+            throw e;
+        }
+    }
+
     @Override
     public void handleRequest(HttpServerExchange exchange) throws Exception {
         LambdaInvokerConfig newConfig = LambdaInvokerConfig.load();
@@ -180,14 +227,6 @@ public class LambdaFunctionHandler implements LightHttpHandler {
                             logger.error("Failed to close the StsAssumeRoleCredentialsProvider", e);
                         }
                         stsCredentialsProvider = null;
-                    }
-                    if(stsWebIdentityCredentialsProvider != null) {
-                        try {
-                            stsWebIdentityCredentialsProvider.close();
-                        } catch (Exception e) {
-                            logger.error("Failed to close the StsAssumeRoleWithWebIdentityCredentialsProvider", e);
-                        }
-                        stsWebIdentityCredentialsProvider = null;
                     }
                     if(stsClient != null) {
                         try {
@@ -230,37 +269,25 @@ public class LambdaFunctionHandler implements LightHttpHandler {
             if(config.isMetricsInjection() && metricsHandler != null) metricsHandler.injectMetrics(exchange, startTime, config.getMetricsName(), endpoint);
             return;
         }
-        // set the OAuth 2.0 access token or OpenID Connect ID token that is provided by the identity provider for STS exchange
+        LambdaAsyncClient requestClient = client;
+        RequestScopedLambdaClient requestScopedClient = null;
         if(STS_TYPE_WEB_IDENTITY.equals(config.getStsType())) {
             String rawAuthHeader = exchange.getRequestHeaders().getFirst(Headers.AUTHORIZATION);
             String token = extractBearerToken(rawAuthHeader);
-            if (token != null && !token.isEmpty()) {
-                if (token.equals(tokenCache.get())) {
-                    // incoming ID token reuse
-                    if(logger.isDebugEnabled()) logger.debug("Cached Authorization token detected. Reusing existing token for STS web identity.");
-                } else {
-                    // Not cached, rebuild credentials provider with new token and cache it
-                    if(logger.isDebugEnabled()) logger.debug("Authorization token changed. Refreshing credentials provider for STS web identity.");
-                    AssumeRoleWithWebIdentityRequest refreshRequest = AssumeRoleWithWebIdentityRequest.builder()
-                            .roleArn(config.getRoleArn())
-                            .roleSessionName(config.getRoleSessionName())
-                            .durationSeconds(config.getDurationSeconds())
-                            .webIdentityToken(token)
-                            .build();
-                    stsWebIdentityCredentialsProvider = stsWebIdentityCredentialsProvider.toBuilder()
-                            .refreshRequest(refreshRequest)
-                            .build();
-                    if(client != null) {
-                        try {
-                            client.close();
-                        } catch (Exception e) {
-                            logger.error("Failed to close the existing LambdaAsyncClient during STS web identity refresh", e);
-                        }
-                    }
-                    client = buildLambdaClient(config, stsWebIdentityCredentialsProvider);
-                    tokenCache.set(token);
-                }
+            if(token == null || token.isEmpty()) {
+                exchange.setStatusCode(401);
+                exchange.getResponseSender().send(INVALID_WEB_IDENTITY_TOKEN_MESSAGE);
+                if(config.isMetricsInjection() && metricsHandler != null) metricsHandler.injectMetrics(exchange, startTime, config.getMetricsName(), endpoint);
+                return;
             }
+            if(token.equals(tokenCache.get())) {
+                if(logger.isDebugEnabled()) logger.debug("Cached Authorization token detected. Reusing request-scoped STS web identity configuration.");
+            } else {
+                if(logger.isDebugEnabled()) logger.debug("Authorization token changed. Building request-scoped STS web identity client.");
+                tokenCache.set(token);
+            }
+            requestScopedClient = buildRequestScopedWebIdentityClient(config, token);
+            requestClient = requestScopedClient.getClient();
         }
         APIGatewayProxyRequestEvent requestEvent = new APIGatewayProxyRequestEvent();
         requestEvent.setHttpMethod(httpMethod);
@@ -271,18 +298,24 @@ public class LambdaFunctionHandler implements LightHttpHandler {
         requestEvent.setBody(body);
         String requestBody = JsonMapper.objectMapper.writeValueAsString(requestEvent);
         if(logger.isTraceEnabled()) logger.trace("requestBody = {}", requestBody);
-        String res = invokeFunction(client, functionName, requestBody);
-        if(logger.isDebugEnabled()) logger.debug("response = {}", res);
-        if(res == null) {
-            setExchangeStatus(exchange, EMPTY_LAMBDA_RESPONSE, functionName);
+        try {
+            String res = invokeFunction(requestClient, functionName, requestBody);
+            if(logger.isDebugEnabled()) logger.debug("response = {}", res);
+            if(res == null) {
+                setExchangeStatus(exchange, EMPTY_LAMBDA_RESPONSE, functionName);
+                if(config.isMetricsInjection() && metricsHandler != null) metricsHandler.injectMetrics(exchange, startTime, config.getMetricsName(), endpoint);
+                return;
+            }
+            APIGatewayProxyResponseEvent responseEvent = JsonMapper.fromJson(res, APIGatewayProxyResponseEvent.class);
+            setResponseHeaders(exchange, responseEvent.getHeaders());
+            exchange.setStatusCode(responseEvent.getStatusCode());
+            exchange.getResponseSender().send(responseEvent.getBody());
             if(config.isMetricsInjection() && metricsHandler != null) metricsHandler.injectMetrics(exchange, startTime, config.getMetricsName(), endpoint);
-            return;
+        } finally {
+            if(requestScopedClient != null) {
+                requestScopedClient.close();
+            }
         }
-        APIGatewayProxyResponseEvent responseEvent = JsonMapper.fromJson(res, APIGatewayProxyResponseEvent.class);
-        setResponseHeaders(exchange, responseEvent.getHeaders());
-        exchange.setStatusCode(responseEvent.getStatusCode());
-        exchange.getResponseSender().send(responseEvent.getBody());
-        if(config.isMetricsInjection() && metricsHandler != null) metricsHandler.injectMetrics(exchange, startTime, config.getMetricsName(), endpoint);
     }
 
     private String invokeFunction(LambdaAsyncClient client, String functionName, String requestBody)  {

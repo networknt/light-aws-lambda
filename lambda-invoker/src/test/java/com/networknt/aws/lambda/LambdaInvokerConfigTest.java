@@ -1,6 +1,5 @@
 package com.networknt.aws.lambda;
 
-import com.networknt.config.Config;
 import com.networknt.config.ConfigException;
 import com.networknt.config.JsonMapper;
 import org.junit.jupiter.api.Test;
@@ -11,11 +10,11 @@ import java.util.concurrent.atomic.AtomicReference;
 import static org.junit.jupiter.api.Assertions.*;
 
 public class LambdaInvokerConfigTest {
-    private static LambdaInvokerConfig config = (LambdaInvokerConfig) Config.getInstance().getJsonObjectConfig(LambdaInvokerConfig.CONFIG_NAME, LambdaInvokerConfig.class);
-
     @Test
     public void testFunctionMapping() {
+        LambdaInvokerConfig config = LambdaInvokerConfig.load("lambda-invoker-sts-with-role");
         Map<String, String> functions = config.getFunctions();
+        assertNotNull(functions);
         System.out.println(JsonMapper.toJson(functions));
     }
 

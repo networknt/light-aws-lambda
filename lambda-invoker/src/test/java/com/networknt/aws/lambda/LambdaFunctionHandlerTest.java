@@ -5,6 +5,10 @@ import com.networknt.config.JsonMapper;
 import org.junit.jupiter.api.*;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+import software.amazon.awssdk.auth.credentials.AwsCredentialsProvider;
+import software.amazon.awssdk.services.lambda.LambdaAsyncClient;
+
+import java.lang.reflect.Proxy;
 import java.util.HashMap;
 import java.util.Map;
 
@@ -12,6 +16,51 @@ import static org.junit.jupiter.api.Assertions.*;
 
 class LambdaFunctionHandlerTest {
     static final Logger logger = LoggerFactory.getLogger(LambdaFunctionHandlerTest.class);
+
+    private static class TestLambdaFunctionHandler extends LambdaFunctionHandler {
+        int buildLambdaClientCalls;
+
+        TestLambdaFunctionHandler(LambdaInvokerConfig config) {
+            super(config);
+        }
+
+        @Override
+        LambdaAsyncClient buildLambdaClient(LambdaInvokerConfig config, AwsCredentialsProvider credentialsProvider) {
+            buildLambdaClientCalls++;
+            return (LambdaAsyncClient) Proxy.newProxyInstance(
+                    LambdaAsyncClient.class.getClassLoader(),
+                    new Class[]{LambdaAsyncClient.class},
+                    (proxy, method, args) -> {
+                        if("close".equals(method.getName())) {
+                            return null;
+                        }
+                        if(method.getReturnType().equals(boolean.class)) {
+                            return false;
+                        }
+                        if(method.getReturnType().equals(int.class)) {
+                            return 0;
+                        }
+                        return null;
+                    }
+            );
+        }
+    }
+
+    private LambdaInvokerConfig webIdentityConfig() {
+        LambdaInvokerConfig config = new LambdaInvokerConfig();
+        config.setRegion("us-east-1");
+        config.setApiCallTimeout(60000);
+        config.setApiCallAttemptTimeout(20000);
+        config.setMaxConcurrency(10);
+        config.setMaxPendingConnectionAcquires(100);
+        config.setConnectionAcquisitionTimeout(10);
+        config.setMaxRetries(0);
+        config.setRoleArn("arn:aws:iam::123456789012:role/LambdaInvokerRole");
+        config.setRoleSessionName("test-session");
+        config.setDurationSeconds(900);
+        config.setStsType("StsWebIdentity");
+        return config;
+    }
 
     @Test
     void testAPIGatewayProxyRequestEvent() throws Exception {
@@ -77,5 +126,34 @@ class LambdaFunctionHandlerTest {
     void testExtractBearerToken_tokenIsEmptyAfterBearer_returnsNull() {
         // Empty bearer tokens are treated as invalid and return null so the STS path skips refresh.
         assertNull(LambdaFunctionHandler.extractBearerToken("Bearer "));
+    }
+
+    @Test
+    void testBuildRequestScopedWebIdentityClient_buildsPerRequestClient() {
+        TestLambdaFunctionHandler handler = new TestLambdaFunctionHandler(webIdentityConfig());
+
+        try (LambdaFunctionHandler.RequestScopedLambdaClient requestClient =
+                     handler.buildRequestScopedWebIdentityClient(webIdentityConfig(), "token-1")) {
+            assertNotNull(requestClient);
+            assertNotNull(requestClient.getClient());
+        }
+
+        assertEquals(1, handler.buildLambdaClientCalls);
+    }
+
+    @Test
+    void testBuildRequestScopedWebIdentityClient_buildsNewClientForEachToken() {
+        TestLambdaFunctionHandler handler = new TestLambdaFunctionHandler(webIdentityConfig());
+
+        try (LambdaFunctionHandler.RequestScopedLambdaClient first =
+                     handler.buildRequestScopedWebIdentityClient(webIdentityConfig(), "token-1");
+             LambdaFunctionHandler.RequestScopedLambdaClient second =
+                     handler.buildRequestScopedWebIdentityClient(webIdentityConfig(), "token-2")) {
+            assertNotNull(first.getClient());
+            assertNotNull(second.getClient());
+            assertNotSame(first.getClient(), second.getClient());
+        }
+
+        assertEquals(2, handler.buildLambdaClientCalls);
     }
 }

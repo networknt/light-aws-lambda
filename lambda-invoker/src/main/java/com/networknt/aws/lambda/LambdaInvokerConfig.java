@@ -461,6 +461,9 @@ public class LambdaInvokerConfig {
 
     private void validate() {
         String normalizedStsType = stsType == null ? null : stsType.trim();
+        // Write normalized value back so downstream equals() comparisons work correctly
+        // even when the config value has leading/trailing whitespace (e.g. "StsWebIdentity ").
+        stsType = normalizedStsType;
         if (normalizedStsType != null && !normalizedStsType.isEmpty()) {
             if (!"StsFuncUser".equals(normalizedStsType) && !"StsWebIdentity".equals(normalizedStsType)) {
                 throw new ConfigException(STS_TYPE + " must be one of [StsFuncUser, StsWebIdentity], but was: " + normalizedStsType);

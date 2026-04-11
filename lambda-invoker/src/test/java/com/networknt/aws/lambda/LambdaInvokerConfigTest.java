@@ -48,6 +48,15 @@ public class LambdaInvokerConfigTest {
     }
 
     @Test
+    public void testStsTypeWithTrailingSpaceIsNormalized() {
+        // "StsWebIdentity " (trailing space) must be trimmed so getStsType() equals "StsWebIdentity"
+        LambdaInvokerConfig stsConfig = LambdaInvokerConfig.load("lambda-invoker-sts-trailing-space");
+        assertNotNull(stsConfig);
+        assertEquals("StsWebIdentity", stsConfig.getStsType(),
+                "validate() should strip trailing whitespace and write normalized value back to stsType");
+    }
+
+    @Test
     public void testTokenRefreshDecisionWhenAuthorizationMissing() {
         AtomicReference<String> cache = new AtomicReference<>("token1");
 

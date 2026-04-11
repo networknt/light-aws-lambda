@@ -223,35 +223,29 @@ public class LambdaFunctionHandler implements LightHttpHandler {
         }
         // set the OAuth 2.0 access token or OpenID Connect ID token that is provided by the identity provider for STS exchange
         if(STS_TYPE_WEB_IDENTITY.equals(config.getStsType())) {
-            String authorization = exchange.getRequestHeaders().getFirst(Headers.AUTHORIZATION);
-            if(authorization == null || authorization.isEmpty()){
-                logger.warn("Missing Authorization header from request. STS AssumeRole with Web Identity may fail");
-            } else if(authorization.length() > BEARER_PREFIX.length() &&
-                    authorization.regionMatches(true, 0, BEARER_PREFIX, 0, BEARER_PREFIX.length())) {
-                authorization = authorization.substring(BEARER_PREFIX.length() + 1);
-            } else {
-                logger.warn("Authorization header does not start with Bearer. STS AssumeRole with Web Identity may fail");
-            }
-            if (authorization != null && !authorization.isEmpty() && authorization.equals(tokenCache.get())) {
-                // incoming ID token reuse
-                if(logger.isDebugEnabled()) logger.debug("Cached Authorization token detected. Reusing existing token for STS web identity.");
-            } else if (authorization != null && !authorization.isEmpty()) {
-                // Not cached, rebuild credentials provider with new token and cache it
-                if(logger.isDebugEnabled()) logger.debug("Authorization token changed. Refreshing credentials provider for STS web identity.");
-                final String token = authorization;
-                AssumeRoleWithWebIdentityRequest refreshRequest = AssumeRoleWithWebIdentityRequest.builder()
-                        .roleArn(config.getRoleArn())
-                        .roleSessionName(config.getRoleSessionName())
-                        .durationSeconds(config.getDurationSeconds())
-                        .webIdentityToken(token)
-                        .build();
-                stsWebIdentityCredentialsProvider = stsWebIdentityCredentialsProvider.toBuilder()
-                        .refreshRequest(refreshRequest)
-                        .build();
-                client = client.toBuilder()
-                        .credentialsProvider(stsWebIdentityCredentialsProvider)
-                        .build();
-                tokenCache.set(token);
+            String rawAuthHeader = exchange.getRequestHeaders().getFirst(Headers.AUTHORIZATION);
+            String token = extractBearerToken(rawAuthHeader);
+            if (token != null && !token.isEmpty()) {
+                if (token.equals(tokenCache.get())) {
+                    // incoming ID token reuse
+                    if(logger.isDebugEnabled()) logger.debug("Cached Authorization token detected. Reusing existing token for STS web identity.");
+                } else {
+                    // Not cached, rebuild credentials provider with new token and cache it
+                    if(logger.isDebugEnabled()) logger.debug("Authorization token changed. Refreshing credentials provider for STS web identity.");
+                    AssumeRoleWithWebIdentityRequest refreshRequest = AssumeRoleWithWebIdentityRequest.builder()
+                            .roleArn(config.getRoleArn())
+                            .roleSessionName(config.getRoleSessionName())
+                            .durationSeconds(config.getDurationSeconds())
+                            .webIdentityToken(token)
+                            .build();
+                    stsWebIdentityCredentialsProvider = stsWebIdentityCredentialsProvider.toBuilder()
+                            .refreshRequest(refreshRequest)
+                            .build();
+                    client = client.toBuilder()
+                            .credentialsProvider(stsWebIdentityCredentialsProvider)
+                            .build();
+                    tokenCache.set(token);
+                }
             }
         }
         APIGatewayProxyRequestEvent requestEvent = new APIGatewayProxyRequestEvent();
@@ -343,5 +337,23 @@ public class LambdaFunctionHandler implements LightHttpHandler {
                 exchange.getResponseHeaders().put(new HttpString(key), headers.get(key));
             }
         }
+    }
+
+    /**
+     * Extracts the bearer token from a raw Authorization header value.
+     * Returns the token string if the header starts with "Bearer " (case-insensitive),
+     * or {@code null} if the header is missing/empty or does not use the Bearer scheme.
+     */
+    static String extractBearerToken(String authorizationHeaderValue) {
+        if (authorizationHeaderValue == null || authorizationHeaderValue.isEmpty()) {
+            logger.warn("Missing Authorization header from request. STS AssumeRole with Web Identity may fail");
+            return null;
+        }
+        if (authorizationHeaderValue.length() > BEARER_PREFIX.length() &&
+                authorizationHeaderValue.regionMatches(true, 0, BEARER_PREFIX, 0, BEARER_PREFIX.length())) {
+            return authorizationHeaderValue.substring(BEARER_PREFIX.length() + 1);
+        }
+        logger.warn("Authorization header does not start with Bearer. STS AssumeRole with Web Identity may fail");
+        return null;
     }
 }

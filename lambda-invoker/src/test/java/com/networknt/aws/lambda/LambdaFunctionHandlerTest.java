@@ -8,6 +8,8 @@ import org.slf4j.LoggerFactory;
 import java.util.HashMap;
 import java.util.Map;
 
+import static org.junit.jupiter.api.Assertions.*;
+
 class LambdaFunctionHandlerTest {
     static final Logger logger = LoggerFactory.getLogger(LambdaFunctionHandlerTest.class);
 
@@ -25,5 +27,55 @@ class LambdaFunctionHandlerTest {
         requestEvent.setQueryStringParameters(queryStringParameters);
         requestEvent.setBody(null);
         System.out.println(JsonMapper.objectMapper.writeValueAsString(requestEvent));
+    }
+
+    // --- extractBearerToken tests ---
+
+    @Test
+    void testExtractBearerToken_nullHeader_returnsNull() {
+        assertNull(LambdaFunctionHandler.extractBearerToken(null));
+    }
+
+    @Test
+    void testExtractBearerToken_emptyHeader_returnsNull() {
+        assertNull(LambdaFunctionHandler.extractBearerToken(""));
+    }
+
+    @Test
+    void testExtractBearerToken_validBearerMixedCase_extractsToken() {
+        assertEquals("mytoken123", LambdaFunctionHandler.extractBearerToken("Bearer mytoken123"));
+    }
+
+    @Test
+    void testExtractBearerToken_validBearerLowercase_extractsToken() {
+        assertEquals("mytoken123", LambdaFunctionHandler.extractBearerToken("bearer mytoken123"));
+    }
+
+    @Test
+    void testExtractBearerToken_validBearerUppercase_extractsToken() {
+        assertEquals("mytoken123", LambdaFunctionHandler.extractBearerToken("BEARER mytoken123"));
+    }
+
+    @Test
+    void testExtractBearerToken_bearerWithJwtToken_extractsFullToken() {
+        String jwt = "eyJhbGciOiJSUzI1NiJ9.eyJzdWIiOiJ1c2VyIn0.signature";
+        assertEquals(jwt, LambdaFunctionHandler.extractBearerToken("Bearer " + jwt));
+    }
+
+    @Test
+    void testExtractBearerToken_nonBearerScheme_returnsNull() {
+        assertNull(LambdaFunctionHandler.extractBearerToken("Basic dXNlcjpwYXNz"));
+    }
+
+    @Test
+    void testExtractBearerToken_headerIsBearerOnly_returnsNull() {
+        // "BEARER" alone is exactly BEARER_PREFIX.length() characters, not greater, so returns null
+        assertNull(LambdaFunctionHandler.extractBearerToken("BEARER"));
+    }
+
+    @Test
+    void testExtractBearerToken_tokenIsEmptyAfterBearer_returnsEmptyString() {
+        // "Bearer " is length 7; prefix is 6, +1 = 7 so substring(7) on "Bearer " gives ""
+        assertEquals("", LambdaFunctionHandler.extractBearerToken("Bearer "));
     }
 }

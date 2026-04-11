@@ -74,8 +74,8 @@ class LambdaFunctionHandlerTest {
     }
 
     @Test
-    void testExtractBearerToken_tokenIsEmptyAfterBearer_returnsEmptyString() {
-        // "Bearer " is length 7; prefix is 6, +1 = 7 so substring(7) on "Bearer " gives ""
-        assertEquals("", LambdaFunctionHandler.extractBearerToken("Bearer "));
+    void testExtractBearerToken_tokenIsEmptyAfterBearer_returnsNull() {
+        // Empty bearer tokens are treated as invalid and return null so the STS path skips refresh.
+        assertNull(LambdaFunctionHandler.extractBearerToken("Bearer "));
     }
 }

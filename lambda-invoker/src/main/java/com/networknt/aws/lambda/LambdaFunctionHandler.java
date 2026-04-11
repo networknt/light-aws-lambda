@@ -17,6 +17,7 @@ import io.undertow.util.Headers;
 import io.undertow.util.HttpString;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+import software.amazon.awssdk.auth.credentials.AwsCredentialsProvider;
 import software.amazon.awssdk.core.SdkBytes;
 import software.amazon.awssdk.core.client.config.ClientOverrideConfiguration;
 import software.amazon.awssdk.http.async.SdkAsyncHttpClient;
@@ -79,6 +80,44 @@ public class LambdaFunctionHandler implements LightHttpHandler {
     }
 
     private LambdaAsyncClient initClient(LambdaInvokerConfig config) {
+        AwsCredentialsProvider credentialsProvider = null;
+        // If any STS type selected, use the matching credentials provider for automatic refresh.
+        if(STS_TYPE_FUNC_USER.equals(config.getStsType())) {
+            if(logger.isInfoEnabled()) logger.info("STS AssumeRole is set to " + STS_TYPE_FUNC_USER + " for role: {}", config.getRoleArn());
+            stsClient = StsClient.builder()
+                    .region(Region.of(config.getRegion()))
+                    .build();
+            stsCredentialsProvider = StsAssumeRoleCredentialsProvider.builder()
+                    .stsClient(stsClient)
+                    .refreshRequest(AssumeRoleRequest.builder()
+                            .roleArn(config.getRoleArn())
+                            .roleSessionName(config.getRoleSessionName())
+                            .durationSeconds(config.getDurationSeconds())
+                            .build())
+                    .build();
+            credentialsProvider = stsCredentialsProvider;
+        } else if(STS_TYPE_WEB_IDENTITY.equals(config.getStsType())) {
+            if(logger.isInfoEnabled()) logger.info("STS AssumeRole is set to " + STS_TYPE_WEB_IDENTITY + " for role: {}", config.getRoleArn());
+            stsClient = StsClient.builder()
+                    .region(Region.of(config.getRegion()))
+                    .build();
+            stsWebIdentityCredentialsProvider = StsAssumeRoleWithWebIdentityCredentialsProvider.builder()
+                    .stsClient(stsClient)
+                    .refreshRequest(AssumeRoleWithWebIdentityRequest.builder()
+                            .roleArn(config.getRoleArn())
+                            .roleSessionName(config.getRoleSessionName())
+                            .durationSeconds(config.getDurationSeconds())
+                            // .webIdentityToken(token) // token will be set dynamically for each request in the handleRequest method, so we don't set it here in the builder
+                            .build())
+                    .build();
+            credentialsProvider = stsWebIdentityCredentialsProvider;
+        } else {
+            if(logger.isInfoEnabled()) logger.info("No STS AssumeRole is set. Using default credential provider chain for LambdaAsyncClient.");
+        }
+        return buildLambdaClient(config, credentialsProvider);
+    }
+
+    private LambdaAsyncClient buildLambdaClient(LambdaInvokerConfig config, AwsCredentialsProvider credentialsProvider) {
         SdkAsyncHttpClient asyncHttpClient = NettyNioAsyncHttpClient.builder()
                 .readTimeout(Duration.ofMillis(config.getApiCallAttemptTimeout()))
                 .writeTimeout(Duration.ofMillis(config.getApiCallAttemptTimeout()))
@@ -112,38 +151,8 @@ public class LambdaFunctionHandler implements LightHttpHandler {
             builder.endpointOverride(URI.create(config.getEndpointOverride()));
         }
 
-        // If any STS type selected, use StsAssumeRoleCredentialsProvider for automatic credential refresh
-        if(STS_TYPE_FUNC_USER.equals(config.getStsType())) {
-            if(logger.isInfoEnabled()) logger.info("STS AssumeRole is set to " + STS_TYPE_FUNC_USER + " for role: {}", config.getRoleArn());
-            stsClient = StsClient.builder()
-                    .region(Region.of(config.getRegion()))
-                    .build();
-            stsCredentialsProvider = StsAssumeRoleCredentialsProvider.builder()
-                    .stsClient(stsClient)
-                    .refreshRequest(AssumeRoleRequest.builder()
-                            .roleArn(config.getRoleArn())
-                            .roleSessionName(config.getRoleSessionName())
-                            .durationSeconds(config.getDurationSeconds())
-                            .build())
-                    .build();
-            builder.credentialsProvider(stsCredentialsProvider);
-        } else if(STS_TYPE_WEB_IDENTITY.equals(config.getStsType())) {
-            if(logger.isInfoEnabled()) logger.info("STS AssumeRole is set to " + STS_TYPE_WEB_IDENTITY + " for role: {}", config.getRoleArn());
-            stsClient = StsClient.builder()
-                    .region(Region.of(config.getRegion()))
-                    .build();
-            stsWebIdentityCredentialsProvider = StsAssumeRoleWithWebIdentityCredentialsProvider.builder()
-                    .stsClient(stsClient)
-                    .refreshRequest(AssumeRoleWithWebIdentityRequest.builder()
-                            .roleArn(config.getRoleArn())
-                            .roleSessionName(config.getRoleSessionName())
-                            .durationSeconds(config.getDurationSeconds())
-                            // .webIdentityToken(token) // token will be set dynamically for each request in the handleRequest method, so we don't set it here in the builder
-                            .build())
-                    .build();
-            builder.credentialsProvider(stsWebIdentityCredentialsProvider);
-        } else {
-            if(logger.isInfoEnabled()) logger.info("No STS AssumeRole is set. Using default credential provider chain for LambdaAsyncClient.");
+        if(credentialsProvider != null) {
+            builder.credentialsProvider(credentialsProvider);
         }
 
         return builder.build();
@@ -241,9 +250,14 @@ public class LambdaFunctionHandler implements LightHttpHandler {
                     stsWebIdentityCredentialsProvider = stsWebIdentityCredentialsProvider.toBuilder()
                             .refreshRequest(refreshRequest)
                             .build();
-                    client = client.toBuilder()
-                            .credentialsProvider(stsWebIdentityCredentialsProvider)
-                            .build();
+                    if(client != null) {
+                        try {
+                            client.close();
+                        } catch (Exception e) {
+                            logger.error("Failed to close the existing LambdaAsyncClient during STS web identity refresh", e);
+                        }
+                    }
+                    client = buildLambdaClient(config, stsWebIdentityCredentialsProvider);
                     tokenCache.set(token);
                 }
             }

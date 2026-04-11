@@ -72,7 +72,7 @@
     },
     "stsType" : {
       "type" : "string",
-      "description" : "Enable STS AssumeRole to obtain temporary credentials for Lambda invocation instead of using the\npermanent IAM credentials. Only 2 STS types supported: StsFuncUser and StsWebIdentity.\nIf STS is not to be used set this property as empty. When StsFuncUser is set the handler will\nuse the configured AWS IAM User to assume the given RoleARN. When StsWebIdentity is set the handler will\nuse the request bearer token as the WEB_IDENTITY_TOKEN to be exchanged for STS token.Regardless of the\nselected type, the handler will call STS AssumeRole with the configured roleArn, roleSessionName, and\ndurationSeconds to get short-lived credentials. Using one of the STS types is the recommended approach\nfor production environments to follow the principle of least privilege.",
+      "description" : "Enable STS AssumeRole to obtain temporary credentials for Lambda invocation instead of using the\npermanent IAM credentials. Only 2 STS types supported: StsFuncUser and StsWebIdentity.\nIf STS is not to be used set this property as empty. When StsFuncUser is set the handler will\nuse the configured AWS IAM User to assume the given RoleARN. When StsWebIdentity is set the handler will\nuse the request bearer token as the WEB_IDENTITY_TOKEN to be exchanged for STS token. Regardless of the\nselected type, the handler will call STS AssumeRole with the configured roleArn, roleSessionName, and\ndurationSeconds to get short-lived credentials. Using one of the STS types is the recommended approach\nfor production environments to follow the principle of least privilege.",
       "default" : ""
     },
     "roleArn" : {

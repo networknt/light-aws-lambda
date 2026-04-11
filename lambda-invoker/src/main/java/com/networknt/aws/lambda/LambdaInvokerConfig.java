@@ -159,7 +159,7 @@ public class LambdaInvokerConfig {
                     "permanent IAM credentials. Only 2 STS types supported: StsFuncUser and StsWebIdentity.\n" +
                     "If STS is not to be used set this property as empty. When StsFuncUser is set the handler will\n" +
                     "use the configured AWS IAM User to assume the given RoleARN. When StsWebIdentity is set the handler will\n" +
-                    "use the request bearer token as the WEB_IDENTITY_TOKEN to be exchanged for STS token.Regardless of the\n" +
+                    "use the request bearer token as the WEB_IDENTITY_TOKEN to be exchanged for STS token. Regardless of the\n" +
                     "selected type, the handler will call STS AssumeRole with the configured roleArn, roleSessionName, and\n" +
                     "durationSeconds to get short-lived credentials. Using one of the STS types is the recommended approach\n" +
                     "for production environments to follow the principle of least privilege.\n",
@@ -460,8 +460,14 @@ public class LambdaInvokerConfig {
     }
 
     private void validate() {
-        if ((stsType != null && !stsType.trim().isEmpty()) && (roleArn == null || roleArn.trim().isEmpty())) {
-            throw new ConfigException(ROLE_ARN + " must be configured when " + STS_TYPE + " is not empty.");
+        String normalizedStsType = stsType == null ? null : stsType.trim();
+        if (normalizedStsType != null && !normalizedStsType.isEmpty()) {
+            if (!"StsFuncUser".equals(normalizedStsType) && !"StsWebIdentity".equals(normalizedStsType)) {
+                throw new ConfigException(STS_TYPE + " must be one of [StsFuncUser, StsWebIdentity], but was: " + normalizedStsType);
+            }
+            if (roleArn == null || roleArn.trim().isEmpty()) {
+                throw new ConfigException(ROLE_ARN + " must be configured when " + STS_TYPE + " is not empty.");
+            }
         }
     }
 }

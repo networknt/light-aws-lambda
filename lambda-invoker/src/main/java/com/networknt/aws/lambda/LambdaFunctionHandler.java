@@ -13,6 +13,7 @@ import com.networknt.utility.StringUtils;
 import io.undertow.server.HttpHandler;
 import io.undertow.server.HttpServerExchange;
 import io.undertow.util.HeaderMap;
+import io.undertow.util.Headers;
 import io.undertow.util.HttpString;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -175,7 +176,7 @@ public class LambdaFunctionHandler implements LightHttpHandler {
                         try {
                             stsWebIdentityCredentialsProvider.close();
                         } catch (Exception e) {
-                            logger.error("Failed to close the StsAssumeRoleCredentialsProvider", e);
+                            logger.error("Failed to close the StsAssumeRoleWithWebIdentityCredentialsProvider", e);
                         }
                         stsWebIdentityCredentialsProvider = null;
                     }
@@ -222,27 +223,34 @@ public class LambdaFunctionHandler implements LightHttpHandler {
         }
         // set the OAuth 2.0 access token or OpenID Connect ID token that is provided by the identity provider for STS exchange
         if(STS_TYPE_WEB_IDENTITY.equals(config.getStsType())) {
-            String authorization = headers.get("Authorization");
-            if(authorization.isEmpty()){
+            String authorization = exchange.getRequestHeaders().getFirst(Headers.AUTHORIZATION);
+            if(authorization == null || authorization.isEmpty()){
                 logger.warn("Missing Authorization header from request. STS AssumeRole with Web Identity may fail");
-            } else if(BEARER_PREFIX.equalsIgnoreCase(authorization.substring(0, 6))) {
-                authorization = authorization.substring(7);
+            } else if(authorization.length() > BEARER_PREFIX.length() &&
+                    authorization.regionMatches(true, 0, BEARER_PREFIX, 0, BEARER_PREFIX.length())) {
+                authorization = authorization.substring(BEARER_PREFIX.length() + 1);
             } else {
                 logger.warn("Authorization header does not start with Bearer. STS AssumeRole with Web Identity may fail");
             }
-            if (tokenCache != null && authorization.equals(tokenCache.get())) {
+            if (authorization != null && !authorization.isEmpty() && authorization.equals(tokenCache.get())) {
                 // incoming ID token reuse
-                if(logger.isDebugEnabled()) logger.debug("Cached token. Will reuse = {}", authorization.substring(0, 10) + "...");
-            } else {
+                if(logger.isDebugEnabled()) logger.debug("Cached Authorization token detected. Reusing existing token for STS web identity.");
+            } else if (authorization != null && !authorization.isEmpty()) {
                 // Not cached, rebuild credentials provider with new token and cache it
-                if(logger.isDebugEnabled()) logger.debug("New token. Will refresh credentials provider with new token = {}", authorization.substring(0, 10) + "...");
+                if(logger.isDebugEnabled()) logger.debug("Authorization token changed. Refreshing credentials provider for STS web identity.");
                 final String token = authorization;
-                if(StringUtils.isEmpty(token)) logger.warn("Empty Authorization token from request. STS AssumeRole with Web Identity may fail");
-                stsWebIdentityCredentialsProvider.toBuilder().applyMutation(builder -> {
-                    builder.refreshRequest(AssumeRoleWithWebIdentityRequest.builder()
-                            .webIdentityToken(token)
-                            .build());
-                }).build();
+                AssumeRoleWithWebIdentityRequest refreshRequest = AssumeRoleWithWebIdentityRequest.builder()
+                        .roleArn(config.getRoleArn())
+                        .roleSessionName(config.getRoleSessionName())
+                        .durationSeconds(config.getDurationSeconds())
+                        .webIdentityToken(token)
+                        .build();
+                stsWebIdentityCredentialsProvider = stsWebIdentityCredentialsProvider.toBuilder()
+                        .refreshRequest(refreshRequest)
+                        .build();
+                client = client.toBuilder()
+                        .credentialsProvider(stsWebIdentityCredentialsProvider)
+                        .build();
                 tokenCache.set(token);
             }
         }

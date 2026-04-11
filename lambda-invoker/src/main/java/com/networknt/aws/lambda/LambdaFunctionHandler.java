@@ -349,8 +349,9 @@ public class LambdaFunctionHandler implements LightHttpHandler {
             logger.warn("Missing Authorization header from request. STS AssumeRole with Web Identity may fail");
             return null;
         }
-        if (authorizationHeaderValue.length() > BEARER_PREFIX.length() &&
-                authorizationHeaderValue.regionMatches(true, 0, BEARER_PREFIX, 0, BEARER_PREFIX.length())) {
+        if (authorizationHeaderValue.length() > BEARER_PREFIX.length() + 1 &&
+                authorizationHeaderValue.regionMatches(true, 0, BEARER_PREFIX, 0, BEARER_PREFIX.length()) &&
+                authorizationHeaderValue.charAt(BEARER_PREFIX.length()) == ' ') {
             return authorizationHeaderValue.substring(BEARER_PREFIX.length() + 1);
         }
         logger.warn("Authorization header does not start with Bearer. STS AssumeRole with Web Identity may fail");

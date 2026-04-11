@@ -423,7 +423,12 @@ public class LambdaFunctionHandler implements LightHttpHandler {
         if (authorizationHeaderValue.length() > BEARER_PREFIX.length() + 1 &&
                 authorizationHeaderValue.regionMatches(true, 0, BEARER_PREFIX, 0, BEARER_PREFIX.length()) &&
                 authorizationHeaderValue.charAt(BEARER_PREFIX.length()) == ' ') {
-            return authorizationHeaderValue.substring(BEARER_PREFIX.length() + 1);
+            String token = authorizationHeaderValue.substring(BEARER_PREFIX.length() + 1).trim();
+            if (token.isEmpty()) {
+                if(logger.isDebugEnabled()) logger.debug("Authorization header contains a blank Bearer token. STS AssumeRole with Web Identity may fail");
+                return null;
+            }
+            return token;
         }
         if(logger.isDebugEnabled()) logger.debug("Authorization header does not start with Bearer. STS AssumeRole with Web Identity may fail");
         return null;

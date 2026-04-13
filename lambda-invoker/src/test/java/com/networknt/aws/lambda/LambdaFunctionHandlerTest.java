@@ -5,11 +5,62 @@ import com.networknt.config.JsonMapper;
 import org.junit.jupiter.api.*;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+import software.amazon.awssdk.auth.credentials.AwsCredentialsProvider;
+import software.amazon.awssdk.services.lambda.LambdaAsyncClient;
+
+import java.lang.reflect.Proxy;
 import java.util.HashMap;
 import java.util.Map;
 
+import static org.junit.jupiter.api.Assertions.*;
+
 class LambdaFunctionHandlerTest {
     static final Logger logger = LoggerFactory.getLogger(LambdaFunctionHandlerTest.class);
+
+    private static class TestLambdaFunctionHandler extends LambdaFunctionHandler {
+        int buildLambdaClientCalls;
+
+        TestLambdaFunctionHandler(LambdaInvokerConfig config) {
+            super(config);
+        }
+
+        @Override
+        LambdaAsyncClient buildLambdaClient(LambdaInvokerConfig config, AwsCredentialsProvider credentialsProvider) {
+            buildLambdaClientCalls++;
+            return (LambdaAsyncClient) Proxy.newProxyInstance(
+                    LambdaAsyncClient.class.getClassLoader(),
+                    new Class[]{LambdaAsyncClient.class},
+                    (proxy, method, args) -> {
+                        if("close".equals(method.getName())) {
+                            return null;
+                        }
+                        if(method.getReturnType().equals(boolean.class)) {
+                            return false;
+                        }
+                        if(method.getReturnType().equals(int.class)) {
+                            return 0;
+                        }
+                        return null;
+                    }
+            );
+        }
+    }
+
+    private LambdaInvokerConfig webIdentityConfig() {
+        LambdaInvokerConfig config = new LambdaInvokerConfig();
+        config.setRegion("us-east-1");
+        config.setApiCallTimeout(60000);
+        config.setApiCallAttemptTimeout(20000);
+        config.setMaxConcurrency(10);
+        config.setMaxPendingConnectionAcquires(100);
+        config.setConnectionAcquisitionTimeout(10);
+        config.setMaxRetries(0);
+        config.setRoleArn("arn:aws:iam::123456789012:role/LambdaInvokerRole");
+        config.setRoleSessionName("test-session");
+        config.setDurationSeconds(900);
+        config.setStsType("StsWebIdentity");
+        return config;
+    }
 
     @Test
     void testAPIGatewayProxyRequestEvent() throws Exception {
@@ -25,5 +76,87 @@ class LambdaFunctionHandlerTest {
         requestEvent.setQueryStringParameters(queryStringParameters);
         requestEvent.setBody(null);
         System.out.println(JsonMapper.objectMapper.writeValueAsString(requestEvent));
+    }
+
+    // --- extractBearerToken tests ---
+
+    @Test
+    void testExtractBearerToken_nullHeader_returnsNull() {
+        assertNull(LambdaFunctionHandler.extractBearerToken(null));
+    }
+
+    @Test
+    void testExtractBearerToken_emptyHeader_returnsNull() {
+        assertNull(LambdaFunctionHandler.extractBearerToken(""));
+    }
+
+    @Test
+    void testExtractBearerToken_validBearerMixedCase_extractsToken() {
+        assertEquals("mytoken123", LambdaFunctionHandler.extractBearerToken("Bearer mytoken123"));
+    }
+
+    @Test
+    void testExtractBearerToken_validBearerLowercase_extractsToken() {
+        assertEquals("mytoken123", LambdaFunctionHandler.extractBearerToken("bearer mytoken123"));
+    }
+
+    @Test
+    void testExtractBearerToken_validBearerUppercase_extractsToken() {
+        assertEquals("mytoken123", LambdaFunctionHandler.extractBearerToken("BEARER mytoken123"));
+    }
+
+    @Test
+    void testExtractBearerToken_bearerWithJwtToken_extractsFullToken() {
+        String jwt = "eyJhbGciOiJSUzI1NiJ9.eyJzdWIiOiJ1c2VyIn0.signature";
+        assertEquals(jwt, LambdaFunctionHandler.extractBearerToken("Bearer " + jwt));
+    }
+
+    @Test
+    void testExtractBearerToken_nonBearerScheme_returnsNull() {
+        assertNull(LambdaFunctionHandler.extractBearerToken("Basic dXNlcjpwYXNz"));
+    }
+
+    @Test
+    void testExtractBearerToken_headerIsBearerOnly_returnsNull() {
+        // "BEARER" alone is exactly BEARER_PREFIX.length() characters, not greater, so returns null
+        assertNull(LambdaFunctionHandler.extractBearerToken("BEARER"));
+    }
+
+    @Test
+    void testExtractBearerToken_tokenIsEmptyAfterBearer_returnsNull() {
+        // Empty bearer tokens are treated as invalid and return null so the STS path skips refresh.
+        assertNull(LambdaFunctionHandler.extractBearerToken("Bearer "));
+    }
+
+    @Test
+    void testUpdateWebIdentityToken_refreshesProviderWithoutRebuildingClient() {
+        TestLambdaFunctionHandler handler = new TestLambdaFunctionHandler(webIdentityConfig());
+
+        assertTrue(handler.updateWebIdentityToken("token-1"));
+        assertEquals(1, handler.buildLambdaClientCalls);
+        assertNotNull(handler.currentWebIdentityTokenFingerprint());
+        assertNotEquals("token-1", handler.currentWebIdentityTokenFingerprint());
+    }
+
+    @Test
+    void testUpdateWebIdentityToken_reusesProviderWhenTokenUnchanged() {
+        TestLambdaFunctionHandler handler = new TestLambdaFunctionHandler(webIdentityConfig());
+        assertTrue(handler.updateWebIdentityToken("token-1"));
+        String fingerprint = handler.currentWebIdentityTokenFingerprint();
+
+        assertFalse(handler.updateWebIdentityToken("token-1"));
+        assertEquals(fingerprint, handler.currentWebIdentityTokenFingerprint());
+        assertEquals(1, handler.buildLambdaClientCalls);
+    }
+
+    @Test
+    void testUpdateWebIdentityToken_refreshesProviderWhenTokenChanges() {
+        TestLambdaFunctionHandler handler = new TestLambdaFunctionHandler(webIdentityConfig());
+        assertTrue(handler.updateWebIdentityToken("token-1"));
+        String firstFingerprint = handler.currentWebIdentityTokenFingerprint();
+
+        assertTrue(handler.updateWebIdentityToken("token-2"));
+        assertNotEquals(firstFingerprint, handler.currentWebIdentityTokenFingerprint());
+        assertEquals(1, handler.buildLambdaClientCalls);
     }
 }

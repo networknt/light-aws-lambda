@@ -1,2 +1,2 @@
-stsType: StsWebIdentity
+stsType: "StsWebIdentity "
 roleArn: arn:aws:iam::123456789012:role/TestRole

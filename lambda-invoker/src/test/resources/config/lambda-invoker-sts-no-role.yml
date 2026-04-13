@@ -1,2 +1,2 @@
-stsEnabled: true
+stsType: StsWebIdentity
 roleArn:

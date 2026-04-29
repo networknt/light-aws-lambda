@@ -31,3 +31,7 @@ hs_err_pid*
 .aws-sam/
 target/
 local-lambda/volume/cache
+.gitnexus
+.claude/
+AGENTS.md
+CLAUDE.md

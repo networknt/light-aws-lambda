@@ -1,5 +1,15 @@
 # Change Log
 
+## [2.3.4](https://github.com/networknt/light-aws-lambda/tree/2.3.4) (2026-05-05)
+
+
+**Merged pull requests:**
+
+
+- Sync [\#163](https://github.com/networknt/light-aws-lambda/pull/163) ([stevehu](https://github.com/stevehu))
+- fixes \#160 Add validation for roleArn to avoid NPE [\#161](https://github.com/networknt/light-aws-lambda/pull/161) ([stevehu](https://github.com/stevehu))
+- fixes \#154 support AWS STS on the lambda invoker [\#155](https://github.com/networknt/light-aws-lambda/pull/155) ([stevehu](https://github.com/stevehu))
+- Special Character Fix [\#153](https://github.com/networknt/light-aws-lambda/pull/153) ([KalevGonvick](https://github.com/KalevGonvick))
 ## [2.3.3](https://github.com/networknt/light-aws-lambda/tree/2.3.3) (2026-02-19)
 
 

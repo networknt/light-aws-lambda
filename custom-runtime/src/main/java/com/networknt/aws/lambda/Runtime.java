@@ -40,7 +40,7 @@ public class Runtime {
                 }
                 String result = OBJECT_MAPPER.writeValueAsString(response);
                 // Post to Lambda success endpoint
-                HttpUtils.post(String.format("http://%s/2018-06-01/runtime/invocation/%s/response", endpoint, invocation.getRequestId()), result);
+                HttpUtils.post(LambdaRuntimeApiEndpoint.invocationResponse(endpoint, invocation.getRequestId()), result);
             } catch (Exception t) {
                 String response = OBJECT_MAPPER.writeValueAsString(
                         DefaultResponse.builder()
@@ -51,22 +51,17 @@ public class Runtime {
                 t.printStackTrace();
 
                 // Post to Lambda error endpoint
-                HttpUtils.post(
-                        String.format("http://%s/2018-06-01/runtime/invocation/%s/error", endpoint, invocation.getRequestId()),
-                        response
-                );
+                HttpUtils.post(LambdaRuntimeApiEndpoint.invocationError(endpoint, invocation.getRequestId()), response);
             }
         }
     }
 
     private static InvocationResponse getInvocation(String endpoint) throws IOException {
-        HttpURLConnection connection = HttpUtils.get(
-                String.format("http://%s/2018-06-01/runtime/invocation/next", endpoint)
-        );
+        HttpURLConnection connection = HttpUtils.get(LambdaRuntimeApiEndpoint.nextInvocation(endpoint));
 
         String response = NioUtils.toString(connection.getInputStream());
 
-        String requestId = connection.getHeaderField(REQUEST_ID_HEADER);
+        String requestId = LambdaRuntimeApiEndpoint.validateRequestId(connection.getHeaderField(REQUEST_ID_HEADER));
 
         APIGatewayProxyRequestEvent event = OBJECT_MAPPER.readValue(response, APIGatewayProxyRequestEvent.class);
 

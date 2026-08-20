@@ -12,8 +12,6 @@ import com.networknt.oas.model.impl.SchemaImpl;
 import com.networknt.openapi.NormalisedPath;
 import com.networknt.openapi.OpenApiOperation;
 import com.networknt.openapi.ValidatorConfig;
-import com.networknt.schema.PathType;
-import com.networknt.schema.SchemaValidatorsConfig;
 import com.networknt.status.Status;
 import com.networknt.utility.MapUtil;
 import com.networknt.utility.StringUtils;
@@ -88,11 +86,6 @@ public class RequestValidator {
             }
             return null;
         }
-        SchemaValidatorsConfig config = SchemaValidatorsConfig.builder()
-                .typeLoose(false)
-                .pathType(PathType.JSON_POINTER)
-                .nullableKeywordEnabled(validatorConfig.isHandleNullableField())
-                .build();
         // the body can be converted to JsonNode here. If not, an error is returned.
         JsonNode requestNode = null;
         requestBody = requestBody.trim();
@@ -105,7 +98,9 @@ public class RequestValidator {
         } else {
             return new Status(CONTENT_TYPE_MISMATCH, "application/json");
         }
-        return schemaValidator.validate(requestNode, Overlay.toJson((SchemaImpl)specBody.getContentMediaType("application/json").getSchema()), config);
+        return schemaValidator.validate(requestNode,
+                Overlay.toJson((SchemaImpl)specBody.getContentMediaType("application/json").getSchema()),
+                false, validatorConfig.isHandleNullableField());
     }
 
     private Status validateRequestParameters(final APIGatewayProxyRequestEvent requestEvent, final NormalisedPath requestPath, final OpenApiOperation openApiOperation) {

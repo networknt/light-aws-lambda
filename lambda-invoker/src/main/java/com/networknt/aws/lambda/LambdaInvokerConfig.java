@@ -47,7 +47,7 @@ public class LambdaInvokerConfig {
 
     // --- Annotated Fields ---
     private final Map<String, Object> mappedConfig;
-    private static LambdaInvokerConfig instance;
+    private static volatile LambdaInvokerConfig instance;
 
     @StringField(
             configFieldName = REGION,

@@ -1,5 +1,28 @@
 # Change Log
 
+## [2.4.0](https://github.com/networknt/light-aws-lambda/tree/2.4.0) (2026-10-07)
+
+**Commits:**
+
+- upgrade to version 2.4.0 before release in master branch ([13ea892](https://github.com/networknt/light-aws-lambda/commit/13ea892ec8c003ef637be4feae2a1e94e830c37c)) (by Steve Hu)
+- upgrade maven-javadoc to 3.12.0 from 3.4.1 ([ffd0b3a](https://github.com/networknt/light-aws-lambda/commit/ffd0b3aedefddfa1f883f0e4f6f7cba5e41448ab)) (by Steve Hu)
+- upgrade maven-version to 2.22.0 from 2.4 ([59bce53](https://github.com/networknt/light-aws-lambda/commit/59bce539e392f83fe9470ddc4c7b99271d48b63e)) (by Steve Hu)
+- upgrade mockito to 5.24.0 ([ccd229e](https://github.com/networknt/light-aws-lambda/commit/ccd229e06e91033cfb150cc93dccd90267d7a60f)) (by Steve Hu)
+- upgrade slf4j to 2.0.20 from 2.0.19 ([8f276ed](https://github.com/networknt/light-aws-lambda/commit/8f276ed13a8ac309e7a6cb38848bc671555cb294)) (by Steve Hu)
+- upgrade jose4j to 0.9.7 from 0.9.6 ([fb410bb](https://github.com/networknt/light-aws-lambda/commit/fb410bbd92eabb0105051a1b56a2b871286de534)) (by Steve Hu)
+- upgrade jackson to 2.22.3 from 2.22.1 ([9bf3a10](https://github.com/networknt/light-aws-lambda/commit/9bf3a106a7c9f350aacce33fbcd769991e9b3814)) (by Steve Hu)
+- upgrade to version 2.3.8-SNAPSHOT after release in master branch ([a089975](https://github.com/networknt/light-aws-lambda/commit/a089975b7b4b11ac95fa7d62aa45647817b8e2e1)) (by Steve Hu)
+- upgrade slf4j to 2.0.19 from 2.0.17 ([4eebca7](https://github.com/networknt/light-aws-lambda/commit/4eebca7ecbcf7a43ef2dae4cfcf32f0ee044fd2e)) (by Steve Hu)
+- upgrade maven-surefire to 3.6.0 ([b743597](https://github.com/networknt/light-aws-lambda/commit/b743597e4b93f1867bd186d7964a17175e71a485)) (by Steve Hu)
+- upgrade logback to 1.6.3 from 1.5.37 ([c34ac0f](https://github.com/networknt/light-aws-lambda/commit/c34ac0f6004f660012e6cf6aebe7a4c5f42dcdc4)) (by Steve Hu)
+- upgrade actions/checkout ([a65664f](https://github.com/networknt/light-aws-lambda/commit/a65664f5a84c4a563920081b1630d48769896a16)) (by Steve Hu)
+- upgrade central-publishing-maven to 0.11.0 from 0.7.0 ([3028888](https://github.com/networknt/light-aws-lambda/commit/30288885b3f3f8235839b6f3c603439065048135)) (by Steve Hu)
+- fixes #166 Safely publish the graphql ValidatorConfig cached singleton ([105c09b](https://github.com/networknt/light-aws-lambda/commit/105c09bef9517be1049fe27030cb054f1989528c)) (by Steve Hu)
+- fixes #165 upgrade json-schema-validator to 2.0.5 from 1.5.1 ([8d32afc](https://github.com/networknt/light-aws-lambda/commit/8d32afc1eb1f4d481ca27f52e04ca0dd1b5cb224)) (by Steve Hu)
+- update json-schema-validator version to 2.0.7 ([e80b5f5](https://github.com/networknt/light-aws-lambda/commit/e80b5f5034fefedca3d602558a4c8858ee8d6372)) (by Steve Hu)
+- update json-schema-validator version to 2.0.5 ([44dbdab](https://github.com/networknt/light-aws-lambda/commit/44dbdabf1f0dbcf7a8aa832df9ac850f7a907f75)) (by Steve Hu)
+- upgrade to version 2.3.8-SNAPSHOT after release in master branch ([126cea7](https://github.com/networknt/light-aws-lambda/commit/126cea77156f9e733d63fd2abc56518677e94920)) (by Steve Hu)
+
 ## [2.3.7](https://github.com/networknt/light-aws-lambda/tree/2.3.7) (2026-08-12)
 
 

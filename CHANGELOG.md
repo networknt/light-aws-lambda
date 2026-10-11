@@ -1,5 +1,22 @@
 # Change Log
 
+## [2.4.1](https://github.com/networknt/light-aws-lambda/tree/2.4.1) (2026-10-11)
+
+**Commits:**
+
+- upgrade to version 2.4.1 before release in master branch ([5227fd5](https://github.com/networknt/light-aws-lambda/commit/5227fd54dd12a614ce75441654037519bdff3f39)) (by Steve Hu)
+- upgrade lambda-awssdk to 2.55.13 from 2.55.12 ([456248e](https://github.com/networknt/light-aws-lambda/commit/456248ec5c1efce2f093370aebad16c9b80c29ec)) (by Steve Hu)
+- upgrade maven-gpg to 3.2.8 from 3.2.7 ([a8dab73](https://github.com/networknt/light-aws-lambda/commit/a8dab732eac3d0fd3b0ab688671fb1ee666404e8)) (by Steve Hu)
+- build: upgrade JUnit to 6.1.3 ([dbda193](https://github.com/networknt/light-aws-lambda/commit/dbda1936df47b76fc4130b5b7fa8a353765d5faf)) (by Steve Hu)
+- upgrade udertow to 2.4.4.Final from 2.4.1.Final ([61b57c9](https://github.com/networknt/light-aws-lambda/commit/61b57c94ec3fc59b67c19c1b8a57b89fa5aebf4f)) (by Steve Hu)
+- upgrade logback to 1.6.5 from 1.6.3 ([8611600](https://github.com/networknt/light-aws-lambda/commit/8611600530f2a0f7f25dd695ab2cee8169e8070f)) (by Steve Hu)
+- upgrade snakeyaml to 2.7 from 2.4 ([51d2f24](https://github.com/networknt/light-aws-lambda/commit/51d2f24427a0986713754772f08c8ce479b1cade)) (by Steve Hu)
+- upgrade json-schema-validator to 2.0.8 from 2.0.7 ([f72478f](https://github.com/networknt/light-aws-lambda/commit/f72478f0c07ab498b39fc37dc1b41050bd1d87cf)) (by Steve Hu)
+- upgrade http-client with project version ([5690337](https://github.com/networknt/light-aws-lambda/commit/5690337b3caed098c079f3cfee0cc884f2b8ad3b)) (by Steve Hu)
+- upgrade lambda to 2.55.12 from 2.51.3 ([8a1b75c](https://github.com/networknt/light-aws-lambda/commit/8a1b75c367c4d5ea20cf8ab15430e9544a4b1250)) (by Steve Hu)
+- upgrade encoder to 1.5.0 from 1.3.1 ([e1aeb4a](https://github.com/networknt/light-aws-lambda/commit/e1aeb4a5018304f9ebf4c0539b58fe981de8bb2e)) (by Steve Hu)
+- upgrade to version 2.4.1-SNAPSHOT after release in master branch ([efc9e21](https://github.com/networknt/light-aws-lambda/commit/efc9e21ceb4c3b2895e640b0e4c7e4b93c179668)) (by Steve Hu)
+
 ## [2.4.0](https://github.com/networknt/light-aws-lambda/tree/2.4.0) (2026-10-07)
 
 **Commits:**

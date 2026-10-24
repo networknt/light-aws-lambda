@@ -106,6 +106,7 @@
         <version.lambda-awssdk>2.55.13</version.lambda-awssdk>
         <version.jose4j>0.9.7</version.jose4j>
         <version.snakeyaml>2.7</version.snakeyaml>
+        <version.snakeyaml-engine>3.0.1</version.snakeyaml-engine>
         <version.commons-text>1.15.0</version.commons-text>
         <version.encoder>1.5.0</version.encoder>
         <version.logback>1.6.5</version.logback>
@@ -271,9 +272,15 @@
 
             <!-- External dependencies -->
             <dependency>
+                <!-- Compatibility pin for classic SnakeYAML exports and transitive consumers. -->
                 <groupId>org.yaml</groupId>
                 <artifactId>snakeyaml</artifactId>
                 <version>${version.snakeyaml}</version>
+            </dependency>
+            <dependency>
+                <groupId>org.snakeyaml</groupId>
+                <artifactId>snakeyaml-engine</artifactId>
+                <version>${version.snakeyaml-engine}</version>
             </dependency>
             <dependency>
                 <groupId>org.slf4j</groupId>

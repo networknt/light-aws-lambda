@@ -44,8 +44,13 @@
             <artifactId>jackson-databind</artifactId>
         </dependency>
         <dependency>
+            <!-- Compatibility export for consumers still importing the classic API. -->
             <groupId>org.yaml</groupId>
             <artifactId>snakeyaml</artifactId>
+        </dependency>
+        <dependency>
+            <groupId>org.snakeyaml</groupId>
+            <artifactId>snakeyaml-engine</artifactId>
         </dependency>
         <dependency>
             <groupId>org.slf4j</groupId>

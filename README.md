@@ -29,3 +29,9 @@ This is a Lambda extersion that will collect the logs of the Lambda function and
 ##### Metrics
 
 This is a Lambda extension that will collect the metrics of the Lambda function and send to a time series database.
+
+### YAML configuration migration
+
+`env-config` uses SnakeYAML Engine with YAML 1.2 Core resolution. See the
+[configuration migration notes](env-config/README.md) for scalar changes,
+duplicate-key handling, and dependency compatibility before rollout.

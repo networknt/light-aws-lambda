@@ -11,6 +11,10 @@ import static org.junit.jupiter.api.Assertions.assertSame;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 
 class EngineConfigurationTest {
+    private Map<String, Object> engineConfig() {
+        return Configuration.load(getClass().getClassLoader().getResourceAsStream("engine.yml")).get("Engine");
+    }
+
     @Test
     void loadsStageConfigurationFromClasspath() {
         Configuration configuration = Configuration.getInstance();
@@ -22,7 +26,7 @@ class EngineConfigurationTest {
 
     @Test
     void usesYaml12CoreScalarResolution() {
-        Map<String, Object> config = Configuration.getInstance().getStageConfig("Engine");
+        Map<String, Object> config = engineConfig();
         assertEquals(true, config.get("enabled"));
         assertEquals("on", config.get("legacyBoolean"));
         assertEquals(755, config.get("decimal"));
@@ -39,7 +43,7 @@ class EngineConfigurationTest {
 
     @Test
     void preservesCollectionsAliasesAndUnicode() {
-        Map<String, Object> config = Configuration.getInstance().getStageConfig("Engine");
+        Map<String, Object> config = engineConfig();
         assertEquals(List.of("https://one.example.com", "https://two.example.com"), config.get("endpoints"));
         assertEquals(config.get("endpoints"), config.get("copiedEndpoints"));
         assertEquals("Unicode: café λ", config.get("message"));
@@ -47,6 +51,6 @@ class EngineConfigurationTest {
 
     @Test
     void preservesLastValueForDuplicateKeys() {
-        assertEquals("last", Configuration.getInstance().getStageConfig("Engine").get("duplicate"));
+        assertEquals("last", engineConfig().get("duplicate"));
     }
 }

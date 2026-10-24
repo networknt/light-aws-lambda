@@ -6,22 +6,3 @@ Stage:
   jwkUrl: https://stage.example.com/oauth2/aus41bwp2BafABp7h1d6/v1/keys
 Prod:
   jwkUrl: https://prod.example.com/oauth2/aus41bwp2BafABp7h1d6/v1/keys
-Engine:
-  enabled: true
-  legacyBoolean: on
-  decimal: 0755
-  octal: 0o755
-  binary: 0b11
-  separatedInteger: 1_000
-  sexagesimal: 1:30
-  sexagesimalFloat: 1:30.5
-  separatedFloat: 1_0.5
-  timestamp: 2026-10-24
-  empty: null
-  message: "Unicode: café λ"
-  endpoints: &endpoints
-    - https://one.example.com
-    - https://two.example.com
-  copiedEndpoints: *endpoints
-  duplicate: first
-  duplicate: last

@@ -272,6 +272,7 @@
 
             <!-- External dependencies -->
             <dependency>
+                <!-- Compatibility pin for classic SnakeYAML exports and transitive consumers. -->
                 <groupId>org.yaml</groupId>
                 <artifactId>snakeyaml</artifactId>
                 <version>${version.snakeyaml}</version>

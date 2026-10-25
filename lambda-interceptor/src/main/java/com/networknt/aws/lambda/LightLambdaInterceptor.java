@@ -4,13 +4,13 @@ import com.amazonaws.services.lambda.runtime.Context;
 import com.amazonaws.services.lambda.runtime.LambdaLogger;
 import com.amazonaws.services.lambda.runtime.events.APIGatewayProxyRequestEvent;
 import com.amazonaws.services.lambda.runtime.events.APIGatewayProxyResponseEvent;
-import com.networknt.jackson.Jackson2Defaults;
+import com.networknt.jackson.JacksonDefaults;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import tools.jackson.databind.ObjectMapper;
 
 public class LightLambdaInterceptor {
-    private static ObjectMapper objectMapper = Jackson2Defaults.mapper();
+    private static ObjectMapper objectMapper = JacksonDefaults.mapper();
     private static final Logger logger = LoggerFactory.getLogger(LightLambdaInterceptor.class);
 
     public APIGatewayProxyRequestEvent interceptRequest(final APIGatewayProxyRequestEvent input, final Context context) {

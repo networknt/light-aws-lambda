@@ -1,6 +1,6 @@
 package com.networknt.aws.lambda.validator;
 
-import com.networknt.config.Jackson2Defaults;
+import com.networknt.jackson.JacksonDefaults;
 
 import tools.jackson.databind.JsonNode;
 import tools.jackson.databind.ObjectMapper;
@@ -16,7 +16,7 @@ import static org.junit.jupiter.api.Assertions.assertNull;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 
 public class SchemaValidatorTest {
-    private static final ObjectMapper MAPPER = Jackson2Defaults.mapper();
+    private static final ObjectMapper MAPPER = JacksonDefaults.mapper();
 
     @Test
     void shouldConstructWithoutAnApi() {

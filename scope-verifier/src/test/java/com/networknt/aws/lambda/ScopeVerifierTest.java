@@ -1,6 +1,6 @@
 package com.networknt.aws.lambda;
 
-import com.networknt.config.Jackson2Defaults;
+import com.networknt.jackson.JacksonDefaults;
 
 import com.amazonaws.services.lambda.runtime.events.APIGatewayProxyRequestEvent;
 import com.amazonaws.services.lambda.runtime.events.APIGatewayProxyResponseEvent;
@@ -13,7 +13,7 @@ import java.util.ArrayList;
 import java.util.List;
 
 public class ScopeVerifierTest {
-    ObjectMapper objectMapper = Jackson2Defaults.mapper();
+    ObjectMapper objectMapper = JacksonDefaults.mapper();
     @Test
     public void testSuccessRequest() {
         ScopeVerifier verifier = new ScopeVerifier();

@@ -35,3 +35,11 @@ This is a Lambda extension that will collect the metrics of the Lambda function 
 `env-config` uses SnakeYAML Engine with YAML 1.2 Core resolution. See the
 [configuration migration notes](env-config/README.md) for scalar changes,
 duplicate-key handling, and dependency compatibility before rollout.
+
+## Jackson 3 migration
+
+This source line requires Jackson 3.2.3, json-schema-validator 3.0.8 and the Jackson 3 light-4j/http-client prerequisites. Public mapper and JsonNode types use tools.jackson; annotations retain com.fasterxml.jackson.annotation. Build those prerequisites before this reactor. Do not mix published Jackson 2 snapshot binaries with this source line.
+
+Mappers use the shared Jackson2Defaults profile and preserve existing per-mapper overrides. Mappers are immutable; Java time and Optional support are built into Jackson 3. Classic SnakeYAML compatibility pins remain until the stack-wide cleanup.
+
+Local qualification covers JVM tests and sanitized API Gateway/event and validation parity. It does not qualify deployed AWS execution or GraalVM native images.

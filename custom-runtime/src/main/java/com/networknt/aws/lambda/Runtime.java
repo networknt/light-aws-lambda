@@ -1,10 +1,12 @@
 package com.networknt.aws.lambda;
 
+import com.networknt.config.Jackson2Defaults;
+
 import com.amazonaws.services.lambda.runtime.RequestHandler;
 import com.amazonaws.services.lambda.runtime.events.APIGatewayProxyRequestEvent;
 import com.amazonaws.services.lambda.runtime.events.APIGatewayProxyResponseEvent;
-import com.fasterxml.jackson.databind.DeserializationFeature;
-import com.fasterxml.jackson.databind.ObjectMapper;
+import tools.jackson.databind.DeserializationFeature;
+import tools.jackson.databind.ObjectMapper;
 
 import java.io.IOException;
 import java.lang.reflect.Method;
@@ -18,8 +20,8 @@ import com.networknt.utility.NioUtils;
 public class Runtime {
     private static final String REQUEST_ID_HEADER = "lambda-runtime-aws-request-id";
 
-    private static final ObjectMapper OBJECT_MAPPER = new ObjectMapper()
-            .disable(DeserializationFeature.FAIL_ON_UNKNOWN_PROPERTIES);
+    private static final ObjectMapper OBJECT_MAPPER = Jackson2Defaults.builder()
+            .disable(DeserializationFeature.FAIL_ON_UNKNOWN_PROPERTIES).build();
 
     public static void main(String[] args) throws IOException {
         while(true) {

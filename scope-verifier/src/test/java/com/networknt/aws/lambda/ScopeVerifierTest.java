@@ -1,8 +1,10 @@
 package com.networknt.aws.lambda;
 
+import com.networknt.config.Jackson2Defaults;
+
 import com.amazonaws.services.lambda.runtime.events.APIGatewayProxyRequestEvent;
 import com.amazonaws.services.lambda.runtime.events.APIGatewayProxyResponseEvent;
-import com.fasterxml.jackson.databind.ObjectMapper;
+import tools.jackson.databind.ObjectMapper;
 import com.networknt.utility.StringUtils;
 import org.junit.jupiter.api.Assertions;
 import org.junit.jupiter.api.Test;
@@ -11,7 +13,7 @@ import java.util.ArrayList;
 import java.util.List;
 
 public class ScopeVerifierTest {
-    ObjectMapper objectMapper = new ObjectMapper();
+    ObjectMapper objectMapper = Jackson2Defaults.mapper();
     @Test
     public void testSuccessRequest() {
         ScopeVerifier verifier = new ScopeVerifier();

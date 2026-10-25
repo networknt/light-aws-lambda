@@ -1,14 +1,13 @@
 package com.networknt.aws.lambda;
 
-import com.networknt.config.Jackson2Defaults;
-
 import com.amazonaws.services.lambda.runtime.Context;
 import com.amazonaws.services.lambda.runtime.LambdaLogger;
 import com.amazonaws.services.lambda.runtime.events.APIGatewayProxyRequestEvent;
 import com.amazonaws.services.lambda.runtime.events.APIGatewayProxyResponseEvent;
-import tools.jackson.databind.ObjectMapper;
+import com.networknt.jackson.Jackson2Defaults;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+import tools.jackson.databind.ObjectMapper;
 
 public class LightLambdaInterceptor {
     private static ObjectMapper objectMapper = Jackson2Defaults.mapper();

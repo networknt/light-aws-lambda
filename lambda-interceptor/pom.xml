@@ -33,7 +33,7 @@
     <dependencies>
         <dependency>
             <groupId>com.networknt</groupId>
-            <artifactId>config</artifactId>
+            <artifactId>jackson-defaults</artifactId>
         </dependency>
         <dependency>
             <groupId>com.networknt</groupId>

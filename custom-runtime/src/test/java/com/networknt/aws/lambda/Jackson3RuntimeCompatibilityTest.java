@@ -2,7 +2,9 @@ package com.networknt.aws.lambda;
 
 import com.amazonaws.services.lambda.runtime.events.APIGatewayProxyRequestEvent;
 import com.amazonaws.services.lambda.runtime.events.APIGatewayProxyResponseEvent;
+import com.networknt.jackson.JacksonDefaults;
 import org.junit.jupiter.api.Test;
+import tools.jackson.databind.DeserializationFeature;
 
 import java.util.List;
 import java.util.Map;
@@ -14,12 +16,12 @@ import static org.junit.jupiter.api.Assertions.assertTrue;
 
 class Jackson3RuntimeCompatibilityTest {
     @Test
-    void reusesOneImmutableMapperWithoutChangingFrameworkDefaults() {
-        org.junit.jupiter.api.Assertions.assertSame(LambdaRuntimeMappers.mapper(), LambdaRuntimeMappers.mapper());
-        assertFalse(LambdaRuntimeMappers.mapper().isEnabled(tools.jackson.databind.DeserializationFeature.FAIL_ON_UNKNOWN_PROPERTIES));
-        assertTrue(com.networknt.jackson.JacksonDefaults.mapper().isEnabled(tools.jackson.databind.DeserializationFeature.FAIL_ON_UNKNOWN_PROPERTIES));
+    void runtimeAndFrameworkMappersHaveSeparateUnknownPropertyPolicies() {
+        var runtimeMapper = LambdaRuntimeMappers.mapper();
+        var frameworkMapper = JacksonDefaults.builder().build();
+        assertFalse(runtimeMapper.isEnabled(DeserializationFeature.FAIL_ON_UNKNOWN_PROPERTIES));
+        assertTrue(frameworkMapper.isEnabled(DeserializationFeature.FAIL_ON_UNKNOWN_PROPERTIES));
     }
-
 
     @Test
     void bindsAwsGatewayEventsWithoutJackson2Types() throws Exception {

@@ -75,7 +75,8 @@ public class SchemaValidator {
      *            for use in references.
      */
     public SchemaValidator(final OpenApi3 api) {
-        this.jsonNode = api == null ? null : Overlay.toJson((OpenApi3Impl)api).get(COMPONENTS_FIELD);
+        JsonNode components = api == null ? null : Overlay.toJson((OpenApi3Impl)api).get(COMPONENTS_FIELD);
+        this.jsonNode = components == null ? null : components.deepCopy();
         this.pathType = PathType.JSON_POINTER;
     }
 
@@ -114,10 +115,11 @@ public class SchemaValidator {
 
         List<Error> processingReport = null;
         try {
+            JsonNode validationSchema = schema.deepCopy();
             if(jsonNode != null) {
-                ((ObjectNode)schema).set(COMPONENTS_FIELD, jsonNode);
+                ((ObjectNode)validationSchema).set(COMPONENTS_FIELD, jsonNode.deepCopy());
             }
-            Schema jsonSchema = getRegistry(typeLoose, nullableKeywordEnabled, validationPathType).getSchema(schema);
+            Schema jsonSchema = getRegistry(typeLoose, nullableKeywordEnabled, validationPathType).getSchema(validationSchema);
             processingReport = jsonSchema.validate(value);
         } catch (Exception e) {
             LOG.error("Unable to validate the value against the OpenAPI schema", e);

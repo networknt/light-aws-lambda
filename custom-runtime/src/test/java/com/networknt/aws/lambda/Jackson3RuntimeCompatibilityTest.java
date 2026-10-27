@@ -16,7 +16,7 @@ import static org.junit.jupiter.api.Assertions.assertTrue;
 
 class Jackson3RuntimeCompatibilityTest {
     @Test
-    void acceptsUnknownEventPropertiesWithoutChangingFreshFrameworkMapper() {
+    void runtimeAndFrameworkMappersHaveSeparateUnknownPropertyPolicies() {
         var runtimeMapper = LambdaRuntimeMappers.mapper();
         var frameworkMapper = JacksonDefaults.builder().build();
         assertFalse(runtimeMapper.isEnabled(DeserializationFeature.FAIL_ON_UNKNOWN_PROPERTIES));

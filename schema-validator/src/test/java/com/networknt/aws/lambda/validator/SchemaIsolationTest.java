@@ -6,19 +6,26 @@ import com.networknt.oas.model.OpenApi3;
 import org.junit.jupiter.api.Test;
 import tools.jackson.databind.JsonNode;
 
+import java.nio.file.Path;
 import java.util.ArrayList;
 import java.util.concurrent.Callable;
 import java.util.concurrent.Executors;
 import java.util.concurrent.TimeUnit;
 
-import static org.junit.jupiter.api.Assertions.*;
+import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertFalse;
+import static org.junit.jupiter.api.Assertions.assertNotNull;
+import static org.junit.jupiter.api.Assertions.assertNull;
+import static org.junit.jupiter.api.Assertions.assertTrue;
 
 class SchemaIsolationTest {
     private static OpenApi3 api(String type) throws Exception {
+        // Resolution base for the inline document; the parser does not read this file.
+        var documentUrl = Path.of("schema-isolation.json").toUri().toURL();
         return (OpenApi3) new OpenApiParser().parse("""
                 {"openapi":"3.0.3","info":{"title":"isolation","version":"1"},
                  "paths":{},"components":{"schemas":{"Value":{"type":"%s"}}}}
-                """.formatted(type), java.nio.file.Path.of("schema-isolation.json").toUri().toURL(), false);
+                """.formatted(type), documentUrl, false);
     }
 
     private static JsonNode reference() {
@@ -50,7 +57,7 @@ class SchemaIsolationTest {
     }
 
     @Test
-    void concurrentValidatorsKeepTheirOwnComponentsAndProfiles() throws Exception {
+    void concurrentValidationKeepsCallerInputsIsolated() throws Exception {
         var integerValidator = new SchemaValidator(api("integer"));
         var stringValidator = new SchemaValidator(api("string"));
         var schema = reference();

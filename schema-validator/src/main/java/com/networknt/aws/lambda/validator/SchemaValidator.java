@@ -70,6 +70,8 @@ public class SchemaValidator {
 
     /**
      * Build a new validator for the given API specification.
+     * Components are snapshotted at construction. Later changes to the API overlay are not observed;
+     * construct a new validator after changing the specification.
      *
      * @param api The API to build the validator for. If provided, is used to retrieve schemas in components
      *            for use in references.

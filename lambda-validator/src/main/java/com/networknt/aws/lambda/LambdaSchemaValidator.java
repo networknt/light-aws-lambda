@@ -2,7 +2,7 @@ package com.networknt.aws.lambda;
 
 import com.amazonaws.services.lambda.runtime.events.APIGatewayProxyRequestEvent;
 import com.amazonaws.services.lambda.runtime.events.APIGatewayProxyResponseEvent;
-import com.fasterxml.jackson.core.JsonProcessingException;
+import tools.jackson.core.JacksonException;
 import com.networknt.aws.lambda.validator.RequestValidator;
 import com.networknt.aws.lambda.validator.SchemaValidator;
 import com.networknt.config.Config;
@@ -48,7 +48,7 @@ public class LambdaSchemaValidator {
             String openapiString = Config.getInstance().getMapper().writeValueAsString(openapi);
             if(logger.isTraceEnabled()) logger.trace("OpenApiMiddleware openapiString: " + openapiString);
             helper = new OpenApiHelper(openapiString);
-        } catch (JsonProcessingException e) {
+        } catch (JacksonException e) {
             logger.error("merge specification failed");
             throw new RuntimeException("merge specification failed");
         }

@@ -1,7 +1,9 @@
 package com.networknt.aws.lambda;
 
+import com.networknt.jackson.JacksonDefaults;
+
 import com.amazonaws.services.lambda.runtime.events.APIGatewayProxyRequestEvent;
-import com.fasterxml.jackson.databind.ObjectMapper;
+import tools.jackson.databind.ObjectMapper;
 import org.junit.jupiter.api.Assertions;
 import org.junit.jupiter.api.Disabled;
 import org.junit.jupiter.api.Test;
@@ -9,7 +11,7 @@ import org.junit.jupiter.api.Test;
 import java.util.Map;
 
 public class ConfigurationTest {
-    ObjectMapper objectMapper = new ObjectMapper();
+    ObjectMapper objectMapper = JacksonDefaults.mapper();
     @Test
     @Disabled
     public void thatConfigurationValuesAreLoaded() throws Exception {

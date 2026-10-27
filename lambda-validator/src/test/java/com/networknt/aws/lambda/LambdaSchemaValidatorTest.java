@@ -1,9 +1,11 @@
 package com.networknt.aws.lambda;
 
+import com.networknt.jackson.JacksonDefaults;
+
 import com.amazonaws.services.lambda.runtime.events.APIGatewayProxyRequestEvent;
 import com.amazonaws.services.lambda.runtime.events.APIGatewayProxyResponseEvent;
 import com.fasterxml.jackson.annotation.JsonIgnore;
-import com.fasterxml.jackson.databind.ObjectMapper;
+import tools.jackson.databind.ObjectMapper;
 import org.junit.jupiter.api.Assertions;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Disabled;
@@ -13,7 +15,7 @@ import java.util.HashMap;
 import java.util.Map;
 
 public class LambdaSchemaValidatorTest {
-    ObjectMapper objectMapper = new ObjectMapper();
+    ObjectMapper objectMapper = JacksonDefaults.mapper();
     private final LambdaSchemaValidator validator = new LambdaSchemaValidator();
     APIGatewayProxyRequestEvent requestEvent;
 

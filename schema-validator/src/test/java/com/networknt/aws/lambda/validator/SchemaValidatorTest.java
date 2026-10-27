@@ -1,9 +1,11 @@
 package com.networknt.aws.lambda.validator;
 
-import com.fasterxml.jackson.databind.JsonNode;
-import com.fasterxml.jackson.databind.ObjectMapper;
-import com.fasterxml.jackson.databind.node.NullNode;
-import com.fasterxml.jackson.databind.node.TextNode;
+import com.networknt.jackson.JacksonDefaults;
+
+import tools.jackson.databind.JsonNode;
+import tools.jackson.databind.ObjectMapper;
+import tools.jackson.databind.node.NullNode;
+import tools.jackson.databind.node.StringNode;
 import com.networknt.status.Status;
 import org.junit.jupiter.api.Test;
 
@@ -14,7 +16,7 @@ import static org.junit.jupiter.api.Assertions.assertNull;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 
 public class SchemaValidatorTest {
-    private static final ObjectMapper MAPPER = new ObjectMapper();
+    private static final ObjectMapper MAPPER = JacksonDefaults.mapper();
 
     @Test
     void shouldConstructWithoutAnApi() {
@@ -26,8 +28,8 @@ public class SchemaValidatorTest {
         SchemaValidator validator = new SchemaValidator();
         JsonNode schema = MAPPER.readTree("{\"type\":\"integer\"}");
 
-        assertNull(validator.validate(new TextNode("42"), schema, true, false));
-        assertNotNull(validator.validate(new TextNode("42"), schema, false, false));
+        assertNull(validator.validate(new StringNode("42"), schema, true, false));
+        assertNotNull(validator.validate(new StringNode("42"), schema, false, false));
     }
 
     @Test
@@ -56,7 +58,7 @@ public class SchemaValidatorTest {
         SchemaValidator validator = new SchemaValidator();
         JsonNode schema = MAPPER.readTree("{\"$schema\":\"http://json-schema.org/draft-07/schema#\",\"type\":\"integer\"}");
 
-        Status status = validator.validate(new TextNode("invalid"), schema, false, false);
+        Status status = validator.validate(new StringNode("invalid"), schema, false, false);
 
         assertNotNull(status);
         assertEquals(SchemaValidator.VALIDATOR_SCHEMA, status.getCode());
@@ -67,7 +69,7 @@ public class SchemaValidatorTest {
         SchemaValidator validator = new SchemaValidator();
         JsonNode schema = MAPPER.readTree("{\"type\":\"string\",\"pattern\":\"[\"}");
 
-        Status status = validator.validate(new TextNode("value"), schema, false, false);
+        Status status = validator.validate(new StringNode("value"), schema, false, false);
 
         assertNotNull(status);
         assertEquals(SchemaValidator.VALIDATOR_SCHEMA_INVALID_JSON, status.getCode());

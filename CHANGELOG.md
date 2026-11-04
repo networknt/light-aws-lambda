@@ -1,5 +1,19 @@
 # Change Log
 
+## [2.5.0](https://github.com/networknt/light-aws-lambda/tree/2.5.0) (2026-11-04)
+
+**Commits:**
+
+- upgrade to version 2.5.0 before release in 2.x branch ([20a5ad1](https://github.com/networknt/light-aws-lambda/commit/20a5ad180c547be844ecf8f942ad7acd966aef08)) (by Steve Hu)
+- upgrade to version 2.5.0-SNAPSHOT after release in 2.x branch ([eab2544](https://github.com/networknt/light-aws-lambda/commit/eab254461df0bf21b2c24e94b32e467f5cf07a0b)) (by Steve Hu)
+- upgrade lambda-awssdk to 2.57.8 from 2.55.13 ([ced6bf7](https://github.com/networknt/light-aws-lambda/commit/ced6bf7732ba6ae97640eee57bba32a4ae8d3016)) (by Steve Hu)
+- upgrade lambda-core to 1.4.1 from 1.4.0 ([8827370](https://github.com/networknt/light-aws-lambda/commit/8827370fdb597ee3f92131de5b125d16e886b1e4)) (by Steve Hu)
+- upgrade encoder to 1.6.0 from 1.5.0 ([e9a310a](https://github.com/networknt/light-aws-lambda/commit/e9a310adc250229decca9ec43f1fd94f22076ea6)) (by Steve Hu)
+- upgrade jackson to 2.22.4 from 2.22.3 ([907d845](https://github.com/networknt/light-aws-lambda/commit/907d8450f447547b9ae309adeb7a06540ad7d812)) (by Steve Hu)
+- upgrade logback to 1.6.6 from 1.6.5 ([a4083be](https://github.com/networknt/light-aws-lambda/commit/a4083be0bd9ea7847481a60a8c900e83650ca0bb)) (by Steve Hu)
+- upgrade maven-version to 2.23.0 from 2.22.0 ([9dbcc24](https://github.com/networknt/light-aws-lambda/commit/9dbcc245f7b24d9fa7d7e55e510b4893db0d7d78)) (by Steve Hu)
+- upgrade to version 2.4.2-SNAPSHOT after release in master branch ([e01b861](https://github.com/networknt/light-aws-lambda/commit/e01b86144619366cc445159f75d33b9b8d511612)) (by Steve Hu)
+
 ## [2.4.1](https://github.com/networknt/light-aws-lambda/tree/2.4.1) (2026-10-11)
 
 **Commits:**

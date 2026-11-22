@@ -1,5 +1,17 @@
 # Change Log
 
+## [2.5.1](https://github.com/networknt/light-aws-lambda/tree/2.5.1) (2026-11-21)
+
+**Commits:**
+
+- upgrade to version 2.5.1 before release in 2.x branch ([bf69555](https://github.com/networknt/light-aws-lambda/commit/bf69555ded3bcec1a8e2a09b887a96cb20a9e03b)) (by Steve Hu)
+- upgrade logback to 1.6.8 from 1.6.7 ([2e2c900](https://github.com/networknt/light-aws-lambda/commit/2e2c900f1e06c4cf3f28752534cb3efb98f16af1)) (by Steve Hu)
+- upgrade lambda-awssdk to 2.59.5 from 2.57.8 ([cb3b150](https://github.com/networknt/light-aws-lambda/commit/cb3b150e00227ef1a953785a570627b15e42588f)) (by Steve Hu)
+- upgrade logback to 1.6.7 from 1.6.6 ([2d0670f](https://github.com/networknt/light-aws-lambda/commit/2d0670ffd594c41e01c28bed34d06b304e4a3f62)) (by Steve Hu)
+- upgrade maven-version to 2.25.2 from 2.23.0 ([c97c857](https://github.com/networknt/light-aws-lambda/commit/c97c8575ee8cb72be361e71d5f0c058c89b5e82a)) (by Steve Hu)
+- upgrade maven-surefire to 3.6.1 from 3.6.0 ([631a0fd](https://github.com/networknt/light-aws-lambda/commit/631a0fd285ce0064aaac47b6602c0929a344316e)) (by Steve Hu)
+- upgrade to version 2.5.1-SNAPSHOT after release in 2.x branch ([223688e](https://github.com/networknt/light-aws-lambda/commit/223688ea5e74939b6659dd7d60848ee8f2ee6054)) (by Steve Hu)
+
 ## [2.5.0](https://github.com/networknt/light-aws-lambda/tree/2.5.0) (2026-11-04)
 
 **Commits:**
